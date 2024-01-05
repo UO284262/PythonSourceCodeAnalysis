@@ -5,7 +5,7 @@ import db.dbentities as dbentities
 
 class Visitor_print(Visitor):
 
-     ####################### Visits extra ######################
+    ####################### Visits extra ######################
     """
     def visit_comp(self, comp, depth: int):
         print("-"*depth + "Comp")
