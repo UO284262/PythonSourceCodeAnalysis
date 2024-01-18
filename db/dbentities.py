@@ -1,7 +1,7 @@
 import uuid
 
 class DBNode:
-    def __init__(self,parent_table,parent_id, node):
+    def __init__(self, parent_table = None, parent_id = None,  node = None):
         self.node = node
         self.table = "Nodes"
         self.parent_table = parent_table
@@ -9,9 +9,9 @@ class DBNode:
         self.node_id = 0
 
 class DBProgram:
-    def __init__(self, name: str, hasSubDirsWithCode: bool, hasPackages: bool, numberOfModules: int,
-                 numberOfSubDirsWithCode: int, numberOfPackages: int, classDefsPct: int, functionDefsPct: int,
-                 enumDefsPct: int, hasCodeRootPackage: bool, averageDefsPerModule: int, user_id, isExpert: bool, node):
+    def __init__(self, category = None, name: str = None,  hasSubDirsWithCode: bool = None,  hasPackages: bool = None,  numberOfModules: int = None, 
+                 numberOfSubDirsWithCode: int = None,  numberOfPackages: int = None,  classDefsPct: int = None,  functionDefsPct: int = None, 
+                 enumDefsPct: int = None,  hasCodeRootPackage: bool = None,  averageDefsPerModule: int = None,  user_id = None,  isExpert: bool = None,  node = None):
         self.node = node
         self.table = "Programs"
         self.name = name
@@ -30,12 +30,12 @@ class DBProgram:
         self.program_id = 0
 
 class DBModule:
-    def __init__(self, module_id, name: str, nameConvention: str, hasDocString: bool,
-                 globalStmtsPct: float, globalExpressions: float, numberOfClasses: int,
-                 numberOfFunctions: int, classDefsPct: float, functionDefsPct: float,
-                 enumDefsPct: float, averageStmtsFunctionBody: float,
-                 averageStmtsMethodBody: float, typeAnnotationsPct: float,
-                 hasEntryPoint: bool, path: str, program_id, import_id, node):
+    def __init__(self, category = None, module_id = None,  name: str = None,  nameConvention: str = None,  hasDocString: bool = None, 
+                 globalStmtsPct: float = None,  globalExpressions: float = None,  numberOfClasses: int = None, 
+                 numberOfFunctions: int = None,  classDefsPct: float = None,  functionDefsPct: float = None, 
+                 enumDefsPct: float = None,  averageStmtsFunctionBody: float = None, 
+                 averageStmtsMethodBody: float = None,  typeAnnotationsPct: float = None, 
+                 hasEntryPoint: bool = None,  path: str = None,  program_id = None,  import_id = None,  node = None):
         self.node = node
         self.table = "Modules"
         self.module_id = module_id
@@ -58,9 +58,9 @@ class DBModule:
         self.import_id = import_id
 
 class DBImport:
-    def __init__(self, numberImports: int, moduleImportsPct: float,
-                 averageImportedModules: float, fromImportsPct: float,
-                 averageAsInImportedModules: float, localImportsPct: float, node):
+    def __init__(self, numberImports: int = None,  moduleImportsPct: float = None, 
+                 averageImportedModules: float = None,  fromImportsPct: float = None, 
+                 averageAsInImportedModules: float = None,  localImportsPct: float = None,  node = None):
         self.node = node
         self.table = "Imports"
         self.numberImports = numberImports
@@ -72,17 +72,17 @@ class DBImport:
         self.import_id = 0
 
 class DBClassDef:
-    def __init__(self, classdef_id, nameConvention: str, isEnumClass: bool,
-                 numberOfCharacters: int, numberOfDecorators: int,
-                 numberOfBaseClasses: int, hasGenericTypeAnnotations: bool,
-                 hasDocString: bool, bodyCount: int, assignmentsPct: float,
-                 expressionsPct: float, usesMetaclass: bool,
-                 numberOfKeyWords: int, height: int,
-                 averageStmtsMethodBody: float, typeAnnotationsPct: float,
-                 privateMethodsPct: float, magicMethodsPct: float,
-                 asyncMethodsPct: float, classMethodsPct: float,
-                 staticMethodsPct: float, abstractMethodsPct: float,
-                 sourceCode: str, module_id, node):
+    def __init__(self, category = None, classdef_id = None,  nameConvention: str = None,  isEnumClass: bool = None, 
+                 numberOfCharacters: int = None,  numberOfDecorators: int = None, 
+                 numberOfBaseClasses: int = None,  hasGenericTypeAnnotations: bool = None, 
+                 hasDocString: bool = None,  bodyCount: int = None,  assignmentsPct: float = None, 
+                 expressionsPct: float = None,  usesMetaclass: bool = None, 
+                 numberOfKeyWords: int = None,  height: int = None, 
+                 averageStmtsMethodBody: float = None,  typeAnnotationsPct: float = None, 
+                 privateMethodsPct: float = None,  magicMethodsPct: float = None, 
+                 asyncMethodsPct: float = None,  classMethodsPct: float = None, 
+                 staticMethodsPct: float = None,  abstractMethodsPct: float = None, 
+                 sourceCode: str = None,  module_id = None,  node = None):
         self.node = node
         self.table = "ClassDefs"
         self.classdef_id = classdef_id
@@ -111,13 +111,13 @@ class DBClassDef:
         self.module_id = module_id
 
 class DBFunctionDef:
-    def __init__(self, functiondef_id, nameConvention: str,
-                 numberOfCharacters: int, isPrivate: bool, isMagic: bool,
-                 bodyCount: int, expressionsPct: float,
-                 isAsync: bool, numberOfDecorators: int,
-                 hasReturnTypeAnnotation: bool, hasDocString: bool,
-                 height: int, typeAnnotationsPct: float,
-                 sourceCode: str, module_id, parameters_id, node):
+    def __init__(self, category = None, functiondef_id = None,  nameConvention: str = None, 
+                 numberOfCharacters: int = None,  isPrivate: bool = None,  isMagic: bool = None, 
+                 bodyCount: int = None,  expressionsPct: float = None, 
+                 isAsync: bool = None,  numberOfDecorators: int = None, 
+                 hasReturnTypeAnnotation: bool = None,  hasDocString: bool = None, 
+                 height: int = None,  typeAnnotationsPct: float = None, 
+                 sourceCode: str = None,  module_id = None,  parameters_id = None,  node = None):
         self.node = node
         self.table = "FunctionDefs"
         self.functiondef_id = functiondef_id
@@ -138,10 +138,10 @@ class DBFunctionDef:
         self.parameters_id = parameters_id
 
 class DBMethodDef:
-    def __init__(self, methoddef_id, classdef_id,
-                 isClassMethod: bool, isStaticMethod: bool,
-                 isConstructorMethod: bool, isAbstractMethod: bool,
-                 isProperty: bool, isWrapper: bool, isCached: bool, node):
+    def __init__(self, category = None, methoddef_id = None,  classdef_id = None, 
+                 isClassMethod: bool = None,  isStaticMethod: bool = None, 
+                 isConstructorMethod: bool = None,  isAbstractMethod: bool = None, 
+                 isProperty: bool = None,  isWrapper: bool = None,  isCached: bool = None,  node = None):
         self.node = node
         self.table = "MethodDefs"
         self.methoddef_id = methoddef_id
@@ -155,11 +155,11 @@ class DBMethodDef:
         self.isCached = isCached
 
 class DBParameter:
-    def __init__(self, numberOfParams: int,
-                 posOnlyParamPct: float, varParamPct: float,
-                 hasVarParam: bool, typeAnnotationPct: float,
-                 kwOnlyParamPct: float, defaultValuePct: float,
-                 hasKWParam: bool, nameConvention: str, node):
+    def __init__(self,  numberOfParams: int = None, 
+                 posOnlyParamPct: float = None,  varParamPct: float = None, 
+                 hasVarParam: bool = None,  typeAnnotationPct: float = None, 
+                 kwOnlyParamPct: float = None,  defaultValuePct: float = None, 
+                 hasKWParam: bool = None,  nameConvention: str = None,  node = None):
         self.node = node
         self.table = "Parameters"
         self.numberOfParams = numberOfParams
@@ -174,10 +174,10 @@ class DBParameter:
         self.parameters_id = 0
 
 class DBStatement:
-    def __init__(self, statement_id, category: str, parent: str, statementRole: str,
-                 height: int, depth: int, sourceCode: str, parent_id, node,
-                 hasOrElse: bool = None, bodySize: int = None,
-                 first_child_id: int = None, second_child_id: int = None,
+    def __init__(self,  statement_id = None,  category: str = None,  parent: str = None,  statementRole: str = None, 
+                 height: int = None,  depth: int = None,  sourceCode: str = None,  parent_id = None,  node = None, 
+                 hasOrElse: bool = None,  bodySize: int = None, 
+                 first_child_id: int = None,  second_child_id: int = None, 
                  third_child_id: int = None):
         self.node = node
         self.table = "Statements"
@@ -196,11 +196,11 @@ class DBStatement:
         self.parent_id = parent_id
 
 class DBExpression:
-    def __init__(self, expression_id, category: str,
-                 first_child_category: str, second_child_category: str,
-                 third_child_category: str, fourth_child_category: str,
-                 parent: str, expressionRole: str, height: int,
-                 depth: int, sourceCode: str, parent_id, node):
+    def __init__(self,  expression_id = None,  category: str = None, 
+                 first_child_category: str = None,  second_child_category: str = None, 
+                 third_child_category: str = None,  fourth_child_category: str = None, 
+                 parent: str = None,  expressionRole: str = None,  height: int = None, 
+                 depth: int = None,  sourceCode: str = None,  parent_id = None,  node = None):
         self.node = node
         self.table = "Expressions"
         self.expression_id = expression_id
@@ -217,9 +217,9 @@ class DBExpression:
         self.parent_id = parent_id
 
 class DBComprehension:
-    def __init__(self, category: str, numberOfIfs: int,
-                 numberOfGenerators: int, isAsync: bool,
-                 expression_id, node):
+    def __init__(self,  category: str = None,  numberOfIfs: int = None, 
+                 numberOfGenerators: int = None,  isAsync: bool = None, 
+                 expression_id = None,  node = None):
         self.node = node
         self.table = "Comprehensions"
         self.category = category
@@ -229,8 +229,8 @@ class DBComprehension:
         self.expression_id = expression_id
 
 class DBFString:
-    def __init__(self, numberOfElements: int, constantsPct: float,
-                 expressionsPct: float, expression_id, node):
+    def __init__(self,  numberOfElements: int = None,  constantsPct: float = None, 
+                 expressionsPct: float = None,  expression_id = None,  node = None):
         self.node = node
         self.table = "FStrings"
         self.numberOfElements = numberOfElements
@@ -239,8 +239,8 @@ class DBFString:
         self.expression_id = expression_id
 
 class DBVariable:
-    def __init__(self, nameConvention: str, numberOfCharacters: int,
-                 isPrivate: bool, isMagic: bool, expression_id, node):
+    def __init__(self,  nameConvention: str = None,  numberOfCharacters: int = None, 
+                 isPrivate: bool = None,  isMagic: bool = None,  expression_id = None,  node = None):
         self.node = node
         self.table = "Variables"
         self.nameConvention = nameConvention
@@ -250,8 +250,8 @@ class DBVariable:
         self.expression_id = expression_id
 
 class DBVector:
-    def __init__(self, category: str, numberOfElements: int,
-                 homogeneous: bool, expression_id, node):
+    def __init__(self,  category: str = None,  numberOfElements: int = None, 
+                 homogeneous: bool = None,  expression_id = None,  node = None):
         self.node = node
         self.table = "Vectors"
         self.category = category
@@ -260,9 +260,9 @@ class DBVector:
         self.expression_id = expression_id
 
 class DBCallArg:
-    def __init__(self, numberArgs: int,
-                 namedArgsPct: float, doubleStarArgsPct: float,
-                 expression_id, node):
+    def __init__(self,  numberArgs: int = None, 
+                 namedArgsPct: float = None,  doubleStarArgsPct: float = None, 
+                 expression_id = None,  node = None):
         self.node = node
         self.table = "CallArgs"
         self.numberArgs = numberArgs
@@ -272,12 +272,12 @@ class DBCallArg:
         self.callArgs_id = 0
 
 class DBCase:
-    def __init__(self, numberOfCases: int, guards: float,
-                 averageBodyCount: float, averageMatchValue: float,
-                 averageMatchSingleton: float, averageMatchSequence: float,
-                 averageMatchMapping: float, averageMatchClass: float,
-                 averageMatchStar: float, averageMatchAs: float,
-                 averageMatchOr: float, statement_id, node):
+    def __init__(self,  numberOfCases: int = None,  guards: float = None, 
+                 averageBodyCount: float = None,  averageMatchValue: float = None, 
+                 averageMatchSingleton: float = None,  averageMatchSequence: float = None, 
+                 averageMatchMapping: float = None,  averageMatchClass: float = None, 
+                 averageMatchStar: float = None,  averageMatchAs: float = None, 
+                 averageMatchOr: float = None,  statement_id = None,  node = None):
         self.node = node
         self.table = "Cases"
         self.numberOfCases = numberOfCases
@@ -295,10 +295,10 @@ class DBCase:
         self.cases_id = 0
 
 class DBHandler:
-    def __init__(self, numberOfHandlers: int,
-                 hasFinally: bool, hasCatchAll: bool,
-                 averageBodyCOunt: float, hasStar: bool,
-                 statement_id, node):
+    def __init__(self,  numberOfHandlers: int = None, 
+                 hasFinally: bool = None,  hasCatchAll: bool = None, 
+                 averageBodyCOunt: float = None,  hasStar: bool = None, 
+                 statement_id = None,  node = None):
         self.node = node
         self.table = "Handler"
         self.numberOfHandlers = numberOfHandlers

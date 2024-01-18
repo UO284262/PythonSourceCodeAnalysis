@@ -3,198 +3,198 @@ from visitors.visitor import Visitor
 
 ####### SPECIAL ACCEPTS ##########
 
-def accept_expr(self, visitor, params, depth):
-    self.value.accept(visitor, params, depth)
+def accept_expr(self, visitor, params):
+    self.value.accept(visitor, params)
 
 ast.Expr.accept = accept_expr
 
 ##################################
 
-def accept_module(self, visitor, params, depth):
-    visitor.visit_module(self, params, depth)
+def accept_module(self, visitor, params):
+    visitor.visit_Module(self, params)
 
-def accept_functiondef(self, visitor, params, depth):
-    visitor.visit_functiondef(self, params, depth)
+def accept_functiondef(self, visitor, params):
+    visitor.visit_FunctionDef(self, params)
 
-def accept_asyncfunctiondef(self, visitor, params, depth):
-    visitor.visit_asyncfunctiondef(self, params, depth)
+def accept_asyncfunctiondef(self, visitor, params):
+    visitor.visit_AsyncFunctionDef(self, params)
 
-def accept_classdef(self, visitor, params, depth):
-    visitor.visit_classdef(self, params, depth)
+def accept_classdef(self, visitor, params):
+    visitor.visit_ClassDef(self, params)
 
-def accept_return(self, visitor, params, depth):
-    visitor.visit_return(self, params, depth)
+def accept_return(self, visitor, params):
+    visitor.visit_Return(self, params)
 
-def accept_delete(self, visitor, params, depth):
-    visitor.visit_delete(self, params, depth)
+def accept_delete(self, visitor, params):
+    visitor.visit_Delete(self, params)
 
-def accept_assign(self, visitor, params, depth):
-    visitor.visit_assign(self, params, depth)
+def accept_assign(self, visitor, params):
+    visitor.visit_Assign(self, params)
 
-def accept_augassign(self, visitor, params, depth):
-    visitor.visit_augassign(self, params, depth)
+def accept_augassign(self, visitor, params):
+    visitor.visit_AugAssign(self, params)
 
-def accept_annassign(self, visitor, params, depth):
-    visitor.visit_annassign(self, params, depth)
+def accept_annassign(self, visitor, params):
+    visitor.visit_AnnAssign(self, params)
 
-def accept_for(self, visitor, params, depth):
-    visitor.visit_for(self, params, depth)
+def accept_for(self, visitor, params):
+    visitor.visit_For(self, params)
 
-def accept_asyncfor(self, visitor, params, depth):
-    visitor.visit_asyncfor(self, params, depth)
+def accept_asyncfor(self, visitor, params):
+    visitor.visit_AsyncFor(self, params)
 
-def accept_while(self, visitor, params, depth):
-    visitor.visit_while(self, params, depth)
+def accept_while(self, visitor, params):
+    visitor.visit_While(self, params)
 
-def accept_if(self, visitor, params, depth):
-    visitor.visit_if(self, params, depth)
+def accept_if(self, visitor, params):
+    visitor.visit_if(self, params)
 
-def accept_with(self, visitor, params, depth):
-    visitor.visit_with(self, params, depth)
+def accept_with(self, visitor, params):
+    visitor.visit_with(self, params)
 
-def accept_asyncwith(self, visitor, params, depth):
-    visitor.visit_asyncwith(self, params, depth)
+def accept_asyncwith(self, visitor, params):
+    visitor.visit_asyncwith(self, params)
 
-def accept_match(self, visitor, params, depth):
-    visitor.visit_match(self, params, depth)
+def accept_match(self, visitor, params):
+    visitor.visit_match(self, params)
 
-def accept_raise(self, visitor, params, depth):
-    visitor.visit_raise(self, params, depth)
+def accept_raise(self, visitor, params):
+    visitor.visit_raise(self, params)
 
-def accept_try(self, visitor, params, depth):
-    visitor.visit_try(self, params, depth)
+def accept_try(self, visitor, params):
+    visitor.visit_try(self, params)
 
-def accept_trystar(self, visitor, params, depth):
-    visitor.visit_trystar(self, params, depth)
+def accept_trystar(self, visitor, params):
+    visitor.visit_trystar(self, params)
 
-def accept_assert(self, visitor, params, depth):
-    visitor.visit_assert(self, params, depth)
+def accept_assert(self, visitor, params):
+    visitor.visit_assert(self, params)
 
-def accept_global(self, visitor, params, depth):
-    visitor.visit_global(self, params, depth)
+def accept_global(self, visitor, params):
+    visitor.visit_global(self, params)
 
-def accept_nonlocal(self, visitor, params, depth):
-    visitor.visit_nonlocal(self, params, depth)
+def accept_nonlocal(self, visitor, params):
+    visitor.visit_nonlocal(self, params)
 
-def accept_pass(self, visitor, params, depth):
-    visitor.visit_pass(self, params, depth)
+def accept_pass(self, visitor, params):
+    visitor.visit_pass(self, params)
 
-def accept_break(self, visitor, params, depth):
-    visitor.visit_break(self, params, depth)
+def accept_break(self, visitor, params):
+    visitor.visit_break(self, params)
 
-def accept_continue(self, visitor, params, depth):
-    visitor.visit_continue(self, params, depth)
+def accept_continue(self, visitor, params):
+    visitor.visit_continue(self, params)
 
-def accept_import(self, visitor, params, depth):
-    visitor.visit_import(self, params, depth)
+def accept_import(self, visitor, params):
+    visitor.visit_import(self, params)
 
-def accept_importfrom(self, visitor, params, depth):
-    visitor.visit_importfrom(self, params, depth)
+def accept_importfrom(self, visitor, params):
+    visitor.visit_importfrom(self, params)
 
-def accept_boolop(self, visitor, params, depth):
-    visitor.visit_boolop(self, params, depth)
+def accept_boolop(self, visitor, params):
+    visitor.visit_boolop(self, params)
 
-def accept_namedexpr(self, visitor, params, depth):
-    visitor.visit_namedexpr(self, params, depth)
+def accept_namedexpr(self, visitor, params):
+    visitor.visit_namedexpr(self, params)
 
-def accept_binop(self, visitor, params, depth):
-    visitor.visit_binop(self, params, depth)
+def accept_binop(self, visitor, params):
+    visitor.visit_binop(self, params)
 
-def accept_unaryop(self, visitor, params, depth):
-    visitor.visit_unaryop(self, params, depth)
+def accept_unaryop(self, visitor, params):
+    visitor.visit_unaryop(self, params)
 
-def accept_lambda(self, visitor, params, depth):
-    visitor.visit_lambda(self, params, depth)
+def accept_lambda(self, visitor, params):
+    visitor.visit_lambda(self, params)
 
-def accept_ifexp(self, visitor, params, depth):
-    visitor.visit_ifexp(self, params, depth)
+def accept_ifexp(self, visitor, params):
+    visitor.visit_ifexp(self, params)
 
-def accept_listcomp(self, visitor, params, depth):
-    visitor.visit_listcomp(self, params, depth)
+def accept_listcomp(self, visitor, params):
+    visitor.visit_listcomp(self, params)
 
-def accept_setcomp(self, visitor, params, depth):
-    visitor.visit_setcomp(self, params, depth)
+def accept_setcomp(self, visitor, params):
+    visitor.visit_setcomp(self, params)
 
-def accept_dictcomp(self, visitor, params, depth):
-    visitor.visit_dictcomp(self, params, depth)
+def accept_dictcomp(self, visitor, params):
+    visitor.visit_dictcomp(self, params)
 
-def accept_generatorexp(self, visitor, params, depth):
-    visitor.visit_generatorexp(self, params, depth)
+def accept_generatorexp(self, visitor, params):
+    visitor.visit_generatorexp(self, params)
 
-def accept_await(self, visitor, params, depth):
-    visitor.visit_await(self, params, depth)
+def accept_await(self, visitor, params):
+    visitor.visit_await(self, params)
 
-def accept_yield(self, visitor, params, depth):
-    visitor.visit_yield(self, params, depth)
+def accept_yield(self, visitor, params):
+    visitor.visit_yield(self, params)
 
-def accept_yieldfrom(self, visitor, params, depth):
-    visitor.visit_yieldfrom(self, params, depth)
+def accept_yieldfrom(self, visitor, params):
+    visitor.visit_yieldfrom(self, params)
 
-def accept_compare(self, visitor, params, depth):
-    visitor.visit_compare(self, params, depth)
+def accept_compare(self, visitor, params):
+    visitor.visit_compare(self, params)
 
-def accept_call(self, visitor, params, depth):
-    visitor.visit_call(self, params, depth)
+def accept_call(self, visitor, params):
+    visitor.visit_call(self, params)
 
-def accept_formattedvalue(self, visitor, params, depth):
-    visitor.visit_formattedvalue(self, params, depth)
+def accept_formattedvalue(self, visitor, params):
+    visitor.visit_formattedvalue(self, params)
 
-def accept_joinedstr(self, visitor, params, depth):
-    visitor.visit_joinedstr(self, params, depth)
+def accept_joinedstr(self, visitor, params):
+    visitor.visit_joinedstr(self, params)
 
-def accept_constant(self, visitor, params, depth):
-    visitor.visit_constant(self, params, depth)
+def accept_constant(self, visitor, params):
+    visitor.visit_constant(self, params)
 
-def accept_attribute(self, visitor, params, depth):
-    visitor.visit_attribute(self, params, depth)
+def accept_attribute(self, visitor, params):
+    visitor.visit_attribute(self, params)
 
-def accept_subscript(self, visitor, params, depth):
-    visitor.visit_subscript(self, params, depth)
+def accept_subscript(self, visitor, params):
+    visitor.visit_subscript(self, params)
 
-def accept_starred(self, visitor, params, depth):
-    visitor.visit_starred(self, params, depth)
+def accept_starred(self, visitor, params):
+    visitor.visit_starred(self, params)
 
-def accept_name(self, visitor, params, depth):
-    visitor.visit_name(self, params, depth)
+def accept_name(self, visitor, params):
+    visitor.visit_name(self, params)
 
-def accept_list(self, visitor, params, depth):
-    visitor.visit_list(self, params, depth)
+def accept_list(self, visitor, params):
+    visitor.visit_list(self, params)
 
-def accept_tuple(self, visitor, params, depth):
-    visitor.visit_tuple(self, params, depth)
+def accept_tuple(self, visitor, params):
+    visitor.visit_tuple(self, params)
 
-def accept_dict(self, visitor, params, depth):
-    visitor.visit_dict(self, params, depth)
+def accept_dict(self, visitor, params):
+    visitor.visit_dict(self, params)
 
-def accept_set(self, visitor, params, depth):
-    visitor.visit_set(self, params, depth)
+def accept_set(self, visitor, params):
+    visitor.visit_set(self, params)
 
-def accept_slice(self, visitor, params, depth):
-    visitor.visit_slice(self, params, depth)
+def accept_slice(self, visitor, params):
+    visitor.visit_slice(self, params)
 
-def accept_matchvalue(self, visitor, params, depth):
-    visitor.visit_matchvalue(self, params, depth)
+def accept_matchvalue(self, visitor, params):
+    visitor.visit_matchvalue(self, params)
 
-def accept_matchsingleton(self, visitor, params, depth):
-    visitor.visit_matchsingleton(self, params, depth)
+def accept_matchsingleton(self, visitor, params):
+    visitor.visit_matchsingleton(self, params)
 
-def accept_matchsequence(self, visitor, params, depth):
-    visitor.visit_matchsequence(self, params, depth)
+def accept_matchsequence(self, visitor, params):
+    visitor.visit_matchsequence(self, params)
 
-def accept_matchmapping(self, visitor, params, depth):
-    visitor.visit_matchmapping(self, params, depth)
+def accept_matchmapping(self, visitor, params):
+    visitor.visit_matchmapping(self, params)
 
-def accept_matchclass(self, visitor, params, depth):
-    visitor.visit_matchclass(self, params, depth)
+def accept_matchclass(self, visitor, params):
+    visitor.visit_matchclass(self, params)
 
-def accept_matchstar(self, visitor, params, depth):
-    visitor.visit_matchstar(self, params, depth)
+def accept_matchstar(self, visitor, params):
+    visitor.visit_matchstar(self, params)
 
-def accept_matchas(self, visitor, params, depth):
-    visitor.visit_matchas(self, params, depth)
+def accept_matchas(self, visitor, params):
+    visitor.visit_matchas(self, params)
 
-def accept_matchor(self, visitor, params, depth):
-    visitor.visit_matchor(self, params, depth)
+def accept_matchor(self, visitor, params):
+    visitor.visit_matchor(self, params)
 
 # Agregar los métodos accept a las clases del módulo ast
 ast.Module.accept = accept_module

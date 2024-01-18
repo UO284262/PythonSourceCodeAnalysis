@@ -334,7 +334,6 @@ class Visitor_print(Visitor):
     def visit_yield(self, node: ast.Yield, params, depth: int):
         print("-"*depth + "Yield")
         if node.value: node.value.accept(self, params, depth+1)
-        return
 
     
     def visit_yieldfrom(self, node: ast.YieldFrom, params, depth: int):
@@ -347,7 +346,7 @@ class Visitor_print(Visitor):
         print("-"*depth + "Compare")
         node.left.accept(self, params, depth+1)
         for child in node.ops:
-            print("-"*depth+1 + node.ops.__doc__)
+            print("-"*(depth+1) + node.ops.__doc__)
         for child in node.comparators:
             child.accept(self, params, depth+1)
         return
