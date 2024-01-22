@@ -33,11 +33,9 @@ class Visitor(ABC):
     def visit_assign(self, node: ast.Assign, params):
         pass
 
-    '''
     @abstractmethod
     def visit_typealias(self, node: ast.TypeAlias, params):
         pass
-    '''
 
     @abstractmethod
     def visit_augassign(self, node: ast.AugAssign, params):

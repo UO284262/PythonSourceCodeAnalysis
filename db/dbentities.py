@@ -73,7 +73,7 @@ class DBImport:
 
 class DBClassDef:
     def __init__(self, category = None, classdef_id = None,  nameConvention: str = None,  isEnumClass: bool = None, 
-                 numberOfCharacters: int = None,  numberOfDecorators: int = None, 
+                 numberOfCharacters: int = None, numberOfMethods: int = None, numberOfDecorators: int = None, 
                  numberOfBaseClasses: int = None,  hasGenericTypeAnnotations: bool = None, 
                  hasDocString: bool = None,  bodyCount: int = None,  assignmentsPct: float = None, 
                  expressionsPct: float = None,  usesMetaclass: bool = None, 
@@ -82,7 +82,7 @@ class DBClassDef:
                  privateMethodsPct: float = None,  magicMethodsPct: float = None, 
                  asyncMethodsPct: float = None,  classMethodsPct: float = None, 
                  staticMethodsPct: float = None,  abstractMethodsPct: float = None, 
-                 sourceCode: str = None,  module_id = None,  node = None):
+                 propertyMethodsPct: float = None, sourceCode: str = None,  module_id = None,  node = None):
         self.node = node
         self.table = "ClassDefs"
         self.classdef_id = classdef_id
@@ -90,6 +90,7 @@ class DBClassDef:
         self.isEnumClass = isEnumClass
         self.numberOfCharacters = numberOfCharacters
         self.numberOfDecorators = numberOfDecorators
+        self.numberOfMethods = numberOfMethods
         self.numberOfBaseClasses = numberOfBaseClasses
         self.hasGenericTypeAnnotations = hasGenericTypeAnnotations
         self.hasDocString = hasDocString
@@ -107,6 +108,7 @@ class DBClassDef:
         self.classMethodsPct = classMethodsPct
         self.staticMethodsPct = staticMethodsPct
         self.abstractMethodsPct = abstractMethodsPct
+        self.propertyMethodsPct = propertyMethodsPct
         self.sourceCode = sourceCode
         self.module_id = module_id
 
@@ -171,7 +173,7 @@ class DBParameter:
         self.defaultValuePct = defaultValuePct
         self.hasKWParam = hasKWParam
         self.nameConvention = nameConvention
-        self.parameters_id = 0
+        self.parameter_id = 0
 
 class DBStatement:
     def __init__(self,  statement_id = None,  category: str = None,  parent: str = None,  statementRole: str = None, 
@@ -292,19 +294,17 @@ class DBCase:
         self.averageMatchAs = averageMatchAs
         self.averageMatchOr = averageMatchOr
         self.statement_id = statement_id
-        self.cases_id = 0
 
 class DBHandler:
     def __init__(self,  numberOfHandlers: int = None, 
                  hasFinally: bool = None,  hasCatchAll: bool = None, 
-                 averageBodyCOunt: float = None,  hasStar: bool = None, 
+                 averageBodyCount: float = None,  hasStar: bool = None, 
                  statement_id = None,  node = None):
         self.node = node
         self.table = "Handler"
         self.numberOfHandlers = numberOfHandlers
         self.hasFinally = hasFinally
         self.hasCatchAll = hasCatchAll
-        self.averageBodyCOunt = averageBodyCOunt
+        self.averageBodyCount = averageBodyCount
         self.hasStar = hasStar
         self.statement_id = statement_id
-        self.handler_id = 0

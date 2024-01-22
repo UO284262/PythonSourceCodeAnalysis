@@ -10,24 +10,6 @@ class Visitor_info(NodeVisitor):
 
     # params = [parent, parent_id = node]
 
-    ####################### Visits extra ######################
-    """
-    def visit_comp(self : Self, node: ast. ,comp) -> None: 
-        print("-"*depth + "Comp")
-        comp.target.accept(self : Self,depth+1)
-        comp.iter.accept(self : Self,depth+1)
-        for child in comp.ifs:
-            child.accept(self : Self,depth+1)
-        return
-    
-    def visit_keyword(self : Self, node: ast. ,kyw) -> None: 
-        print("-"*depth + "Keyword")
-        if kyw.arg: print("-"*(depth+1) + "Identifier: " + kyw.args)
-        kyw.value.accept(self : Self,depth+1)
-        return
-    """
-    ###########################################################
-
     def visit_Module(self : Self, node : ast.Module , params : Dict) -> None: 
         dbnode = dbentities.DBNode()
         module = dbentities.DBModule()
@@ -218,6 +200,8 @@ class Visitor_info(NodeVisitor):
         stmt.statementRole = params.role
         ############# PARAMS #####################
         params = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
+        stmtRoles = ["For", "ForElse"]
+        exprRoles = ["ForElement", "ForEnumerable", "ForBody", "ForElseBody"]
         ##########################################
         return
 
@@ -237,6 +221,8 @@ class Visitor_info(NodeVisitor):
         stmt.statementRole = params.role
         ############# PARAMS #####################
         params = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
+        stmtRoles = ["AsyncFor", "AsyncForElse"]
+        exprRoles = ["AsyncForElement", "AsyncForEnumerable", "AsyncForBody", "AsyncForElseBody"]
         ##########################################
         return
 
@@ -256,6 +242,8 @@ class Visitor_info(NodeVisitor):
         stmt.statementRole = params.role
         ############# PARAMS #####################
         params = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
+        stmtRoles = ["While", "WhileElse"]
+        exprRoles = ["WhileCondition", "WhileBody", "WhileElseBody"]
         ##########################################
         return
 
@@ -275,6 +263,8 @@ class Visitor_info(NodeVisitor):
         stmt.statementRole = params.role
         ############# PARAMS #####################
         params = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
+        stmtRoles = ["If", "IfElse"]
+        exprRoles = ["IfCondition", "IfBody", "IfElseBody"]
         ##########################################
         return
 
@@ -294,6 +284,8 @@ class Visitor_info(NodeVisitor):
         stmt.statementRole = params.role
         ############# PARAMS #####################
         params = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
+        stmtRoles = ["With"]
+        exprRoles = ["WithElement", "WithAs", "WithBody"]
         ##########################################
         return
 
@@ -313,6 +305,8 @@ class Visitor_info(NodeVisitor):
         stmt.statementRole = params.role
         ############# PARAMS #####################
         params = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
+        stmtRoles = ["AsyncWith"]
+        exprRoles = ["AsyncWithElement", "AsyncWithAs", "AsyncWithBody"]
         ##########################################
         return
 
@@ -332,6 +326,7 @@ class Visitor_info(NodeVisitor):
         stmt.statementRole = params.role
         ############# PARAMS #####################
         params = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
+        exprMatch = ["MatchCondition", "Case", "CaseGuard", "CaseBody"]
         ##########################################
         return
 
@@ -351,6 +346,7 @@ class Visitor_info(NodeVisitor):
         stmt.statementRole = params.role
         ############# PARAMS #####################
         params = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["Raise","RaiseFrom"]
         ##########################################
         return
 
@@ -370,6 +366,8 @@ class Visitor_info(NodeVisitor):
         stmt.statementRole = params.role
         ############# PARAMS #####################
         params = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
+        stmtRoles = ["Try", "TryElse", "TryFinally", "TryHandler"]
+        exprRoles = ["TryBody", "TryElse", "FinallyBody"]
         ##########################################
         return
 
@@ -389,6 +387,8 @@ class Visitor_info(NodeVisitor):
         stmt.statementRole = params.role
         ############# PARAMS #####################
         params = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
+        stmtRoles = ["Try", "TryElse", "TryFinally", "TryHandlerStar"]
+        exprRoles = ["TryBody", "TryElse", "FinallyBody"]
         ##########################################
         return
 
@@ -408,6 +408,7 @@ class Visitor_info(NodeVisitor):
         stmt.statementRole = params.role
         ############# PARAMS #####################
         params = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["AssertCondition", "AssertMessage"]
         ##########################################
         return
 
@@ -547,6 +548,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["Logical"]
         ##########################################
         return
 
@@ -566,6 +568,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["AssignExpLHS", "AssignExpRHS"]
         ##########################################
         return
 
@@ -585,6 +588,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["Arithmetic", "Shift", "Pow", "MatMult", "BWLogical"]
         ##########################################
         return
     
@@ -604,6 +608,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["Arithmetic"]
         ##########################################
         return
     
@@ -623,6 +628,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["LambdaBody"]
         ##########################################
         return
     
@@ -642,6 +648,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############ PARAMS ######################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["TernaryCondition", "TernaryIfBody", "TernaryElseBody"]
         ##########################################
         return
 
@@ -664,6 +671,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["ComprenhensionElement"]
         ##########################################
         return
 
@@ -684,6 +692,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["ComprenhensionElement"]
         ##########################################
         return
 
@@ -704,6 +713,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["DictionaryLiteralKey", "DictionaryLiteralValue"]
         ##########################################
         return
 
@@ -724,6 +734,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["ComprenhensionElement"]
         ##########################################
         return
 
@@ -745,6 +756,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["Await"]
         ##########################################
         return
 
@@ -764,6 +776,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["Yield"]
         ##########################################
         return
 
@@ -783,6 +796,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["YieldFrom"]
         ##########################################
         return
 
@@ -802,6 +816,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["Relational", "Is", "In"]
         ##########################################
         return
 
@@ -823,22 +838,30 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["CallFuncName", "CallArg"]
         ##########################################
         return
 
     ################################################################
 
-    """
-    def visit_formattedvalue(self : Self, node : ast. , params : Dict) -> None: 
+    def visit_formattedvalue(self : Self, node : ast.FormattedValue , params : Dict) -> None: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
         id = uuid.uuid4().int
         dbnode.node_id = expr.expression_id = id
         dbnode.parent_id = expr.parent_id = params.parent_id
+        ############ CATEGORIES ##################
+        expr.category = node.__doc__.split('(')[0]
+        dbnode.parent_table = params.parent.table
+        expr.parent = params.parent.category
+        ############# ROLES ######################
+        expr.expressionRole = params.role
+        ############# PARAMS #####################
+        params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["FormattedValue", "FormattedFormat"]
         ##########################################
         return
-    """
 
     ########################### F-strings #####################################
 
@@ -859,6 +882,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["FString"]
         ##########################################
         return
 
@@ -899,6 +923,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["Dot"]
         ##########################################
         return
 
@@ -918,6 +943,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["Slice", "Indexing"]
         ##########################################
         return
 
@@ -937,6 +963,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["Star"]
         ##########################################
         return
 
@@ -981,6 +1008,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["ListLiteral"]
         ##########################################
         return
 
@@ -1001,6 +1029,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["TupleLiteral"]
         ##########################################
         return
 
@@ -1021,6 +1050,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["DictionaryLiteralKey", "DictionaryLiteralValue"]
         ##########################################
         return
 
@@ -1041,6 +1071,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["SetLiteral"]
         ##########################################
         return
 
@@ -1062,6 +1093,7 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         params = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["Slice", "Indexing"]
         ##########################################
         return
 
@@ -1071,11 +1103,10 @@ class Visitor_info(NodeVisitor):
     def visit_MatchValue(self : Self, node : ast.MatchValue , params : Dict) -> None: 
         dbnode = dbentities.DBCase()
         ############ IDS #########################
-        id = uuid.uuid4().int
-        dbnode.cases_id = id
         dbnode.statement_id = params.parent_id
         ############# PARAMS #####################
         params = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["MatchCondition"]
         ##########################################
         return
 
@@ -1083,8 +1114,6 @@ class Visitor_info(NodeVisitor):
     def visit_MatchSingleton(self : Self, node : ast.MatchSingleton , params : Dict) -> None: 
         dbnode = dbentities.DBCase()
         ############ IDS #########################
-        id = uuid.uuid4().int
-        dbnode.cases_id = id
         dbnode.statement_id = params.parent_id
         ############# PARAMS #####################
         params = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
@@ -1095,8 +1124,6 @@ class Visitor_info(NodeVisitor):
     def visit_MatchSequence(self : Self, node : ast.MatchSequence , params : Dict) -> None: 
         dbnode = dbentities.DBCase()
         ############ IDS #########################
-        id = uuid.uuid4().int
-        dbnode.cases_id = id
         dbnode.statement_id = params.parent_id
         ############# PARAMS #####################
         params = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
@@ -1107,11 +1134,10 @@ class Visitor_info(NodeVisitor):
     def visit_MatchMapping(self : Self, node : ast.MatchMapping , params : Dict) -> None: 
         dbnode = dbentities.DBCase()
         ############ IDS #########################
-        id = uuid.uuid4().int
-        dbnode.cases_id = id
         dbnode.statement_id = params.parent_id
         ############# PARAMS #####################
         params = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["MatchCondition"]
         ##########################################
         return
 
@@ -1119,11 +1145,10 @@ class Visitor_info(NodeVisitor):
     def visit_MatchClass(self : Self, node : ast.MatchClass , params : Dict) -> None: 
         dbnode = dbentities.DBCase()
         ############ IDS #########################
-        id = uuid.uuid4().int
-        dbnode.cases_id = id
         dbnode.statement_id = params.parent_id
         ############# PARAMS #####################
         params = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["MatchCondition"]
         ##########################################
         return
 
@@ -1131,8 +1156,6 @@ class Visitor_info(NodeVisitor):
     def visit_MatchStar(self : Self, node : ast.MatchStar , params : Dict) -> None: 
         dbnode = dbentities.DBCase()
         ############ IDS #########################
-        id = uuid.uuid4().int
-        dbnode.cases_id = id
         dbnode.statement_id = params.parent_id
         ############# PARAMS #####################
         params = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
@@ -1143,8 +1166,6 @@ class Visitor_info(NodeVisitor):
     def visit_MatchAs(self : Self, node : ast.MatchAs , params : Dict) -> None: 
         dbnode = dbentities.DBCase()
         ############ IDS #########################
-        id = uuid.uuid4().int
-        dbnode.cases_id = id
         dbnode.statement_id = params.parent_id
         ############# PARAMS #####################
         params = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
@@ -1155,8 +1176,6 @@ class Visitor_info(NodeVisitor):
     def visit_MatchOr(self : Self, node : ast.MatchOr , params : Dict) -> None: 
         dbnode = dbentities.DBCase()
         ############ IDS #########################
-        id = uuid.uuid4().int
-        dbnode.cases_id = id
         dbnode.statement_id = params.parent_id
         ############# PARAMS #####################
         params = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
@@ -1168,11 +1187,58 @@ class Visitor_info(NodeVisitor):
     def visit_ExceptHandler(self : Self, node : ast.ExceptHandler , params : Dict) -> None: 
         dbnode = dbentities.DBHandler()
         ############ IDS #########################
-        id = uuid.uuid4().int
-        dbnode.handler_id = id
         dbnode.statement_id = params.parent_id
         ############# PARAMS #####################
         params = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
+        exprRoles = ["ExceptType", "ExceptBody"]
         ##########################################
         return
+
+    ####################### Visits extra ######################
+
+    def visit_Comprehension(self : Self, node : ast.comprehension , params : Dict) -> None: 
+        
+        return
+    
+    def visit_Arguments(self : Self, node : ast.arguments , params : Dict) -> None: 
+        
+        return
+    
+    def visit_Arg(self : Self, node : ast.arg , params : Dict) -> None: 
+        
+        return
+    
+    def visit_Keyword(self : Self, node : ast.keyword , params : Dict) -> None: 
+        
+        return
+    
+    def visit_Alias(self : Self, node : ast.alias , params : Dict) -> None: 
+        
+        return
+    
+    def visit_Withitem(self : Self, node : ast.withitem , params : Dict) -> None: 
+        
+        return
+    
+    def visit_Match_case(self : Self, node : ast.match_case , params : Dict) -> None: 
+        
+        return
+    
+    def visit_TypeIgnore(self : Self, node : ast.TypeIgnore , params : Dict) -> None: 
+        
+        return
+    
+    def visit_TypeVar(self : Self, node : ast.TypeVar , params : Dict) -> None: 
+        exprRules = ["TypeAnnotation"]
+        return
+    
+    def visit_ParamSpec(self : Self, node : ast.ParamSpec , params : Dict) -> None: 
+        exprRules = ["DefaultParamValue"]
+        return
+    
+    def visit_TypeVarTuple(self : Self, node : ast.TypeVarTuple , params : Dict) -> None: 
+        exprRules = ["TypeVar"]
+        return
+    
+    ###########################################################
     
