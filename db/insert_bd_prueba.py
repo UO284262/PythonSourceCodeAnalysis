@@ -15,28 +15,25 @@ conexion = psycopg2.connect(**conexion_params)
 # Crear un objeto cursor
 cursor = conexion.cursor()
 
-# Ejemplo de inserción de datos
-try:
-    # Definir la consulta SQL para la inserción
-    sql_insert = "INSERT INTO module (prueba) VALUES (%s);"
+def writeOnDB(sql_insert, datos_a_insertar):
+    # Ejemplo de inserción de datos
+    try:
 
-    # Datos a insertar
-    datos_a_insertar = ('valor1',)
+        # Ejecutar la consulta
+        for i in range(len(sql_insert)):
+            cursor.execute(sql_insert[i], datos_a_insertar[i])
 
-    # Ejecutar la consulta
-    cursor.execute(sql_insert, datos_a_insertar)
+            # Confirmar la transacción
+            conexion.commit()
 
-    # Confirmar la transacción
-    conexion.commit()
+        print("Datos insertados correctamente.")
 
-    print("Datos insertados correctamente.")
+    except Exception as e:
+        # Manejar cualquier error
+        print(f"Error: {e}")
+        conexion.rollback()
 
-except Exception as e:
-    # Manejar cualquier error
-    print(f"Error: {e}")
-    conexion.rollback()
-
-finally:
-    # Cerrar el cursor y la conexión
-    cursor.close()
-    conexion.close()
+    finally:
+        # Cerrar el cursor y la conexión
+        cursor.close()
+        conexion.close()
