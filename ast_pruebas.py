@@ -2,8 +2,9 @@ import ast
 import visitors.accepts as accepts
 from visitors.visitor_info import Visitor_info
 from visitors.visitor_print import Visitor_print
+from db.db_utils import init_db 
 
-accepts.accept_annassign
+init_db()
 
 ast_1 = ast.parse("""
 if 1:

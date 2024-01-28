@@ -26,7 +26,24 @@ def writeOnDB(sql_insert, datos_a_insertar):
             # Confirmar la transacción
             conexion.commit()
 
-        print("Datos insertados correctamente.")
+    except Exception as e:
+        # Manejar cualquier error
+        print(f"Error: {e}")
+        conexion.rollback()
+
+    finally:
+        # Cerrar el cursor y la conexión
+        cursor.close()
+        conexion.close()
+
+def init_db():
+    try:
+        with open("script_db.sql", "r") as script_file:
+            script = script_file.read()
+        cursor.execute(script)
+
+        # Confirmar la transacción
+        conexion.commit()
 
     except Exception as e:
         # Manejar cualquier error

@@ -5,7 +5,7 @@ import util.util as util
 from visitors.My_NodeVisitor import NodeVisitor
 from visitors.visitor import Visitor
 import db.dbentities as dbentities
-import visitor_db
+import visitors.visitor_db as visitor_db
 
 def addParam(self : Dict, param, value):
     new_dict = self.copy()
@@ -762,6 +762,10 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["Logical"]
+        ############## PROPAGAR VISIT ############
+        self.visit(node.op, childparams)
+        for child in node.values:
+            self.visit(child, childparams.addParam('role', exprRoles[0]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return
@@ -783,6 +787,9 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["AssignExpLHS", "AssignExpRHS"]
+        ############## PROPAGAR VISIT ############
+        self.visit(node.target, childparams.addParam('role', exprRoles[0]))
+        self.visit(node.value, childparams.addParam('role', exprRoles[1]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return
@@ -804,6 +811,16 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["Arithmetic", "Shift", "Pow", "MatMult", "BWLogical"]
+        ############## PROPAGAR VISIT ############
+        self.visit(node.op, childparams)
+        match node.op:
+            case ast.MatMult: role = exprRoles[3]
+            case ast.LShift, ast.RShift: role = exprRoles[1]
+            case ast.Pow: role = exprRoles[2]
+            case ast.BitAnd, ast.BitOr, ast.BitXor: role = exprRoles[4]
+            case default: role = exprRoles[0]
+        self.visit(node.left, childparams.addParam('role', role))
+        self.visit(node.right, childparams.addParam('role', role))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return
@@ -825,6 +842,9 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["Arithmetic"]
+        ############## PROPAGAR VISIT ############
+        self.visit(node.op, childparams)
+        self.visit(node.operand, childparams.addParam('role', exprRoles[0]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return
@@ -846,6 +866,10 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["LambdaBody"]
+        ############## PROPAGAR VISIT ############
+        self.visit(node.args, childparams)
+        for child in node.body:
+            self.visit(child, childparams.addParam('role', exprRoles[0]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return
@@ -867,6 +891,10 @@ class Visitor_info(NodeVisitor):
         ############ PARAMS ######################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["TernaryCondition", "TernaryIfBody", "TernaryElseBody"]
+        ############## PROPAGAR VISIT ############
+        self.visit(node.test, childparams.addParam('role', exprRoles[0]))
+        self.visit(node.body, childparams.addParam('role', exprRoles[1]))
+        self.visit(node.orelse, childparams.addParam('role', exprRoles[2]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return
@@ -891,6 +919,10 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["ComprenhensionElement"]
+        ############## PROPAGAR VISIT ############
+        for child in node.generators:
+            self.visit(child, childparams)
+        self.visit(node.elt, childparams.addParam('role', exprRoles[0]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : comp, 'dbnode' : dbnode, 'expr': expr})
         return
@@ -913,6 +945,10 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["ComprenhensionElement"]
+        ############## PROPAGAR VISIT ############
+        for child in node.generators:
+            self.visit(child, childparams)
+        self.visit(node.elt, childparams.addParam('role', exprRoles[0]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : comp, 'dbnode' : dbnode, 'expr': expr})
         return
@@ -935,6 +971,11 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["DictionaryLiteralKey", "DictionaryLiteralValue"]
+        ############## PROPAGAR VISIT ############
+        for child in node.generators:
+            self.visit(child, childparams)
+        self.visit(node.key, childparams.addParam('role', exprRoles[0]))
+        self.visit(node.value, childparams.addParam('role', exprRoles[1]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : comp, 'dbnode' : dbnode, 'expr': expr})
         return
@@ -957,6 +998,10 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["ComprenhensionElement"]
+        ############## PROPAGAR VISIT ############
+        for child in node.generators:
+            self.visit(child, childparams)
+        self.visit(node.elt, childparams.addParam('role', exprRoles[0]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : comp, 'dbnode' : dbnode, 'expr': expr})
         return
@@ -980,6 +1025,8 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["Await"]
+        ############## PROPAGAR VISIT ############
+        self.visit(node.value, childparams.addParam('role', exprRoles[0]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return
@@ -1001,6 +1048,8 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["Yield"]
+        ############## PROPAGAR VISIT ############
+        if(node.value): self.visit(node.value, childparams.addParam('role', exprRoles[0]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return
@@ -1022,7 +1071,9 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["YieldFrom"]
-        ############## VISITOR DB ################
+        ############## PROPAGAR VISIT ############
+        self.visit(node.value, childparams.addParam('role', exprRoles[0]))
+         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return
 
@@ -1042,7 +1093,15 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
-        exprRoles = ["Relational", "Is", "In"]
+        exprRoles = ["Compare", "Relational", "Is", "In"]
+        ############## PROPAGAR VISIT ############
+        self.visit(node.left, childparams.addParam('role', exprRoles[0]))
+        index = 0
+        for child in node.comparators:
+            match node.ops[index]:
+                case ast.Is, ast.IsNot: self.visit(child, childparams.addParam('role', exprRoles[2]))
+                case ast.In: self.visit(child, childparams.addParam('role', exprRoles[3]))
+                case default: self.visit(child, childparams.addParam('role', exprRoles[1]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return
@@ -1066,6 +1125,12 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["CallFuncName", "CallArg"]
+        ############## PROPAGAR VISIT ############
+        for child in node.args:
+            self.visit(child, childparams.addParam('role', exprRoles[1]))
+        self.visit(node.func, childparams.addParam('role', exprRoles[0]))
+        for child in node.keywords:
+            self.visit(child, childparams)
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : callArgs, 'dbnode' : dbnode, 'expr' : expr})
         return
@@ -1088,6 +1153,9 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["FormattedValue", "FormattedFormat"]
+        ############## PROPAGAR VISIT ############
+        self.visit(node.value, childparams.addPamam('role', exprRoles[0]))
+        if(node.format_spec): self.visit(node.format_spec, childparams.addParam('role', exprRoles[1]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return
@@ -1112,6 +1180,9 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["FString"]
+        ############## PROPAGAR VISIT ############
+        for child in node.values:
+            self.visit(child, childparams.addParam('node', exprRoles[0]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : fstr, 'dbnode' : dbnode, 'expr' : expr})
         return
@@ -1155,6 +1226,8 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["Dot"]
+        ############## PROPAGAR VISIT ############
+        self.visit(node.value, childparams.addParam('role', exprRoles[0]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return
@@ -1176,6 +1249,9 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["Slice", "Indexing"]
+        ############## PROPAGAR VISIT ############
+        self.visit(node.value, childparams.addParam('role', exprRoles[1]))
+        self.visit(node.slice, childparams.addParam('role', exprRoles[0]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return
@@ -1197,6 +1273,8 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["Star"]
+        ############## PROPAGAR VISIT ############
+        self.visit(node.value, childparams.addParam('role', exprRoles[0]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return
@@ -1244,6 +1322,9 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["ListLiteral"]
+        ############## PROPAGAR VISIT ############
+        for child in node.elts:
+            self.visit(child, childparams.addParam('role', exprRoles[0]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : vct, 'dbnode' : dbnode, 'expr' : expr})
         return
@@ -1266,6 +1347,9 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["TupleLiteral"]
+        ############## PROPAGAR VISIT ############
+        for child in node.elts:
+            self.visit(child, childparams.addParam('role', exprRoles[0]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : vct, 'dbnode' : dbnode, 'expr' : expr})
         return
@@ -1288,6 +1372,11 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["DictionaryLiteralKey", "DictionaryLiteralValue"]
+        ############## PROPAGAR VISIT ############
+        for child in node.keys:
+            self.visit(child, childparams.addParam('role', exprRoles[0]))
+        for child in node.values:
+            self.visit(child, childparams.addParam('role', exprRoles[1]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : vct, 'dbnode' : dbnode, 'expr' : expr})
         return
@@ -1310,6 +1399,9 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["SetLiteral"]
+        ############## PROPAGAR VISIT ############
+        for child in node.elts:
+            self.visit(child, childparams.addParam('role', exprRoles[0]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : vct, 'dbnode' : dbnode, 'expr' : expr})
         return
@@ -1332,7 +1424,11 @@ class Visitor_info(NodeVisitor):
         expr.expressionRole = params.role
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
-        exprRoles = ["Slice", "Indexing"]
+        exprRoles = ["Slice"]
+        ############## PROPAGAR VISIT ############
+        if(node.lower): self.visit(node.lower, childparams.addParam('role', exprRoles[0]))
+        if(node.upper): self.visit(node.upper, childparams.addParam('role', exprRoles[0]))
+        if(node.step): self.visit(node.step, childparams.addParam('role', exprRoles[0]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return
@@ -1347,6 +1443,8 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["MatchCondition"]
+        ############## PROPAGAR VISIT ############
+        self.visit(node.value, childparams.addParam('role', exprRoles[0]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : dbnode})
         return
@@ -1381,6 +1479,9 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["MatchCondition"]
+        ############## PROPAGAR VISIT ############
+        for child in node.keys:
+            self.visit(child, childparams.addParam('role', exprRoles[0]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : dbnode})
         return
@@ -1393,6 +1494,8 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["MatchCondition"]
+        ############## PROPAGAR VISIT ############
+        self.visit(node.cls, childparams.addParam('role', exprRoles[0]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : dbnode})
         return
@@ -1439,6 +1542,10 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["ExceptType", "ExceptBody"]
+        ############## PROPAGAR VISIT ############
+        if(node.type): self.visit(node.type, childparams.addParam('role', exprRoles[0]))
+        for child in node.body:
+            self.visit(child, childparams.addParam('role', exprRoles[1]))
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : dbnode})
         return

@@ -5,7 +5,7 @@ import util.util as util
 from visitors.My_NodeVisitor import NodeVisitor
 from visitors.visitor import Visitor
 import db.dbentities as dbentities
-from db.insert_bd_prueba import writeOnDB
+from db.db_utils import writeOnDB
 
 class Visitor_db(NodeVisitor):
 
