@@ -482,11 +482,11 @@ class Visitor_info(NodeVisitor):
         stmt.statementRole = params.role
         ############# PARAMS #####################
         childparams = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
-        exprRoles = ["MatchCondition", "CaseGuard", "CaseBody"]
+        exprRoles = ["MatchCondition"]
         ############## PROPAGAR VISIT ############
         self.visit(node.subject, childparams.addParam('role', exprRoles[0]))
         for child in node.cases:
-            self.visit(child, childparams.addParam('role_guard', exprRoles[1]).addParam('role_body', exprRoles[2]))
+            self.visit(child, childparams)
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return
@@ -1553,47 +1553,80 @@ class Visitor_info(NodeVisitor):
     ####################### Visits extra ######################
 
     def visit_Comprehension(self : Self, node : ast.comprehension , params : Dict) -> None: 
-        
+        ############# PARAMS #####################
+        exprRoles = ["ComprehensionTarget", "ComprehensionIter", "ComprehensionIf"]
+        ############## PROPAGAR VISIT ############
+        self.visit(node.target, params.addParam('role', exprRoles[0]))
+        self.visit(node.iter, params.addParam('role', exprRoles[1]))
+        for child in node.ifs:
+            self.visit(child, params.addParam('role', exprRoles[2]))
         return
     
     def visit_Arguments(self : Self, node : ast.arguments , params : Dict) -> None: 
-        
+        ############# PARAMS #####################
+        exprRoles = ["ArgumentDefault"]
+        ############## PROPAGAR VISIT ############
+        for child in node.posonlyargs:
+            self.visit(child, params)
+        for child in node.args:
+            self.visit(child, params)
+        if(node.vararg): self.visit(node.vararg, params)
+        for child in node.kwonlyargs:
+            self.visit(child, params)
+        for child in node.kw_defaults:
+            self.visit(child, params.addParam('role', exprRoles[0]))
+        if(node.kwarg): self.visit(node.kwarg, params)
+        for child in node.defaults:
+            self.visit(child, params.addParam('role', exprRoles[0]))
         return
     
-    def visit_Arg(self : Self, node : ast.arg , params : Dict) -> None: 
-        
+    def visit_Arg(self : Self, node : ast.arg , params : Dict) -> None:
+        ############# PARAMS ##################### 
+        exprRoles = ["ArgumentDefault"]
+        ############## PROPAGAR VISIT ############
+        if(node.annotation): self.visit(node.annotation, params.addParam('role', exprRoles[0]))
         return
     
     def visit_Keyword(self : Self, node : ast.keyword , params : Dict) -> None: 
-        
-        return
-    
-    def visit_Alias(self : Self, node : ast.alias , params : Dict) -> None: 
-        
+        ############## PROPAGAR VISIT ############
+        self.visit(node.value, params)
         return
     
     def visit_Withitem(self : Self, node : ast.withitem , params : Dict) -> None: 
-        
+        ############# PARAMS #####################
+        childparams = {"parent" : params.dbnode, "depth" : params.depth, "parent_id" : params.parent_id}
+        ############## PROPAGAR VISIT ############
+        self.visit(node.context_expr, childparams.addParam('role', params.role_ctx))
+        if(node.optional_vars): self.visit(node.optional_vars, childparams.addParam('role', params.role_vars))
         return
     
     def visit_Match_case(self : Self, node : ast.match_case , params : Dict) -> None: 
-        
-        return
-    
-    def visit_TypeIgnore(self : Self, node : ast.TypeIgnore , params : Dict) -> None: 
-        
+        ############# PARAMS #####################
+        stmtRoles = ["Case"]
+        exprRoles = ["CaseGuard", "CaseBody"]
+        ############## PROPAGAR VISIT ############
+        self.visit(node.pattern, params)
+        if(node.guard): self.visit(node.guard, params.addParam('role', exprRoles[0]))
+        for child in node.body:
+            if(child is ast.Expr):
+                self.visit(child, params.addParam("role", exprRoles[1]))
+            else:
+                self.visit(child, params.addParam("role", stmtRoles[0]))
         return
     
     def visit_TypeVar(self : Self, node : ast.TypeVar , params : Dict) -> None: 
-        exprRules = ["TypeAnnotation"]
+        ############# PARAMS #####################
+        exprRoles = ["TypeVar"]
+        ############## PROPAGAR VISIT ############
+        if(node.bound): self.visit(node.bound, params.addParam('role', exprRoles[0]))
         return
     
     def visit_ParamSpec(self : Self, node : ast.ParamSpec , params : Dict) -> None: 
-        exprRules = ["DefaultParamValue"]
+        exprRoles = ["DefaultParamValue"]
         return
     
     def visit_TypeVarTuple(self : Self, node : ast.TypeVarTuple , params : Dict) -> None: 
-        exprRules = ["TypeVar"]
+        exprRoles = ["TypeAnnotation"]
         return
     
     ###########################################################
