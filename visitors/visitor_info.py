@@ -1,4 +1,5 @@
 import ast
+import re
 from typing import Dict, Self
 import uuid
 import util.util as util
@@ -6,6 +7,21 @@ from visitors.My_NodeVisitor import NodeVisitor
 from visitors.visitor import Visitor
 import db.dbentities as dbentities
 import visitors.visitor_db as visitor_db
+
+def what_it_is(method):
+    what_it_is = {'magic' : False, 'private' : False, 'abstract' : False, 'wrapper' : False, 'cached' : False, 'static' : False, 'classmethod' : False, 'property' : False}
+    magic_patron = re.compile(r'^__\w+__$')
+    private_patron = re.compile(r'^_\w+$')
+    what_it_is.magic = magic_patron.match(method.name)
+    what_it_is.private = private_patron.match(method.name)
+    for decorator in method.decorator_list:
+        if(decorator.id == "abstractmethod"): what_it_is.abstract = True
+        if(decorator.id == "wraps"): what_it_is.wrapper = True
+        if(decorator.id == "cache"): what_it_is.cached = True
+        if(decorator.id == "staticmethod"): what_it_is.static = True
+        if(decorator.id == "classmethod"): what_it_is.classmethod = True
+        if(decorator.id == "property"): what_it_is.property = True
+    return what_it_is
 
 def addParam(self : Dict, param, value):
     new_dict = self.copy()
@@ -23,6 +39,7 @@ class Visitor_info(NodeVisitor):
     def visit_Module(self : Self, node : ast.Module , params : Dict) -> None: 
         dbnode = dbentities.DBNode()
         module = dbentities.DBModule()
+        imports = dbentities.DBImport()
         ############ IDS #########################
         id = uuid.uuid4().int
         dbnode.node_id = module.module_id = id
@@ -30,31 +47,44 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : module, "depth" : 1, "parent_id" : id, "role" : "Module"}
         ############## PROPAGAR VISIT ############
         for child in node.body:
-            self.visit(child, childparams)
+            retnode = self.visit(child, childparams)
+        ########## ENTITIE PROPERTIES ############
+        
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : module, 'dbnode' : dbnode})
         return
     
     def visit_FunctionDef(self : Self, node : ast.FunctionDef , params : Dict) -> None: 
+        isMethod = params.parent.table == 'ClassDefs'
         dbnode = dbentities.DBNode()
         function = dbentities.DBFunctionDef()
-        method = dbentities.DBMethodDef()
+        if(isMethod): method = dbentities.DBMethodDef()
         dbparams = dbentities.DBParameter()
         ############ IDS #########################
         id = uuid.uuid4().int
         params_id = uuid.uuid4().int
         dbparams.parameters_id = function.parameters_id = params_id
-        dbnode.node_id = function.functiondef_id = method.methoddef_id = id
-        dbnode.parent_id = method.classdef_id = function.module_id = params.parent_id
+        dbnode.node_id = function.functiondef_id = id
+        dbnode.parent_id = function.module_id = params.parent_id
+        if(isMethod):
+            method.classdef_id = params.parent_id
+            method.methoddef_id = id
         ############# PARAMS #####################
         childparams = {"parent" : function, "depth" : params.depth + 1, "parent_id" : id}
-        stmtRoles = ["FunctionDef", "MethodDef"]
-        exprRoles = ["FuncDecorator", "ReturnType", "FuncBody", "MethodBody"]
+        if(isMethod):
+            stmtRoles = ["MethodDef"]
+            exprRoles = ["FuncDecorator", "ReturnType", "MethodBody"]
+        else:
+            stmtRoles = ["FunctionDef"]
+            exprRoles = ["FuncDecorator", "ReturnType", "FuncBody"]
+        ########## ENTITIE PROPERTIES ############
+        numberOfBodyExpr = 0
         ############## PROPAGAR VISIT ############
-        self.visit(node.args, childparams)
+        args = self.visit(node.args, {"parent": function, "depth": params.depth + 1, "params_id": params_id, "dbparams": dbparams})
         for child in node.body:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
                 self.visit(child, childparams.addParam("role", exprRoles[2]))
+                numberOfBodyExpr += 1
             else:
                 self.visit(child, childparams.addParam("role", stmtRoles[0]))
         for child in node.decorator_list:
@@ -63,30 +93,65 @@ class Visitor_info(NodeVisitor):
             self.visit(node.returns, childparams.addParam("role", exprRoles[1]))
         for child in node.type_params:
             self.visit(child, childparams)
+        ########## ENTITIE PROPERTIES ############
+        whatitis = what_it_is(node)
+        function.isPrivate = whatitis.private
+        function.isMagic = whatitis.magic
+        function.bodyCount = len(node.body)
+        function.isAsync = False
+        function.numberOfDecorators = len(node.decorator_list)
+        function.hasReturnTypeAnnotation = node.returns
+        if(node.returns): args.typeAnnotations += 1
+        function.hasDocString = (isinstance(node.body[0],ast.Constant)) and isinstance(node.body[0].value, str)
+        function.height = params.depth
+        function.typeAnnotationsPct = args.typeAnnotations/(args.numberOfArgs + 1)
+        function.sourceCode = ast.unparse(node)
+        if(isMethod):
+            method.isClassMethod = whatitis.classmethod
+            method.isStaticMethod = whatitis.static
+            method.isConstructorMethod = node.name == '__init__'
+            method.isAbstractMethod = whatitis.abstract
+            method.isProperty = whatitis.property
+            method.isWrapper = whatitis.wrapper
+            method.isCached = whatitis.cached
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : function, 'dbnode' : dbnode, 'dbparams': dbparams})
-        return
+        if(isMethod):
+            return {'method': method, 'function': function, 'args': args}
+        else:
+            return{'node': function}
     
     def visit_AsyncFunctionDef(self : Self, node : ast.AsyncFunctionDef , params : Dict) -> None: 
+        isMethod = params.parent.table == 'ClassDefs'
         dbnode = dbentities.DBNode()
         function = dbentities.DBFunctionDef()
-        method = dbentities.DBMethodDef()
+        if(isMethod): method = dbentities.DBMethodDef()
         dbparams = dbentities.DBParameter()
         ############ IDS #########################
         id = uuid.uuid4().int
         params_id = uuid.uuid4().int
         dbparams.parameters_id = function.parameters_id = params_id
-        dbnode.node_id = function.functiondef_id = method.methoddef_id = id
-        dbnode.parent_id = method.classdef_id = function.module_id = params.parent_id
+        dbnode.node_id = function.functiondef_id = id
+        dbnode.parent_id = function.module_id = params.parent_id
+        if(isMethod):
+            method.classdef_id = params.parent_id
+            method.methoddef_id = id
         ############# PARAMS #####################
         childparams = {"parent" : function, "depth" : params.depth + 1, "parent_id" : id}
-        stmtRoles = ["AsyncFunctionDef", "AsyncMethodDef"]
-        exprRoles = ["FuncDecorator", "ReturnType", "FuncBody", "MethodBody"]
+        if(isMethod):
+            stmtRoles = ["AsyncMethodDef"]
+            exprRoles = ["FuncDecorator", "ReturnType", "MethodBody"]
+        else:
+            stmtRoles = ["AsyncFunctionDef"]
+            exprRoles = ["FuncDecorator", "ReturnType", "FuncBody"]
+        ########## ENTITIE PROPERTIES ############
+        numberOfBodyExpr = 0
         ############## PROPAGAR VISIT ############
-        self.visit(node.args, childparams)
+        args = self.visit(node.args, {"parent": function, "depth": params.depth + 1, "params_id": params_id, "dbparams": dbparams})
         for child in node.body:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
                 self.visit(child, childparams.addParam("role", exprRoles[2]))
+                numberOfBodyExpr += 1
             else:
                 self.visit(child, childparams.addParam("role", stmtRoles[0]))
         for child in node.decorator_list:
@@ -95,10 +160,34 @@ class Visitor_info(NodeVisitor):
             self.visit(node.returns, childparams.addParam("role", exprRoles[1]))
         for child in node.type_params:
             self.visit(child, childparams)
+        ########## ENTITIE PROPERTIES ############
+        whatitis = what_it_is(node)
+        function.isPrivate = whatitis.private
+        function.isMagic = whatitis.magic
+        function.bodyCount = len(node.body)
+        function.isAsync = True
+        function.numberOfDecorators = len(node.decorator_list)
+        function.hasReturnTypeAnnotation = node.returns
+        if(node.returns): args.typeAnnotations += 1
+        function.hasDocString = (isinstance(node.body[0],ast.Constant)) and isinstance(node.body[0].value, str)
+        function.height = params.depth
+        function.typeAnnotationsPct = args.typeAnnotations/(args.numberOfArgs + 1)
+        function.sourceCode = ast.unparse(node)
+        if(isMethod):
+            method.isClassMethod = whatitis.classmethod
+            method.isStaticMethod = whatitis.static
+            method.isConstructorMethod = node.name == '__init__'
+            method.isAbstractMethod = whatitis.abstract
+            method.isProperty = whatitis.property
+            method.isWrapper = whatitis.wrapper
+            method.isCached = whatitis.cached
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : function, 'dbnode' : dbnode, 'dbparams': dbparams})
-        return
-
+        if(isMethod):
+            return {'method': method, 'function': function, 'args': args}
+        else:
+            return{'node': function}
+        
     def visit_ClassDef(self : Self, node : ast.ClassDef , params : Dict) -> None: 
         dbnode = dbentities.DBNode()
         classdef = dbentities.DBClassDef()
@@ -110,20 +199,76 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : classdef, "depth" : params.depth + 1, "parent_id" : id}
         stmtRoles = ["ClassDef"]
         exprRoles = ["ClassBase", "ClassDecorator", "ClassBody"]
+        ########## ENTITIE PROPERTIES ############
+        numberOfMethods = 0
+        bodyCount = len(node.body)
+        assignmentNumber = 0
+        expressionNumber = 0
+        metaclassNumber = 0
+        keywordNumber = 0
+        numberOfMethodStmt = 0
+        numberOfPrivateMethods = 0
+        numberOfMethodTypeAnnotations = 0
+        numberOfMethodParamsRet = 0
+        numberOfMagicMethods = 0
+        numberOfAsyncMethods = 0
+        numberOfClassMethods = 0
+        numberOfStaticMethods = 0
+        numberOfAbstractMethods = 0
+        numberOfPropertyMethods = 0
         ############## PROPAGAR VISIT ############
         for child in node.bases:
             self.visit(child, childparams.addParam("role", exprRoles[0]))
+            classdef.isEnumClass = (child.id == 'Enum')
         for child in node.keywords:
+            if(child.arg == 'metaclass'): metaclassNumber += 1
+            else : keywordNumber += 1
             self.visit(child, childparams)
         for child in node.body:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
+                expressionNumber += 1
                 self.visit(child, childparams.addParam("role", exprRoles[2]))
             else:
-                self.visit(child, childparams.addParam("role", stmtRoles[0]))
+                if(isinstance(child, ast.AnnAssign) or isinstance(child, ast.AugAssign) or isinstance(child, ast.Assign)): assignmentNumber += 1
+                returns = self.visit(child, childparams.addParam("role", stmtRoles[0]))
+                if(isinstance(child,ast.FunctionDef) or isinstance(child,ast.AsyncFunctionDef)):
+                    numberOfMethods += 1
+                    numberOfMethodStmt += returns.function.bodyCount
+                    numberOfMethodParamsRet += (returns.args.numberOfArgs + 1)
+                    numberOfMethodTypeAnnotations += returns.args.typeAnnotations
+                    if(returns.function.isMagic): numberOfMagicMethods += 1
+                    if(returns.function.isPrivate): numberOfPrivateMethods += 1
+                    if(returns.function.isAsync): numberOfAsyncMethods += 1
+                    if(returns.method.isAbstractMethod): numberOfAbstractMethods += 1
+                    if(returns.method.isClassMethod): numberOfClassMethods += 1
+                    if(returns.method.isStaticMethod): numberOfStaticMethods += 1
+                    if(returns.method.isProperty): numberOfPropertyMethods += 1
         for child in node.decorator_list:
             self.visit(child, childparams.addParam("role", exprRoles[1]))
         for child in node.type_params:
             self.visit(child, childparams)
+        ########## ENTITIE PROPERTIES ############
+        classdef.numberOfMethods = numberOfMethods
+        classdef.numberOfDecorators = len(node.decorator_list)
+        classdef.numberOfBaseClasses = len(node.bases)
+        classdef.hasGenericTypeAnnotations = len(node.type_params) > 0
+        classdef.hasDocString = (isinstance(node.body[0],ast.Constant)) and isinstance(node.body[0].value, str)
+        classdef.bodyCount = bodyCount
+        classdef.assignmentsPct = assignmentNumber/bodyCount
+        classdef.expressionsPct = expressionNumber/bodyCount
+        classdef.usesMetaclass = metaclassNumber > 0
+        classdef.numberOfKeyWords = keywordNumber
+        classdef.height = params.depth
+        classdef.averageStmtsMethodBody = numberOfMethodStmt/numberOfMethods
+        classdef.typeAnnotationsPct = numberOfMethodTypeAnnotations/numberOfMethodParamsRet
+        classdef.privateMethodsPct = numberOfPrivateMethods/numberOfMethods
+        classdef.magicMethodsPct = numberOfMagicMethods/numberOfMethods
+        classdef.asyncMethodsPct = numberOfAsyncMethods/numberOfMethods
+        classdef.classMethodsPct = numberOfClassMethods/numberOfMethods
+        classdef.staticMethodsPct = numberOfStaticMethods/numberOfMethods
+        classdef.abstractMethodsPct = numberOfAbstractMethods/numberOfMethods
+        classdef.propertyMethodsPct = numberOfPropertyMethods/numberOfMethods
+        classdef.sourceCode = ast.unparse(node)
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : classdef, 'dbnode' : dbnode})
         return
@@ -290,12 +435,12 @@ class Visitor_info(NodeVisitor):
         self.visit(node.target, childparams.addParam('role', exprRoles[0]))
         self.visit(node.iter, childparams.addParam('role', exprRoles[1]))
         for child in node.body:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
                 self.visit(child, childparams.addParam("role", exprRoles[2]))
             else:
                 self.visit(child, childparams.addParam("role", stmtRoles[0]))
         for child in node.orelse:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
                 self.visit(child, childparams.addParam("role", exprRoles[3]))
             else:
                 self.visit(child, childparams.addParam("role", stmtRoles[1]))
@@ -325,12 +470,12 @@ class Visitor_info(NodeVisitor):
         self.visit(node.target, childparams.addParam('role', exprRoles[0]))
         self.visit(node.iter, childparams.addParam('role', exprRoles[1]))
         for child in node.body:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
                 self.visit(child, childparams.addParam("role", exprRoles[2]))
             else:
                 self.visit(child, childparams.addParam("role", stmtRoles[0]))
         for child in node.orelse:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
                 self.visit(child, childparams.addParam("role", exprRoles[3]))
             else:
                 self.visit(child, childparams.addParam("role", stmtRoles[1]))
@@ -359,12 +504,12 @@ class Visitor_info(NodeVisitor):
         ############## PROPAGAR VISIT ############
         self.visit(node.test, childparams.addParam('role', exprRoles[0]))
         for child in node.body:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
                 self.visit(child, childparams.addParam("role", exprRoles[1]))
             else:
                 self.visit(child, childparams.addParam("role", stmtRoles[0]))
         for child in node.orelse:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
                 self.visit(child, childparams.addParam("role", exprRoles[2]))
             else:
                 self.visit(child, childparams.addParam("role", stmtRoles[1]))
@@ -393,12 +538,12 @@ class Visitor_info(NodeVisitor):
         ############## PROPAGAR VISIT ############
         self.visit(node.test, childparams.addParam('role', exprRoles[0]))
         for child in node.body:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
                 self.visit(child, childparams.addParam("role", exprRoles[1]))
             else:
                 self.visit(child, childparams.addParam("role", stmtRoles[0]))
         for child in node.orelse:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
                 self.visit(child, childparams.addParam("role", exprRoles[2]))
             else:
                 self.visit(child, childparams.addParam("role", stmtRoles[1]))
@@ -426,7 +571,7 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["WithElement", "WithAs", "WithBody"]
         ############## PROPAGAR VISIT ############
         for child in node.body:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
                 self.visit(child, childparams.addParam("role", exprRoles[2]))
             else:
                 self.visit(child, childparams.addParam("role", stmtRoles[0]))
@@ -456,7 +601,7 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["AsyncWithElement", "AsyncWithAs", "AsyncWithBody"]
         ############## PROPAGAR VISIT ############
         for child in node.body:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
                 self.visit(child, childparams.addParam("role", exprRoles[2]))
             else:
                 self.visit(child, childparams.addParam("role", stmtRoles[0]))
@@ -534,17 +679,17 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["TryBody", "TryElse", "FinallyBody"]
         ############## PROPAGAR VISIT ############
         for child in node.body:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
                 self.visit(child, childparams.addParam("role", exprRoles[0]))
             else:
                 self.visit(child, childparams.addParam("role", stmtRoles[0]))
         for child in node.orelse:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
                 self.visit(child, childparams.addParam("role", exprRoles[1]))
             else:
                 self.visit(child, childparams.addParam("role", stmtRoles[1]))
         for child in node.finalbody:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
                 self.visit(child, childparams.addParam("role", exprRoles[2]))
             else:
                 self.visit(child, childparams.addParam("role", stmtRoles[2]))
@@ -574,17 +719,17 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["TryBody", "TryElse", "FinallyBody"]
         ############## PROPAGAR VISIT ############
         for child in node.body:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
                 self.visit(child, childparams.addParam("role", exprRoles[0]))
             else:
                 self.visit(child, childparams.addParam("role", stmtRoles[0]))
         for child in node.orelse:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
                 self.visit(child, childparams.addParam("role", exprRoles[1]))
             else:
                 self.visit(child, childparams.addParam("role", stmtRoles[1]))
         for child in node.finalbody:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
                 self.visit(child, childparams.addParam("role", exprRoles[2]))
             else:
                 self.visit(child, childparams.addParam("role", stmtRoles[2]))
@@ -726,6 +871,7 @@ class Visitor_info(NodeVisitor):
         ############ IDS #########################
         id = uuid.uuid4().int
         dbnode.import_id = params.parent.import_id = id
+        ########## ENTITIE PROPERTIES ############
         ############# PARAMS #####################
         childparams = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
         ############## VISITOR DB ################
@@ -1565,27 +1711,44 @@ class Visitor_info(NodeVisitor):
     def visit_Arguments(self : Self, node : ast.arguments , params : Dict) -> None: 
         ############# PARAMS #####################
         exprRoles = ["ArgumentDefault"]
+        ########## ENTITIE PROPERTIES ############
+        numberOfAnnotations = 0
+        numberOfParams = 0
         ############## PROPAGAR VISIT ############
         for child in node.posonlyargs:
-            self.visit(child, params)
+            arg = self.visit(child, params)
+            if(arg.typeAnnotation): numberOfAnnotations += 1
+            numberOfParams += 1
         for child in node.args:
-            self.visit(child, params)
-        if(node.vararg): self.visit(node.vararg, params)
+            arg =  self.visit(child, params)
+            if(arg.typeAnnotation): numberOfAnnotations += 1
+            numberOfParams += 1
+        if(node.vararg): 
+            arg =  self.visit(node.vararg, params)
+            if(arg.typeAnnotation): numberOfAnnotations += 1
+            numberOfParams += 1
         for child in node.kwonlyargs:
-            self.visit(child, params)
+            arg =  self.visit(child, params)
+            if(arg.typeAnnotation): numberOfAnnotations += 1
+            numberOfParams += 1
         for child in node.kw_defaults:
             self.visit(child, params.addParam('role', exprRoles[0]))
-        if(node.kwarg): self.visit(node.kwarg, params)
+        if(node.kwarg):
+            arg = self.visit(node.kwarg, params)
+            if(arg.typeAnnotation): numberOfAnnotations += 1
+            numberOfParams += 1
         for child in node.defaults:
             self.visit(child, params.addParam('role', exprRoles[0]))
-        return
+        return {"typeAnnotations" : numberOfAnnotations, "numberOfArgs" : numberOfParams}
     
     def visit_Arg(self : Self, node : ast.arg , params : Dict) -> None:
         ############# PARAMS ##################### 
-        exprRoles = ["ArgumentDefault"]
+        exprRoles = ["ArgumentAnnotation"]
         ############## PROPAGAR VISIT ############
-        if(node.annotation): self.visit(node.annotation, params.addParam('role', exprRoles[0]))
-        return
+        if(node.annotation): 
+            self.visit(node.annotation, params.addParam('role', exprRoles[0]))
+            return {'typeAnnotation' : True}
+        return {'typeAnnotation' : False}
     
     def visit_Keyword(self : Self, node : ast.keyword , params : Dict) -> None: 
         ############## PROPAGAR VISIT ############
@@ -1608,7 +1771,7 @@ class Visitor_info(NodeVisitor):
         self.visit(node.pattern, params)
         if(node.guard): self.visit(node.guard, params.addParam('role', exprRoles[0]))
         for child in node.body:
-            if(child is ast.Expr):
+            if(isinstance(child,ast.Expr)):
                 self.visit(child, params.addParam("role", exprRoles[1]))
             else:
                 self.visit(child, params.addParam("role", stmtRoles[0]))
