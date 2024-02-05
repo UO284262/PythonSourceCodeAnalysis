@@ -28,6 +28,20 @@ def addParam(self : Dict, param, value):
     new_dict[param] = value
     return new_dict
 
+def sumMatch(self : Dict, dict_2):
+    {
+        'matchValue' : self.matchValue + dict_2.matchValue, 
+        'matchSingleton' : self.matchSingleton + dict_2.matchSingleton, 
+        'matchSequence' : self.matchSequence + dict_2.matchSequence, 
+        'matchMapping' : self.matchMapping + dict_2.matchMapping, 
+        'matchClass' : self.matchClass + dict_2.matchClass, 
+        'matchStar' : self.matchStar + dict_2.matchStar, 
+        'matchAs' : self.matchAs + dict_2.matchAs, 
+        'matchOr' : self.matchOr + dict_2.matchOr, 
+        'depth' : max(self.depth,dict_2.depth)
+     }
+
+Dict.sumMatch = sumMatch
 Dict.addParam = addParam
 
 class Visitor_info(NodeVisitor):
@@ -36,25 +50,101 @@ class Visitor_info(NodeVisitor):
     def visit_Expr(self: Self, node : ast.Expr, params : Dict):
         return self.visit(node.value, params)
 
-    def visit_Module(self : Self, node : ast.Module , params : Dict) -> None: 
+    def visit_Module(self : Self, node : ast.Module , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         module = dbentities.DBModule()
-        imports = dbentities.DBImport()
+        dbimport = dbentities.DBImport()
         ############ IDS #########################
         id = uuid.uuid4().int
+        import_id = uuid.uuid4().int
         dbnode.node_id = module.module_id = id
+        dbimport.import_id = module.import_id = import_id
         ############# PARAMS #####################
         childparams = {"parent" : module, "depth" : 1, "parent_id" : id, "role" : "Module"}
         ############## PROPAGAR VISIT ############
-        for child in node.body:
-            retnode = self.visit(child, childparams)
+        methodCount = 0
+        functionsBodySize = 0
+        numberOfMethodStmt = 0
+        typeAnnotations = 0
+        simpleImportNum = 0
+        fromImportNum = 0
+        localImports = 0
+        simpleImportModulesNum = 0
+        fromImportModulesNum = 0
+        asnames = 0
+        hasEntryPoint = False
+        count = {'stmt' : 0, 'expr' : 0, 'classes' : 0, 'function' : 0, 'enum' : 0}
         ########## ENTITIE PROPERTIES ############
-        
+        returns = []
+        fromImports = []
+        simpleImports = []
+        functions = []
+        classes = []
+        cindex = 0
+        findex = 0
+        siindex = 0
+        fiindex = 0
+        index = 0
+        for child in node.body:
+            returns[index] = self.visit(child, childparams)
+            if(isinstance(child,ast.Expr)): count.expr += 1
+            elif(isinstance(child,ast.ClassDef)): 
+                count.classes += 1
+                classes[cindex] = returns[index]
+                numberOfMethodStmt += returns[index].numberOfMethodStmt
+                methodCount += returns[index].methodCount
+                typeAnnotations += returns[index].typeAnnotations
+                cindex += 1
+            elif(isinstance(child,ast.FunctionDef) or isinstance(child,ast.AsyncFunctionDef)): 
+                count.function += 1
+                functions[findex] = returns[index]
+                functionsBodySize += returns[index].function.bodyCount
+                typeAnnotations += returns[index].typeAnnotations
+                findex += 1
+            #elif(isinstance(child,ast.enum)): count.enum += 1 ?
+            elif(isinstance(child,ast.Import)): 
+                simpleImportNum += 1
+                simpleImports[siindex] = returns[index]
+                siindex += 1
+                simpleImportModulesNum += returns[index].importedModules
+                if(siindex + fiindex != index): localImports += 1
+            elif(isinstance(child,ast.ImportFrom)):
+                fromImportNum += 1
+                fromImports[fiindex] = returns[index]
+                fiindex += 1
+                asnames += returns[index].asnames
+                fromImportModulesNum += returns[index].importedModules
+                if(siindex + fiindex != index): localImports += 1
+            elif(isinstance(child,ast.stmt)): count.stmt += 1
+            if(isinstance(child, ast.If) and not hasEntryPoint):
+                if(ast.unparse(child.test) == "__name__ == '__main__'"): hasEntryPoint = True
+            index += 1
+        ########## ENTITIE PROPERTIES ############
+        module.name = params.filename
+        module.hasDocString = (isinstance(node.body[0],ast.Constant)) and isinstance(node.body[0].value, str)
+        module.globalStmtsPct = count.stmt/index
+        module.globalExpressions = count.expr/index
+        module.classDefsPct = count.classes/(count.function + count.enum)
+        module.functionDefsPct = count.function/(count.function + count.enum)
+        module.enumDefsPct = count.enum/(count.function + count.enum)
+        module.averageStmtsFunctionBody = functionsBodySize/findex
+        module.averageStmtsMethodBody = numberOfMethodStmt/methodCount
+        module.typeAnnotationsPct = typeAnnotations/(methodCount + findex)
+        module.path = params.path
+        module.hasEntryPoint = hasEntryPoint
+        #------------ imports --------------------
+        dbimport.numberImports = (siindex + fiindex)
+        dbimport.moduleImportsPct = simpleImportNum/(siindex + fiindex)
+        dbimport.fromImportsPct = fromImportNum/(siindex + fiindex)
+        dbimport.localImportsPct = localImports/(siindex + fiindex)
+        dbimport.averageAsInImportedModules = asnames/fromImportModulesNum
+        dbimport.averageImportedModules = simpleImportModulesNum/siindex
+        dbimport.averageFromImportedModules = fromImportModulesNum/fiindex
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : module, 'dbnode' : dbnode})
+        visitor_db.visit(node, {'node' : module, 'dbnode' : dbnode, 'dbimport' : dbimport})
         return
     
-    def visit_FunctionDef(self : Self, node : ast.FunctionDef , params : Dict) -> None: 
+    def visit_FunctionDef(self : Self, node : ast.FunctionDef , params : Dict) -> Dict: 
         isMethod = params.parent.table == 'ClassDefs'
         dbnode = dbentities.DBNode()
         function = dbentities.DBFunctionDef()
@@ -117,11 +207,11 @@ class Visitor_info(NodeVisitor):
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : function, 'dbnode' : dbnode, 'dbparams': dbparams})
         if(isMethod):
-            return {'method': method, 'function': function, 'args': args}
+            return {'method': method, 'function': function, 'args': args, 'typeAnnotations' : args.typeAnnotations}
         else:
-            return{'node': function}
+            return{'node': function, 'typeAnnotations' : args.typeAnnotations}
     
-    def visit_AsyncFunctionDef(self : Self, node : ast.AsyncFunctionDef , params : Dict) -> None: 
+    def visit_AsyncFunctionDef(self : Self, node : ast.AsyncFunctionDef , params : Dict) -> Dict: 
         isMethod = params.parent.table == 'ClassDefs'
         dbnode = dbentities.DBNode()
         function = dbentities.DBFunctionDef()
@@ -184,11 +274,11 @@ class Visitor_info(NodeVisitor):
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : function, 'dbnode' : dbnode, 'dbparams': dbparams})
         if(isMethod):
-            return {'method': method, 'function': function, 'args': args}
+            return {'method': method, 'function': function, 'args': args,  'typeAnnotations' : args.typeAnnotations}
         else:
-            return{'node': function}
+            return{'node': function, 'typeAnnotations' : args.typeAnnotations}
         
-    def visit_ClassDef(self : Self, node : ast.ClassDef , params : Dict) -> None: 
+    def visit_ClassDef(self : Self, node : ast.ClassDef , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         classdef = dbentities.DBClassDef()
         ############ IDS #########################
@@ -271,11 +361,11 @@ class Visitor_info(NodeVisitor):
         classdef.sourceCode = ast.unparse(node)
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : classdef, 'dbnode' : dbnode})
-        return
+        return {'methodCount' : numberOfMethods, 'typeAnnotations' : numberOfMethodTypeAnnotations, 'numberOfMethodStmt' : numberOfMethodStmt}
 
     ############################### STATEMENTS #############################
 
-    def visit_Return(self : Self, node : ast.Return , params : Dict) -> None: 
+    def visit_Return(self : Self, node : ast.Return , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
@@ -291,12 +381,22 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id, "role" : "Return"}
         ############## PROPAGAR VISIT ############
-        if(node.value): self.visit(node.value, childparams)
+        if(node.value): returns = self.visit(node.value, childparams)
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        if(returns):
+            stmt.depth = returns.depth
+            stmt.first_child_id = returns.id
+        else:
+            stmt.depth = 0
+        stmt.sourceCode = ast.unparse(node)
+        stmt.hasOrElse = 'N/A'
+        stmt.bodySize = 'N/A'
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : stmt.depth + 1}
 
-    def visit_Delete(self : Self, node : ast.Delete , params : Dict) -> None: 
+    def visit_Delete(self : Self, node : ast.Delete , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
@@ -312,13 +412,27 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id, "role" : "Delete"}
         ############## PROPAGAR VISIT ############
+        returns = []
+        index = 0
         for child in node.targets:
-            self.visit(child, childparams)
+            returns[index] = self.visit(child, childparams)
+            index += 1
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.depth = 0
+        for i in range(len(returns)):
+            if(returns[i].depth > stmt.depth): stmt.depth = returns[i].depth
+            if(i == 1): stmt.first_child_id = returns[i].id
+            if(i == 2): stmt.second_child_id = returns[i].id
+            if(i == 3): stmt.third_child_id = returns[i].id
+        stmt.sourceCode = ast.unparse(node)
+        stmt.hasOrElse = 'N/A'
+        stmt.bodySize = 'N/A'
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : stmt.depth + 1}
 
-    def visit_Assign(self : Self, node : ast.Assign , params : Dict) -> None: 
+    def visit_Assign(self : Self, node : ast.Assign , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
@@ -335,14 +449,28 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
         roles = ["AssignLHS", "AssignRHS"]
         ############## PROPAGAR VISIT ############
+        returns_targets = []
+        index = 0
         for child in node.targets:
-            self.visit(child, childparams.addParam('role',roles[0]))
-        self.visit(node.value, childparams.addParam('role',roles[1]))
+            returns_targets[index] = self.visit(child, childparams.addParam('role',roles[0]))
+            index += 1
+        returns_value = self.visit(node.value, childparams.addParam('role',roles[1]))
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.depth = 0
+        for i in range(len(returns_targets)):
+            if(returns_targets[i].depth > stmt.depth): stmt.depth = returns_targets[i].depth
+            if(i == 1): stmt.first_child_id = returns_targets[i].id
+            if(i == 2): stmt.second_child_id = returns_targets[i].id
+            if(i == 3): stmt.third_child_id = returns_targets[i].id
+        stmt.sourceCode = ast.unparse(node)
+        stmt.hasOrElse = 'N/A'
+        stmt.bodySize = 'N/A'
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : stmt.depth + 1}
     
-    def visit_TypeAlias(self : Self, node : ast.TypeAlias , params : Dict) -> None:
+    def visit_TypeAlias(self : Self, node : ast.TypeAlias , params : Dict) -> Dict:
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
@@ -359,15 +487,24 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
         roles = ["TypeAliasLHS", "TypeAliasRHS"]
         ############## PROPAGAR VISIT ############
+        returns = []
         for child in node.type_params:
             self.visit(child, childparams)
-        self.visit(node.name, childparams.addParam('role', roles[0]))
-        self.visit(node.value, childparams.addParam('role', roles[1]))
+        returns[0] = self.visit(node.name, childparams.addParam('role', roles[0]))
+        returns[1] = self.visit(node.value, childparams.addParam('role', roles[1]))
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.depth = max(returns[0].depth, returns[1].depth)
+        stmt.first_child_id = returns[0].id
+        stmt.second_child_id = returns[1].id
+        stmt.sourceCode = ast.unparse(node)
+        stmt.hasOrElse = 'N/A'
+        stmt.bodySize = 'N/A'
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : stmt.depth + 1}
     
-    def visit_AugAssign(self : Self, node : ast.AugAssign , params : Dict) -> None: 
+    def visit_AugAssign(self : Self, node : ast.AugAssign , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
@@ -384,13 +521,22 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
         roles = ["AugmentedAssigmentLHS", "AugmentedAssigmentRHS"]
         ############## PROPAGAR VISIT ############
-        self.visit(node.target, childparams.addParam('role', roles[0]))
-        self.visit(node.value, childparams.addParam('role', roles[1]))
+        returns = []
+        returns[0] = self.visit(node.target, childparams.addParam('role', roles[0]))
+        returns[1] = self.visit(node.value, childparams.addParam('role', roles[1]))
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.depth = max(returns[0].depth, returns[1].depth)
+        stmt.first_child_id = returns[0].id
+        stmt.second_child_id = returns[1].id
+        stmt.sourceCode = ast.unparse(node)
+        stmt.hasOrElse = 'N/A'
+        stmt.bodySize = 'N/A'
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : stmt.depth + 1}
 
-    def visit_AnnAssign(self : Self, node : ast.AnnAssign , params : Dict) -> None: 
+    def visit_AnnAssign(self : Self, node : ast.AnnAssign , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
@@ -407,14 +553,26 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
         roles = ["VarDefVarName", "VarDefType", "VarDefInitValue"]
         ############## PROPAGAR VISIT ############
-        self.visit(node.target, childparams.addParam('role', roles[0]))
-        self.visit(node.annotation, childparams.addParam('role', roles[1]))
-        if(node.value): self.visit(node.value, childparams.addParam('role', roles[2]))
+        returns = []
+        returns[0] = self.visit(node.target, childparams.addParam('role', roles[0]))
+        returns[1] = self.visit(node.annotation, childparams.addParam('role', roles[1]))
+        if(node.value): returns[2] = self.visit(node.value, childparams.addParam('role', roles[2]))
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.depth = max(returns[0].depth, returns[1].depth)
+        stmt.first_child_id = returns[0].id
+        stmt.second_child_id = returns[1].id
+        if(returns[2]): 
+            stmt.third_child_id = returns[2].id
+            stmt.depth = max(stmt.depth, returns[2].depth)
+        stmt.sourceCode = ast.unparse(node)
+        stmt.hasOrElse = 'N/A'
+        stmt.bodySize = 'N/A'
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : stmt.depth + 1}
 
-    def visit_For(self : Self, node : ast.For , params : Dict) -> None: 
+    def visit_For(self : Self, node : ast.For , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
@@ -431,25 +589,43 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
         stmtRoles = ["For", "ForElse"]
         exprRoles = ["ForElement", "ForEnumerable", "ForBody", "ForElseBody"]
+        ########## ENTITIE PROPERTIES ############
+        stmt.hasOrElse = False
         ############## PROPAGAR VISIT ############
-        self.visit(node.target, childparams.addParam('role', exprRoles[0]))
-        self.visit(node.iter, childparams.addParam('role', exprRoles[1]))
+        returns = []
+        index = 0
+        returns_target = self.visit(node.target, childparams.addParam('role', exprRoles[0]))
+        returns_iter = self.visit(node.iter, childparams.addParam('role', exprRoles[1]))
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                self.visit(child, childparams.addParam("role", exprRoles[2]))
+                returns[index] = self.visit(child, childparams.addParam("role", exprRoles[2]))
             else:
-                self.visit(child, childparams.addParam("role", stmtRoles[0]))
+                returns[index] = self.visit(child, childparams.addParam("role", stmtRoles[0]))
+            index += 1
         for child in node.orelse:
+            stmt.hasOrElse = True
             if(isinstance(child,ast.Expr)):
-                self.visit(child, childparams.addParam("role", exprRoles[3]))
+                returns[index] = self.visit(child, childparams.addParam("role", exprRoles[3]))
             else:
-                self.visit(child, childparams.addParam("role", stmtRoles[1]))
+                returns[index] = self.visit(child, childparams.addParam("role", stmtRoles[1]))
+            index += 1
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.height = params.depth
+        stmt.depth = 0
+        for i in range(len(returns)):
+            if(returns[i].depth > stmt.depth): stmt.depth = returns[i].depth
+            if(i == 0): stmt.first_child_id = returns[i].id
+            if(i == 1): stmt.second_child_id = returns[i].id
+            if(i == 2): stmt.third_child_id = returns[i].id
+        stmt.sourceCode = ast.unparse(node)
+        stmt.bodySize = index
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : stmt.depth + 1}
 
     
-    def visit_AsyncFor(self : Self, node : ast.AsyncFor , params : Dict) -> None: 
+    def visit_AsyncFor(self : Self, node : ast.AsyncFor , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
@@ -466,25 +642,43 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
         stmtRoles = ["AsyncFor", "AsyncForElse"]
         exprRoles = ["AsyncForElement", "AsyncForEnumerable", "AsyncForBody", "AsyncForElseBody"]
+        ########## ENTITIE PROPERTIES ############
+        stmt.hasOrElse = False
         ############## PROPAGAR VISIT ############
-        self.visit(node.target, childparams.addParam('role', exprRoles[0]))
-        self.visit(node.iter, childparams.addParam('role', exprRoles[1]))
+        returns = []
+        index = 0
+        returns_target = self.visit(node.target, childparams.addParam('role', exprRoles[0]))
+        returns_iter = self.visit(node.iter, childparams.addParam('role', exprRoles[1]))
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                self.visit(child, childparams.addParam("role", exprRoles[2]))
+                returns[index] = self.visit(child, childparams.addParam("role", exprRoles[2]))
             else:
-                self.visit(child, childparams.addParam("role", stmtRoles[0]))
+                returns[index] = self.visit(child, childparams.addParam("role", stmtRoles[0]))
+            index += 1
         for child in node.orelse:
+            stmt.hasOrElse = True
             if(isinstance(child,ast.Expr)):
-                self.visit(child, childparams.addParam("role", exprRoles[3]))
+                returns[index] = self.visit(child, childparams.addParam("role", exprRoles[3]))
             else:
-                self.visit(child, childparams.addParam("role", stmtRoles[1]))
+                returns[index] = self.visit(child, childparams.addParam("role", stmtRoles[1]))
+            index += 1
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.height = params.depth
+        stmt.depth = 0
+        for i in range(len(returns)):
+            if(returns[i].depth > stmt.depth): stmt.depth = returns[i].depth
+            if(i == 0): stmt.first_child_id = returns[i].id
+            if(i == 1): stmt.second_child_id = returns[i].id
+            if(i == 2): stmt.third_child_id = returns[i].id
+        stmt.sourceCode = ast.unparse(node)
+        stmt.bodySize = index
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : stmt.depth + 1}
 
     
-    def visit_While(self : Self, node : ast.While , params : Dict) -> None: 
+    def visit_While(self : Self, node : ast.While , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
@@ -501,24 +695,42 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
         stmtRoles = ["While", "WhileElse"]
         exprRoles = ["WhileCondition", "WhileBody", "WhileElseBody"]
+        ########## ENTITIE PROPERTIES ############
+        stmt.hasOrElse = False
         ############## PROPAGAR VISIT ############
-        self.visit(node.test, childparams.addParam('role', exprRoles[0]))
+        returns = []
+        index = 0
+        returns_test = self.visit(node.test, childparams.addParam('role', exprRoles[0]))
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                self.visit(child, childparams.addParam("role", exprRoles[1]))
+                returns[index] = self.visit(child, childparams.addParam("role", exprRoles[1]))
             else:
-                self.visit(child, childparams.addParam("role", stmtRoles[0]))
+                returns[index] = self.visit(child, childparams.addParam("role", stmtRoles[0]))
+            index += 1
         for child in node.orelse:
+            stmt.hasOrElse = True
             if(isinstance(child,ast.Expr)):
-                self.visit(child, childparams.addParam("role", exprRoles[2]))
+                returns[index] = self.visit(child, childparams.addParam("role", exprRoles[2]))
             else:
-                self.visit(child, childparams.addParam("role", stmtRoles[1]))
+                returns[index] = self.visit(child, childparams.addParam("role", stmtRoles[1]))
+            index += 1
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.height = params.depth
+        stmt.depth = returns_test.depth
+        for i in range(len(returns)):
+            if(returns[i].depth > stmt.depth): stmt.depth = returns[i].depth
+            if(i == 0): stmt.first_child_id = returns[i].id
+            if(i == 1): stmt.second_child_id = returns[i].id
+            if(i == 2): stmt.third_child_id = returns[i].id
+        stmt.sourceCode = ast.unparse(node)
+        stmt.bodySize = index
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : stmt.depth + 1}
 
-    
-    def visit_If(self : Self, node : ast.If , params : Dict) -> None: 
+
+    def visit_If(self : Self, node : ast.If , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
@@ -535,24 +747,43 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
         stmtRoles = ["If", "IfElse"]
         exprRoles = ["IfCondition", "IfBody", "IfElseBody"]
+        ########## ENTITIE PROPERTIES ############
+        stmt.hasOrElse = False
         ############## PROPAGAR VISIT ############
-        self.visit(node.test, childparams.addParam('role', exprRoles[0]))
+        returns = []
+        index = 0
+        returns_test = self.visit(node.test, childparams.addParam('role', exprRoles[0]))
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                self.visit(child, childparams.addParam("role", exprRoles[1]))
+                returns[index] = self.visit(child, childparams.addParam("role", exprRoles[1]))
             else:
-                self.visit(child, childparams.addParam("role", stmtRoles[0]))
+                returns[index] = self.visit(child, childparams.addParam("role", stmtRoles[0]))
+            index += 1
+        bodySize = index
         for child in node.orelse:
+            stmt.hasOrElse = True
             if(isinstance(child,ast.Expr)):
-                self.visit(child, childparams.addParam("role", exprRoles[2]))
+                returns[index] = self.visit(child, childparams.addParam("role", exprRoles[2]))
             else:
-                self.visit(child, childparams.addParam("role", stmtRoles[1]))
+                returns[index] = self.visit(child, childparams.addParam("role", stmtRoles[1]))
+            index += 1
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.height = params.depth
+        stmt.depth = returns_test.depth
+        for i in range(len(returns)):
+            if(returns[i].depth > stmt.depth): stmt.depth = returns[i].depth
+            if(i == 0): stmt.first_child_id = returns[i].id
+            if(i == 1): stmt.second_child_id = returns[i].id
+            if(i == 2): stmt.third_child_id = returns[i].id
+        stmt.sourceCode = ast.unparse(node)
+        stmt.bodySize = bodySize
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : stmt.depth + 1}
 
-    
-    def visit_With(self : Self, node : ast.With , params : Dict) -> None: 
+
+    def visit_With(self : Self, node : ast.With , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
@@ -570,19 +801,34 @@ class Visitor_info(NodeVisitor):
         stmtRoles = ["With"]
         exprRoles = ["WithElement", "WithAs", "WithBody"]
         ############## PROPAGAR VISIT ############
+        returns = []
+        index = 0
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                self.visit(child, childparams.addParam("role", exprRoles[2]))
+                returns[index] = self.visit(child, childparams.addParam("role", exprRoles[2]))
             else:
-                self.visit(child, childparams.addParam("role", stmtRoles[0]))
+                returns[index] = self.visit(child, childparams.addParam("role", stmtRoles[0]))
+            index += 1
         for child in node.items:
             self.visit(child, childparams.addParam("role_ctx", exprRoles[0]).addParam('role_vars', exprRoles[1]))
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.height = params.depth
+        stmt.hasOrElse = 'N/A'
+        stmt.depth = 0
+        for i in range(len(returns)):
+            if(returns[i].depth > stmt.depth): stmt.depth = returns[i].depth
+            if(i == 0): stmt.first_child_id = returns[i].id
+            if(i == 1): stmt.second_child_id = returns[i].id
+            if(i == 2): stmt.third_child_id = returns[i].id
+        stmt.sourceCode = ast.unparse(node)
+        stmt.bodySize = index
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : stmt.depth + 1}
 
     
-    def visit_AsyncWith(self : Self, node : ast.AsyncWith , params : Dict) -> None: 
+    def visit_AsyncWith(self : Self, node : ast.AsyncWith , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
@@ -600,21 +846,36 @@ class Visitor_info(NodeVisitor):
         stmtRoles = ["AsyncWith"]
         exprRoles = ["AsyncWithElement", "AsyncWithAs", "AsyncWithBody"]
         ############## PROPAGAR VISIT ############
+        returns = []
+        index = 0
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                self.visit(child, childparams.addParam("role", exprRoles[2]))
+                returns[index] = self.visit(child, childparams.addParam("role", exprRoles[2]))
             else:
-                self.visit(child, childparams.addParam("role", stmtRoles[0]))
+                returns[index] = self.visit(child, childparams.addParam("role", stmtRoles[0]))
+            index += 1
         for child in node.items:
             self.visit(child, childparams.addParam("role_ctx", exprRoles[0]).addParam('role_vars', exprRoles[1]))
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.hasOrElse = 'N/A'
+        stmt.depth = 0
+        for i in range(len(returns)):
+            if(returns[i].depth > stmt.depth): stmt.depth = returns[i].depth
+            if(i == 0): stmt.first_child_id = returns[i].id
+            if(i == 1): stmt.second_child_id = returns[i].id
+            if(i == 2): stmt.third_child_id = returns[i].id
+        stmt.sourceCode = ast.unparse(node)
+        stmt.bodySize = index
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : stmt.depth + 1}
 
     
-    def visit_Match(self : Self, node : ast.Match , params : Dict) -> None: 
+    def visit_Match(self : Self, node : ast.Match , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
+        case = dbentities.DBCase()
         ############ IDS #########################
         id = uuid.uuid4().int
         dbnode.node_id = stmt.statement_id = id
@@ -629,15 +890,65 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["MatchCondition"]
         ############## PROPAGAR VISIT ############
-        self.visit(node.subject, childparams.addParam('role', exprRoles[0]))
+        returns = []
+        index = 0
+        subject = self.visit(node.subject, childparams.addParam('role', exprRoles[0]))
         for child in node.cases:
-            self.visit(child, childparams)
+            returns[index] = self.visit(child, childparams)
+            index += 1
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.first_child_id = subject.id
+        stmt.height = params.depth
+        stmt.hasOrElse = 'N/A'
+        stmt.depth = subject.depth
+        for i in range(len(returns)):
+            if(returns[i].depth > stmt.depth): stmt.depth = returns[i].depth
+            if(i == 1): stmt.second_child_id = returns[i].id
+            if(i == 2): stmt.third_child_id = returns[i].id
+        stmt.sourceCode = ast.unparse(node)
+        stmt.bodySize = 'N/A'
+        #-----------------------------------------
+        numberOfCasesAs = 0
+        numberOfCasesOr = 0
+        numberOfCasesValue = 0
+        numberOfCasesSingleton = 0
+        numberOfCasesSequence = 0
+        numberOfCasesMapping = 0
+        numberOfCasesClass = 0
+        numberOfCasesStar = 0
+        numberOfGuards = 0
+        bodyTotalCount = 0
+        for i in range(index):
+            numberOfCasesAs += returns[i].matchAs
+            numberOfCasesOr += returns[i].matchOr
+            numberOfCasesValue += returns[i].matchValue
+            numberOfCasesMapping += returns[i].matchMapping
+            numberOfCasesClass += returns[i].matchClass
+            numberOfCasesSingleton += returns[i].matchSingleton
+            numberOfCasesSequence += returns[i].matchSequence
+            numberOfCasesStar += returns[i].matchStar
+            numberOfGuards += returns[i].guards
+            bodyTotalCount += returns[i].bodyCount
+        totalCases = numberOfCasesAs + numberOfCasesOr + numberOfCasesMapping + numberOfCasesSequence + numberOfCasesSingleton + numberOfCasesStar + numberOfCasesClass + numberOfCasesValue
+        case.numberOfCases = totalCases
+        case.guards = numberOfGuards/totalCases
+        case.averageBodyCount = bodyTotalCount/index
+        case.averageMatchValue = numberOfCasesValue/totalCases
+        case.averageMatchSingleton = numberOfCasesSingleton/totalCases
+        case.averageMatchSequence = numberOfCasesSequence/totalCases
+        case.averageMatchMapping = numberOfCasesMapping/totalCases
+        case.averageMatchClass = numberOfCasesClass/totalCases
+        case.averageMatchStar = numberOfCasesStar/totalCases
+        case.averageMatchAs = numberOfCasesAs/totalCases
+        case.averageMatchOr = numberOfCasesOr/totalCases
+        case.statement_id = id
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode, 'case': case})
+        return {'id' : id, 'depth' : stmt.depth + 1}
 
     
-    def visit_Raise(self : Self, node : ast.Raise , params : Dict) -> None: 
+    def visit_Raise(self : Self, node : ast.Raise , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
@@ -654,18 +965,37 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["Raise","RaiseFrom"]
         ############## PROPAGAR VISIT ############
-        if(node.exc): self.visit(node.exc, childparams.addParam('role', exprRoles[0]))
-        if(node.cause): self.visit(node.cause, childparams.addParam('role', exprRoles[1]))
+        if(node.exc): exc = self.visit(node.exc, childparams.addParam('role', exprRoles[0]))
+        if(node.cause): cause = self.visit(node.cause, childparams.addParam('role', exprRoles[1]))
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.hasOrElse = 'N/A'
+        if(exc):
+            stmt.first_child_id = exc.id
+            if(cause):
+                stmt.second_child_id = cause.id  
+                stmt.depth = max(exc.depth, cause.depth)
+            else:
+                stmt.depth = exc.depth
+        else:
+            if(cause):
+                stmt.first_child_id = cause.id
+                stmt.depth = cause.depth
+            else:
+                stmt.depth = 0
+        stmt.sourceCode = ast.unparse(node)
+        stmt.bodySize = 'N/A'
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : stmt.depth + 1}
     
-    def visit_Try(self : Self, node : ast.Try , params : Dict) -> None: 
+    def visit_Try(self : Self, node : ast.Try , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
+        handler = dbentities.DBHandler()
         ############ IDS #########################
         id = uuid.uuid4().int
-        dbnode.node_id = stmt.statement_id = id
+        dbnode.node_id = stmt.statement_id = handler.statement_id = id
         dbnode.parent_id = stmt.parent_id = params.parent_id
         ############ CATEGORIES ##################
         stmt.category = node.__doc__.split('(')[0]
@@ -678,34 +1008,69 @@ class Visitor_info(NodeVisitor):
         stmtRoles = ["Try", "TryElse", "TryFinally", "TryHandler"]
         exprRoles = ["TryBody", "TryElse", "FinallyBody"]
         ############## PROPAGAR VISIT ############
+        returns = []
+        handlers = []
+        index = 0
+        hindex = 0
+        handlersBodies = 0
+        hasOrElse = False
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                self.visit(child, childparams.addParam("role", exprRoles[0]))
+                returns[index] = self.visit(child, childparams.addParam("role", exprRoles[0]))
             else:
-                self.visit(child, childparams.addParam("role", stmtRoles[0]))
+                returns[index] = self.visit(child, childparams.addParam("role", stmtRoles[0]))
+            index += 1
         for child in node.orelse:
             if(isinstance(child,ast.Expr)):
-                self.visit(child, childparams.addParam("role", exprRoles[1]))
+                returns[index] = self.visit(child, childparams.addParam("role", exprRoles[1]))
             else:
-                self.visit(child, childparams.addParam("role", stmtRoles[1]))
+                returns[index] = self.visit(child, childparams.addParam("role", stmtRoles[1]))
+            index += 1
+            hasOrElse = True
         for child in node.finalbody:
             if(isinstance(child,ast.Expr)):
-                self.visit(child, childparams.addParam("role", exprRoles[2]))
+                returns[index] =  returns[index] = self.visit(child, childparams.addParam("role", exprRoles[2]))
             else:
-                self.visit(child, childparams.addParam("role", stmtRoles[2]))
+                returns[index] =  self.visit(child, childparams.addParam("role", stmtRoles[2]))
+            index += 1
         for child in node.handlers:
-            self.visit(child, childparams.addParam("role", stmtRoles[3]))
+            handlers[hindex] = self.visit(child, childparams.addParam("role", stmtRoles[3]).addParam('handler', handler))
+            hindex += 1
+            handlersBodies += len(child.body)
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.hasOrElse = hasOrElse
+        stmt.depth = 0
+        for i in range(len(returns)):
+            if(returns[i].depth > stmt.depth): stmt.depth = returns[i].depth
+            if(i == 0): stmt.first_child_id = returns[i].id
+            if(i == 1): stmt.second_child_id = returns[i].id
+            if(i == 2): stmt.third_child_id = returns[i].id
+        stmt.sourceCode = ast.unparse(node)
+        stmt.bodySize = index + handlersBodies
+        #--------------- handler -----------------
+        handler.numberOfHandlers = index
+        if(node.finalbody):
+            handler.hasFinally = True
+        else:
+            handler.hasFinally = False
+        handler.hasCatchAll = False
+        for child in handlers:
+            if(child.isCatchAll): handler.hasCatchAll = True
+        handler.averageBodyCount = handlersBodies/handler.numberOfHandlers
+        handler.hasStar = False
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode, 'handler' : handler})
+        return {'id' : id, 'depth' : stmt.depth + 1}
 
     
-    def visit_TryStar(self : Self, node : ast.TryStar , params : Dict) -> None: 
+    def visit_TryStar(self : Self, node : ast.TryStar , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
+        handler = dbentities.DBHandler()
         ############ IDS #########################
         id = uuid.uuid4().int
-        dbnode.node_id = stmt.statement_id = id
+        dbnode.node_id = stmt.statement_id = handler.statement_id = id
         dbnode.parent_id = stmt.parent_id = params.parent_id
         ############ CATEGORIES ##################
         stmt.category = "Try"
@@ -718,29 +1083,63 @@ class Visitor_info(NodeVisitor):
         stmtRoles = ["Try", "TryElse", "TryFinally", "TryHandlerStar"]
         exprRoles = ["TryBody", "TryElse", "FinallyBody"]
         ############## PROPAGAR VISIT ############
+        returns = []
+        handlers = []
+        index = 0
+        hindex = 0
+        hasOrElse = False
+        handlersBodies = 0
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                self.visit(child, childparams.addParam("role", exprRoles[0]))
+                returns[index] = self.visit(child, childparams.addParam("role", exprRoles[0]))
             else:
-                self.visit(child, childparams.addParam("role", stmtRoles[0]))
+                returns[index] = self.visit(child, childparams.addParam("role", stmtRoles[0]))
+            index += 1
         for child in node.orelse:
             if(isinstance(child,ast.Expr)):
-                self.visit(child, childparams.addParam("role", exprRoles[1]))
+                returns[index] = self.visit(child, childparams.addParam("role", exprRoles[1]))
             else:
-                self.visit(child, childparams.addParam("role", stmtRoles[1]))
+                returns[index] = self.visit(child, childparams.addParam("role", stmtRoles[1]))
+            index += 1
+            hasOrElse = True
         for child in node.finalbody:
             if(isinstance(child,ast.Expr)):
-                self.visit(child, childparams.addParam("role", exprRoles[2]))
+                returns[index] =  returns[index] = self.visit(child, childparams.addParam("role", exprRoles[2]))
             else:
-                self.visit(child, childparams.addParam("role", stmtRoles[2]))
+                returns[index] =  self.visit(child, childparams.addParam("role", stmtRoles[2]))
+            index += 1
         for child in node.handlers:
-            self.visit(child, childparams.addParam("role", stmtRoles[3]))
+            handlers[hindex] = self.visit(child, childparams.addParam("role", stmtRoles[3]).addParam('handler', handler))
+            hindex += 1
+            handlersBodies += len(child.body)
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.hasOrElse = hasOrElse
+        stmt.depth = 0
+        for i in range(len(returns)):
+            if(returns[i].depth > stmt.depth): stmt.depth = returns[i].depth
+            if(i == 0): stmt.first_child_id = returns[i].id
+            if(i == 1): stmt.second_child_id = returns[i].id
+            if(i == 2): stmt.third_child_id = returns[i].id
+        stmt.sourceCode = ast.unparse(node)
+        stmt.bodySize = index + handlersBodies
+        #--------------- handler -----------------
+        handler.numberOfHandlers = index
+        if(node.finalbody):
+            handler.hasFinally = True
+        else:
+            handler.hasFinally = False
+        handler.hasCatchAll = False
+        for child in handlers:
+            if(child.isCatchAll): handler.hasCatchAll = True
+        handler.averageBodyCount = handlersBodies/handler.numberOfHandlers
+        handler.hasStar = True
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode, 'handler' : handler})
+        return {'id' : id, 'depth' : stmt.depth + 1}
 
     
-    def visit_Assert(self : Self, node : ast.Assert , params : Dict) -> None: 
+    def visit_Assert(self : Self, node : ast.Assert , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
@@ -757,14 +1156,24 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["AssertCondition", "AssertMessage"]
         ############## PROPAGAR VISIT ############
-        self.visit(node.test, childparams.addParam('role', exprRoles[0]))
-        if(node.msg): self.visit(node.msg, childparams.addParam('role', exprRoles[1]))
+        test = self.visit(node.test, childparams.addParam('role', exprRoles[0]))
+        if(node.msg): msg = self.visit(node.msg, childparams.addParam('role', exprRoles[1]))
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.hasOrElse = 'N/A'
+        stmt.first_child_id = test.id
+        stmt.depth = test.depth
+        if(msg):
+            stmt.second_child_id = msg.id  
+            stmt.depth = max(msg.depth, stmt.depth)
+        stmt.sourceCode = ast.unparse(node)
+        stmt.bodySize = 'N/A'
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : stmt.depth + 1}
 
     
-    def visit_Global(self : Self, node : ast.Global , params : Dict) -> None: 
+    def visit_Global(self : Self, node : ast.Global , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
@@ -777,14 +1186,18 @@ class Visitor_info(NodeVisitor):
         stmt.parent = params.parent.category
         ############# ROLES ######################
         stmt.statementRole = params.role
-        ############# PARAMS #####################
-        childparams = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.hasOrElse = 'N/A'
+        stmt.depth = 0
+        stmt.sourceCode = ast.unparse(node)
+        stmt.bodySize = 'N/A'
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : stmt.depth + 1}
 
     
-    def visit_Nonlocal(self : Self, node : ast.Nonlocal , params : Dict) -> None: 
+    def visit_Nonlocal(self : Self, node : ast.Nonlocal , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
@@ -797,14 +1210,18 @@ class Visitor_info(NodeVisitor):
         stmt.parent = params.parent.category
         ############# ROLES ######################
         stmt.statementRole = params.role
-        ############# PARAMS #####################
-        childparams = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.hasOrElse = 'N/A'
+        stmt.depth = 0
+        stmt.sourceCode = ast.unparse(node)
+        stmt.bodySize = 'N/A'
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : stmt.depth + 1}
 
     
-    def visit_Pass(self : Self, node : ast.Pass , params : Dict) -> None: 
+    def visit_Pass(self : Self, node : ast.Pass , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
@@ -817,14 +1234,18 @@ class Visitor_info(NodeVisitor):
         stmt.parent = params.parent.category
         ############# ROLES ######################
         stmt.statementRole = params.role
-        ############# PARAMS #####################
-        childparams = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.hasOrElse = 'N/A'
+        stmt.depth = 0
+        stmt.sourceCode = ast.unparse(node)
+        stmt.bodySize = 'N/A'
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : stmt.depth + 1}
 
     
-    def visit_Break(self : Self, node : ast.Break , params : Dict) -> None: 
+    def visit_Break(self : Self, node : ast.Break , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
@@ -837,14 +1258,18 @@ class Visitor_info(NodeVisitor):
         stmt.parent = params.parent.category
         ############# ROLES ######################
         stmt.statementRole = params.role
-        ############# PARAMS #####################
-        childparams = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.hasOrElse = 'N/A'
+        stmt.depth = 0
+        stmt.sourceCode = ast.unparse(node)
+        stmt.bodySize = 'N/A'
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : stmt.depth + 1}
 
     
-    def visit_Continue(self : Self, node : ast.Continue , params : Dict) -> None: 
+    def visit_Continue(self : Self, node : ast.Continue , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
@@ -857,42 +1282,59 @@ class Visitor_info(NodeVisitor):
         stmt.parent = params.parent.category
         ############# ROLES ######################
         stmt.statementRole = params.role
-        ############# PARAMS #####################
-        childparams = {"parent" : stmt, "depth" : params.depth + 1, "parent_id" : id}
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.hasOrElse = 'N/A'
+        stmt.depth = 0
+        stmt.sourceCode = ast.unparse(node)
+        stmt.bodySize = 'N/A'
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : stmt.depth + 1}
 
     ############################ IMPORTS ##################################
 
     
-    def visit_Import(self : Self, node : ast.Import , params : Dict) -> None: 
-        dbnode = dbentities.DBImport()
+    def visit_Import(self : Self, node : ast.Import , params : Dict) -> Dict: 
+        stmt = dbentities.DBStatement()
         ############ IDS #########################
         id = uuid.uuid4().int
-        dbnode.import_id = params.parent.import_id = id
+        stmt.statement_id = id
         ########## ENTITIE PROPERTIES ############
-        ############# PARAMS #####################
-        childparams = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
+        stmt.height = params.depth
+        stmt.hasOrElse = 'N/A'
+        stmt.depth = 0
+        stmt.sourceCode = ast.unparse(node)
+        stmt.bodySize = 'N/A'
+        asnames = 0
+        for alias in node.names:
+            if(alias.asname): asnames += 1
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : dbnode})
-        return
+        visitor_db.visit(node, {'node' : stmt})
+        return {'id' : id, 'depth' : stmt.depth + 1, 'importedModules' : len(node.names), 'asnames' : asnames}
 
     
-    def visit_ImportFrom(self : Self, node : ast.ImportFrom , params : Dict) -> None: 
-        dbnode = dbentities.DBImport()
+    def visit_ImportFrom(self : Self, node : ast.ImportFrom , params : Dict) -> Dict: 
+        stmt = dbentities.DBStatement()
         ############ IDS #########################
         id = uuid.uuid4().int
-        dbnode.import_id = params.parent.import_id = id
-        ############# PARAMS #####################
-        childparams = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
+        stmt.statement_id = id
+        ########## ENTITIE PROPERTIES ############
+        stmt.height = params.depth
+        stmt.hasOrElse = 'N/A'
+        stmt.depth = 0
+        stmt.sourceCode = ast.unparse(node)
+        stmt.bodySize = 'N/A'
+        asnames = 0
+        for alias in node.names:
+            if(alias.asname): asnames += 1
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : dbnode})
-        return
+        visitor_db.visit(node, {'node' : stmt})
+        return {'id' : id, 'depth' : stmt.depth + 1, 'importedModules' : len(node.names), 'asnames' : asnames}
 
     ############################ EXPRESSIONS ##################################
 
-    def visit_BoolOp(self : Self, node : ast.BoolOp , params : Dict) -> None: 
+    def visit_BoolOp(self : Self, node : ast.BoolOp , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
@@ -917,7 +1359,7 @@ class Visitor_info(NodeVisitor):
         return
 
     
-    def visit_NamedExpr(self : Self, node : ast.NamedExpr , params : Dict) -> None: 
+    def visit_NamedExpr(self : Self, node : ast.NamedExpr , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
@@ -941,7 +1383,7 @@ class Visitor_info(NodeVisitor):
         return
 
     
-    def visit_BinOp(self : Self, node : ast.BinOp , params : Dict) -> None: 
+    def visit_BinOp(self : Self, node : ast.BinOp , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
@@ -972,7 +1414,7 @@ class Visitor_info(NodeVisitor):
         return
     
     
-    def visit_UnaryOp(self : Self, node : ast.UnaryOp , params : Dict) -> None: 
+    def visit_UnaryOp(self : Self, node : ast.UnaryOp , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
@@ -996,7 +1438,7 @@ class Visitor_info(NodeVisitor):
         return
     
     
-    def visit_Lambda(self : Self, node : ast.Lambda , params : Dict) -> None: 
+    def visit_Lambda(self : Self, node : ast.Lambda , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
@@ -1021,7 +1463,7 @@ class Visitor_info(NodeVisitor):
         return
     
     
-    def visit_Ifexp(self : Self, node : ast.IfExp , params : Dict) -> None: 
+    def visit_Ifexp(self : Self, node : ast.IfExp , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
@@ -1048,7 +1490,7 @@ class Visitor_info(NodeVisitor):
     ######################### COMPREHENSIONS #############################
 
     
-    def visit_ListComp(self : Self, node : ast.ListComp , params : Dict) -> None: 
+    def visit_ListComp(self : Self, node : ast.ListComp , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         comp = dbentities.DBComprehension()
@@ -1074,7 +1516,7 @@ class Visitor_info(NodeVisitor):
         return
 
     
-    def visit_SetComp(self : Self, node : ast.SetComp , params : Dict) -> None: 
+    def visit_SetComp(self : Self, node : ast.SetComp , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         comp = dbentities.DBComprehension()
@@ -1100,7 +1542,7 @@ class Visitor_info(NodeVisitor):
         return
 
     
-    def visit_DictComp(self : Self, node : ast.DictComp , params : Dict) -> None: 
+    def visit_DictComp(self : Self, node : ast.DictComp , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         comp = dbentities.DBComprehension()
@@ -1127,7 +1569,7 @@ class Visitor_info(NodeVisitor):
         return
 
     
-    def visit_GeneratorExp(self : Self, node : ast.GeneratorExp , params : Dict) -> None: 
+    def visit_GeneratorExp(self : Self, node : ast.GeneratorExp , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         comp = dbentities.DBComprehension()
@@ -1155,7 +1597,7 @@ class Visitor_info(NodeVisitor):
     ######################################################################
 
     
-    def visit_Await(self : Self, node : ast.Await , params : Dict) -> None: 
+    def visit_Await(self : Self, node : ast.Await , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
@@ -1178,7 +1620,7 @@ class Visitor_info(NodeVisitor):
         return
 
     
-    def visit_Yield(self : Self, node : ast.Yield , params : Dict) -> None: 
+    def visit_Yield(self : Self, node : ast.Yield , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
@@ -1201,7 +1643,7 @@ class Visitor_info(NodeVisitor):
         return
 
     
-    def visit_YieldFrom(self : Self, node : ast.YieldFrom , params : Dict) -> None: 
+    def visit_YieldFrom(self : Self, node : ast.YieldFrom , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
@@ -1224,7 +1666,7 @@ class Visitor_info(NodeVisitor):
         return
 
     
-    def visit_Compare(self : Self, node : ast.Compare , params : Dict) -> None: 
+    def visit_Compare(self : Self, node : ast.Compare , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
@@ -1255,7 +1697,7 @@ class Visitor_info(NodeVisitor):
     ########################## call_args ###########################
 
     
-    def visit_Call(self : Self, node : ast.Call , params : Dict) -> None: 
+    def visit_Call(self : Self, node : ast.Call , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         callArgs = dbentities.DBCallArg()
@@ -1283,7 +1725,7 @@ class Visitor_info(NodeVisitor):
 
     ################################################################
 
-    def visit_formattedvalue(self : Self, node : ast.FormattedValue , params : Dict) -> None: 
+    def visit_formattedvalue(self : Self, node : ast.FormattedValue , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
@@ -1309,7 +1751,7 @@ class Visitor_info(NodeVisitor):
     ########################### F-strings #####################################
 
     
-    def visit_JoinedStr(self : Self, node : ast.JoinedStr , params : Dict) -> None: 
+    def visit_JoinedStr(self : Self, node : ast.JoinedStr , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         fstr = dbentities.DBFString()
@@ -1336,7 +1778,7 @@ class Visitor_info(NodeVisitor):
     ###########################################################################
 
     
-    def visit_Constant(self : Self, node : ast.Constant , params : Dict) -> None: 
+    def visit_Constant(self : Self, node : ast.Constant , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
@@ -1356,7 +1798,7 @@ class Visitor_info(NodeVisitor):
         return
 
     
-    def visit_Attribute(self : Self, node : ast.Attribute , params : Dict) -> None: 
+    def visit_Attribute(self : Self, node : ast.Attribute , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
@@ -1379,7 +1821,7 @@ class Visitor_info(NodeVisitor):
         return
 
     
-    def visit_Subscript(self : Self, node : ast.Subscript , params : Dict) -> None: 
+    def visit_Subscript(self : Self, node : ast.Subscript , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
@@ -1403,7 +1845,7 @@ class Visitor_info(NodeVisitor):
         return
 
     
-    def visit_Starred(self : Self, node : ast.Starred , params : Dict) -> None: 
+    def visit_Starred(self : Self, node : ast.Starred , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
@@ -1428,7 +1870,7 @@ class Visitor_info(NodeVisitor):
     ############################# Variable ##################################
 
     
-    def visit_Name(self : Self, node : ast.Name , params : Dict) -> None: 
+    def visit_Name(self : Self, node : ast.Name , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         var = dbentities.DBVariable()
@@ -1451,7 +1893,7 @@ class Visitor_info(NodeVisitor):
     ############################### Vectors #################################
 
     
-    def visit_List(self : Self, node : ast.List , params : Dict) -> None: 
+    def visit_List(self : Self, node : ast.List , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         vct = dbentities.DBVector()
@@ -1476,7 +1918,7 @@ class Visitor_info(NodeVisitor):
         return
 
     
-    def visit_Tuple(self : Self, node : ast.Tuple , params : Dict) -> None: 
+    def visit_Tuple(self : Self, node : ast.Tuple , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         vct = dbentities.DBVector()
@@ -1501,7 +1943,7 @@ class Visitor_info(NodeVisitor):
         return
 
     
-    def visit_Dict(self : Self, node : ast.Dict , params : Dict) -> None: 
+    def visit_Dict(self : Self, node : ast.Dict , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         vct = dbentities.DBVector()
@@ -1528,7 +1970,7 @@ class Visitor_info(NodeVisitor):
         return
 
     
-    def visit_Set(self : Self, node : ast.Set , params : Dict) -> None: 
+    def visit_Set(self : Self, node : ast.Set , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         vct = dbentities.DBVector()
@@ -1555,7 +1997,7 @@ class Visitor_info(NodeVisitor):
     ########################################################################
 
     
-    def visit_Slice(self : Self, node : ast.Slice , params : Dict) -> None: 
+    def visit_Slice(self : Self, node : ast.Slice , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
@@ -1582,123 +2024,132 @@ class Visitor_info(NodeVisitor):
     ############################### Cases ###################################
 
     
-    def visit_MatchValue(self : Self, node : ast.MatchValue , params : Dict) -> None: 
-        dbnode = dbentities.DBCase()
-        ############ IDS #########################
-        dbnode.statement_id = params.parent_id
-        ############# PARAMS #####################
-        childparams = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
+    def visit_MatchValue(self : Self, node : ast.MatchValue , params : Dict) -> Dict: 
+        childparams = {"parent" : params.parent, "depth" : params.depth + 1, "parent_id" : params.parent_id}
         exprRoles = ["MatchCondition"]
         ############## PROPAGAR VISIT ############
         self.visit(node.value, childparams.addParam('role', exprRoles[0]))
-        ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : dbnode})
-        return
+        return {'matchValue' : 1, 'matchSingleton' : 0, 'matchSequence' : 0, 'matchMapping' : 0, 'matchClass' : 0, 'matchStar' : 0, 'matchAs' : 0, 'matchOr' : 0, 'depth' : 1}
 
     
-    def visit_MatchSingleton(self : Self, node : ast.MatchSingleton , params : Dict) -> None: 
-        dbnode = dbentities.DBCase()
-        ############ IDS #########################
-        dbnode.statement_id = params.parent_id
-        ############# PARAMS #####################
-        childparams = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
-        ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : dbnode})
-        return
+    def visit_MatchSingleton(self : Self, node : ast.MatchSingleton , params : Dict) -> Dict: 
+        return {'matchValue' : 0, 'matchSingleton' : 1, 'matchSequence' : 0, 'matchMapping' : 0, 'matchClass' : 0, 'matchStar' : 0, 'matchAs' : 0, 'matchOr' : 0, 'depth' : 1}
 
     
-    def visit_MatchSequence(self : Self, node : ast.MatchSequence , params : Dict) -> None: 
-        dbnode = dbentities.DBCase()
-        ############ IDS #########################
-        dbnode.statement_id = params.parent_id
+    def visit_MatchSequence(self : Self, node : ast.MatchSequence , params : Dict) -> Dict: 
         ############# PARAMS #####################
-        childparams = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
-        ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : dbnode})
-        return
-
-    
-    def visit_MatchMapping(self : Self, node : ast.MatchMapping , params : Dict) -> None: 
-        dbnode = dbentities.DBCase()
-        ############ IDS #########################
-        dbnode.statement_id = params.parent_id
-        ############# PARAMS #####################
-        childparams = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
-        exprRoles = ["MatchCondition"]
+        childparams = {"parent" : params.parent, "depth" : params.depth + 1, "parent_id" : params.parent_id}
+        ################ RETURNS #################
+        returns = {'matchValue' : 0, 'matchSingleton' : 0, 'matchSequence' : 1, 'matchMapping' : 0, 'matchClass' : 0, 'matchStar' : 0, 'matchAs' : 0, 'matchOr' : 0, 'depth' : 0}
         ############## PROPAGAR VISIT ############
+        childs = []
+        index = 0
+        for child in node.patterns:
+            childs[index] = self.visit(child, childparams)
+            index += 1
+            returns = returns.sumMatch(childs[index])
+        returns.depth += 1
+        return returns
+
+    
+    def visit_MatchMapping(self : Self, node : ast.MatchMapping , params : Dict) -> Dict: 
+        ############# PARAMS #####################
+        childparams = {"parent" : params.parent, "depth" : params.depth + 1, "parent_id" : params.parent_id}
+        exprRoles = ["MatchCondition"]
+        ################ RETURNS #################
+        returns = {'matchValue' : 0, 'matchSingleton' : 0, 'matchSequence' : 0, 'matchMapping' : 1, 'matchClass' : 0, 'matchStar' : 0, 'matchAs' : 0, 'matchOr' : 0, 'depth' : 0}
+        ############## PROPAGAR VISIT ############
+        childs = []
+        exprs = []
+        index = 0
+        for child in node.patterns:
+            childs[index] = self.visit(child, childparams)
+            index += 1
+            returns = returns.sumMatch(childs[index])
+        index = 0
         for child in node.keys:
-            self.visit(child, childparams.addParam('role', exprRoles[0]))
-        ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : dbnode})
-        return
+            exprs[index] = self.visit(child, childparams.addParam('role', exprRoles[0]))
+            returns.depth = max(returns.depth, exprs[index].depth)
+            index += 1
+        returns.depth += 1
+        return returns
 
     
-    def visit_MatchClass(self : Self, node : ast.MatchClass , params : Dict) -> None: 
-        dbnode = dbentities.DBCase()
-        ############ IDS #########################
-        dbnode.statement_id = params.parent_id
+    def visit_MatchClass(self : Self, node : ast.MatchClass , params : Dict) -> Dict: 
         ############# PARAMS #####################
-        childparams = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
+        childparams = {"parent" : params.parent, "depth" : params.depth + 1, "parent_id" : params.parent_id}
         exprRoles = ["MatchCondition"]
+        ################ RETURNS #################
+        returns = {'matchValue' : 0, 'matchSingleton' : 0, 'matchSequence' : 0, 'matchMapping' : 0, 'matchClass' : 1, 'matchStar' : 0, 'matchAs' : 0, 'matchOr' : 0, 'depth' : 1}
         ############## PROPAGAR VISIT ############
-        self.visit(node.cls, childparams.addParam('role', exprRoles[0]))
-        ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : dbnode})
-        return
+        cls = self.visit(node.cls, childparams.addParam('role', exprRoles[0]))
+        childs = []
+        index = 0
+        for child in node.patterns:
+            childs[index] = self.visit(child, childparams)
+            index += 1
+            returns = returns.sumMatch(childs[index])
+        for child in node.kwd_patterns:
+            childs[index] = self.visit(child, childparams)
+            index += 1
+            returns = returns.sumMatch(childs[index])
+        returns.depth = max(returns.depth + 1, cls.depth)
+        return returns
 
     
-    def visit_MatchStar(self : Self, node : ast.MatchStar , params : Dict) -> None: 
-        dbnode = dbentities.DBCase()
-        ############ IDS #########################
-        dbnode.statement_id = params.parent_id
-        ############# PARAMS #####################
-        childparams = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
-        ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : dbnode})
-        return
+    def visit_MatchStar(self : Self, node : ast.MatchStar , params : Dict) -> Dict: 
+        return {'matchValue' : 0, 'matchSingleton' : 0, 'matchSequence' : 0, 'matchMapping' : 0, 'matchClass' : 0, 'matchStar' : 1, 'matchAs' : 0, 'matchOr' : 0, 'depth' : 1}
 
     
-    def visit_MatchAs(self : Self, node : ast.MatchAs , params : Dict) -> None: 
-        dbnode = dbentities.DBCase()
-        ############ IDS #########################
-        dbnode.statement_id = params.parent_id
+    def visit_MatchAs(self : Self, node : ast.MatchAs , params : Dict) -> Dict: 
         ############# PARAMS #####################
-        childparams = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
-        ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : dbnode})
-        return
+        childparams = {"parent" : params.parent, "depth" : params.depth + 1, "parent_id" : params.parent_id}
+        ################ RETURNS #################
+        returns = {'matchValue' : 0, 'matchSingleton' : 0, 'matchSequence' : 0, 'matchMapping' : 0, 'matchClass' : 0, 'matchStar' : 0, 'matchAs' : 1, 'matchOr' : 0, 'depth' : 1}
+        ############## PROPAGAR VISIT ############
+        if(node.pattern): child = self.visit(node.pattern, childparams)
+        returns.depth = max(returns.depth, child.depth + 1)
+        return returns
 
     
-    def visit_MatchOr(self : Self, node : ast.MatchOr , params : Dict) -> None: 
-        dbnode = dbentities.DBCase()
-        ############ IDS #########################
-        dbnode.statement_id = params.parent_id
+    def visit_MatchOr(self : Self, node : ast.MatchOr , params : Dict) -> Dict: 
         ############# PARAMS #####################
-        childparams = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
-        ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : dbnode})
-        return
+        childparams = {"parent" : params.parent, "depth" : params.depth + 1, "parent_id" : params.parent_id}
+        ################ RETURNS #################
+        returns = {'matchValue' : 0, 'matchSingleton' : 0, 'matchSequence' : 0, 'matchMapping' : 0, 'matchClass' : 0, 'matchStar' : 0, 'matchAs' : 0, 'matchOr' : 1, 'depth' : 1}
+        ############## PROPAGAR VISIT ############
+        childs = []
+        index = 0
+        for child in node.patterns:
+            childs[index] = self.visit(child, childparams)
+            index += 1
+            returns = returns.sumMatch(childs[index])
+        returns.depth += 1
+        return returns
     
     ############################# HANDLER ####################################
 
-    def visit_ExceptHandler(self : Self, node : ast.ExceptHandler , params : Dict) -> None: 
-        dbnode = dbentities.DBHandler()
-        ############ IDS #########################
-        dbnode.statement_id = params.parent_id
+    def visit_ExceptHandler(self : Self, node : ast.ExceptHandler , params : Dict) -> Dict: 
         ############# PARAMS #####################
-        childparams = {"parent" : dbnode, "depth" : params.depth + 1, "parent_id" : id}
+        childparams = {"parent" : params.handler, "depth" : params.depth + 1, "parent_id" : params.parent_id}
         exprRoles = ["ExceptType", "ExceptBody"]
         ############## PROPAGAR VISIT ############
-        if(node.type): self.visit(node.type, childparams.addParam('role', exprRoles[0]))
+        returns = []
+        index = 0
+        depth = 0
+        isCatchAll = True
+        if(node.type): 
+            self.visit(node.type, childparams.addParam('role', exprRoles[0]))
+            isCatchAll = False
         for child in node.body:
-            self.visit(child, childparams.addParam('role', exprRoles[1]))
-        ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : dbnode})
-        return
+            returns[index] = self.visit(child, childparams.addParam('role', exprRoles[1]))
+            depth = max(depth,returns[index].depth)
+            index += 1
+        return { 'id' : params.parent_id, 'depth' : depth, 'isCatchAll' : isCatchAll}
 
     ####################### Visits extra ######################
 
-    def visit_Comprehension(self : Self, node : ast.comprehension , params : Dict) -> None: 
+    def visit_Comprehension(self : Self, node : ast.comprehension , params : Dict) -> Dict: 
         ############# PARAMS #####################
         exprRoles = ["ComprehensionTarget", "ComprehensionIter", "ComprehensionIf"]
         ############## PROPAGAR VISIT ############
@@ -1708,9 +2159,9 @@ class Visitor_info(NodeVisitor):
             self.visit(child, params.addParam('role', exprRoles[2]))
         return
     
-    def visit_Arguments(self : Self, node : ast.arguments , params : Dict) -> None: 
+    def visit_Arguments(self : Self, node : ast.arguments , params : Dict) -> Dict: 
         ############# PARAMS #####################
-        exprRoles = ["ArgumentDefault"]
+        exprRoles = ["DefaultParamValue"]
         ########## ENTITIE PROPERTIES ############
         numberOfAnnotations = 0
         numberOfParams = 0
@@ -1741,21 +2192,21 @@ class Visitor_info(NodeVisitor):
             self.visit(child, params.addParam('role', exprRoles[0]))
         return {"typeAnnotations" : numberOfAnnotations, "numberOfArgs" : numberOfParams}
     
-    def visit_Arg(self : Self, node : ast.arg , params : Dict) -> None:
+    def visit_Arg(self : Self, node : ast.arg , params : Dict) -> Dict:
         ############# PARAMS ##################### 
-        exprRoles = ["ArgumentAnnotation"]
+        exprRoles = ["TypeAnnotation"]
         ############## PROPAGAR VISIT ############
         if(node.annotation): 
             self.visit(node.annotation, params.addParam('role', exprRoles[0]))
             return {'typeAnnotation' : True}
         return {'typeAnnotation' : False}
     
-    def visit_Keyword(self : Self, node : ast.keyword , params : Dict) -> None: 
+    def visit_Keyword(self : Self, node : ast.keyword , params : Dict) -> Dict: 
         ############## PROPAGAR VISIT ############
         self.visit(node.value, params)
         return
     
-    def visit_Withitem(self : Self, node : ast.withitem , params : Dict) -> None: 
+    def visit_Withitem(self : Self, node : ast.withitem , params : Dict) -> Dict: 
         ############# PARAMS #####################
         childparams = {"parent" : params.dbnode, "depth" : params.depth, "parent_id" : params.parent_id}
         ############## PROPAGAR VISIT ############
@@ -1763,33 +2214,44 @@ class Visitor_info(NodeVisitor):
         if(node.optional_vars): self.visit(node.optional_vars, childparams.addParam('role', params.role_vars))
         return
     
-    def visit_Match_case(self : Self, node : ast.match_case , params : Dict) -> None: 
+    def visit_Match_case(self : Self, node : ast.match_case , params : Dict) -> Dict: 
         ############# PARAMS #####################
         stmtRoles = ["Case"]
         exprRoles = ["CaseGuard", "CaseBody"]
+        ########## ENTITIE PROPERTIES ############
+        depth = 0
         ############## PROPAGAR VISIT ############
-        self.visit(node.pattern, params)
-        if(node.guard): self.visit(node.guard, params.addParam('role', exprRoles[0]))
+        childs = []
+        index = 0
+        returns = self.visit(node.pattern, params)
+        guards = 0
+        if(node.guard): 
+            guard = self.visit(node.guard, params.addParam('role', exprRoles[0]))
+            guards = 1
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                self.visit(child, params.addParam("role", exprRoles[1]))
+                childs[index] = self.visit(child, params.addParam("role", exprRoles[1]))
             else:
-                self.visit(child, params.addParam("role", stmtRoles[0]))
-        return
+                childs[index] = self.visit(child, params.addParam("role", stmtRoles[0]))
+            index += 1
+        ########## ENTITIE PROPERTIES ############
+        for i in range(index):
+            depth = max(depth, childs[i].depth)
+        returns.addParam('guards',guards)
+        returns.addParam('bodyCount',index)
+        return returns
     
-    def visit_TypeVar(self : Self, node : ast.TypeVar , params : Dict) -> None: 
+    def visit_TypeVar(self : Self, node : ast.TypeVar , params : Dict) -> Dict: 
         ############# PARAMS #####################
         exprRoles = ["TypeVar"]
         ############## PROPAGAR VISIT ############
         if(node.bound): self.visit(node.bound, params.addParam('role', exprRoles[0]))
         return
     
-    def visit_ParamSpec(self : Self, node : ast.ParamSpec , params : Dict) -> None: 
-        exprRoles = ["DefaultParamValue"]
+    def visit_ParamSpec(self : Self, node : ast.ParamSpec , params : Dict) -> Dict: 
         return
     
-    def visit_TypeVarTuple(self : Self, node : ast.TypeVarTuple , params : Dict) -> None: 
-        exprRoles = ["TypeAnnotation"]
+    def visit_TypeVarTuple(self : Self, node : ast.TypeVarTuple , params : Dict) -> Dict: 
         return
     
     ###########################################################

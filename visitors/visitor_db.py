@@ -100,6 +100,7 @@ class Visitor_db(NodeVisitor):
     def visit_Match(self, node: ast.Match, params):
         self.insert_node(params.dbnode)
         self.insert_statement(params.node)
+        self.insert_case(params.case)
         pass
     
     def visit_Raise(self, node: ast.Raise, params):
@@ -110,11 +111,13 @@ class Visitor_db(NodeVisitor):
     def visit_Try(self, node: ast.Try, params):
         self.insert_node(params.dbnode)
         self.insert_statement(params.node)
+        self.insert_handler(params.handler)
         pass
     
     def visit_TryStar(self, node: ast.Try, params):
         self.insert_node(params.dbnode)
         self.insert_statement(params.node)
+        self.insert_handler(params.handler)
         pass
     
     def visit_Assert(self, node: ast.Assert, params):
@@ -150,11 +153,11 @@ class Visitor_db(NodeVisitor):
     ############################ IMPORTS ##################################
     
     def visit_Import(self, node: ast.Import, params):
-        self.insert_import(params.node)
+        self.insert_statement(params.node)
         pass
     
     def visit_ImportFrom(self, node: ast.ImportFrom, params):
-        self.insert_import(params.node)
+        self.insert_statement(params.node)
         pass
 
     ############################ EXPRESSIONS ##################################
@@ -324,41 +327,32 @@ class Visitor_db(NodeVisitor):
         pass
     
     def visit_ExceptHandler(self, node: ast.ExceptHandler, params):
-        self.insert_node(params.node)
         pass
 
     ############################### Cases ###################################
     
     def visit_MatchValue(self, node: ast.MatchValue, params):
-        self.insert_case(params.node)
         pass
     
     def visit_MatchSingleton(self, node: ast.MatchSingleton, params):
-        self.insert_case(params.node)
         pass
     
     def visit_MatchSequence(self, node: ast.MatchSequence, params):
-        self.insert_case(params.node)
         pass
     
     def visit_MatchMapping(self, node: ast.MatchMapping, params):
-        self.insert_case(params.node)
         pass
     
     def visit_MatchClass(self, node: ast.MatchClass, params):
-        self.insert_case(params.node)
         pass
     
     def visit_MatchStar(self, node: ast.MatchStar, params):
-        self.insert_case(params.node)
         pass
     
     def visit_MatchAs(self, node: ast.MatchAs, params):
-        self.insert_case(params.node)
         pass
     
     def visit_MatchOr(self, node: ast.MatchOr, params):
-        self.insert_case(params.node)
         pass
 
     def insert_functiondef(self : Self, node: dbentities.DBFunctionDef):

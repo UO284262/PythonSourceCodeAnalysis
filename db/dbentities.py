@@ -65,7 +65,7 @@ class DBModule:
 
 class DBImport:
     def __init__(self, numberImports: int = None,  moduleImportsPct: float = None, 
-                 averageImportedModules: float = None,  fromImportsPct: float = None, 
+                 averageImportedModules: float = None,  fromImportsPct: float = None, averageFromImportedModules: float = None,
                  averageAsInImportedModules: float = None,  localImportsPct: float = None,  node = None, userId = None, experticeLevel = None):
         self.userId = userId
         self.experticeLevel = experticeLevel
@@ -74,6 +74,7 @@ class DBImport:
         self.numberImports = numberImports
         self.moduleImportsPct = moduleImportsPct
         self.averageImportedModules = averageImportedModules
+        self.averageFromImportedModules = averageFromImportedModules
         self.fromImportsPct = fromImportsPct
         self.averageAsInImportedModules = averageAsInImportedModules
         self.localImportsPct = localImportsPct
