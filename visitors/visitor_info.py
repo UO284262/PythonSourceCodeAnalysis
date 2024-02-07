@@ -1350,13 +1350,35 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["Logical"]
+        ########## ENTITIE PROPERTIES ############
+        depth = 0
+        first_child_category = ''
+        second_child_category = ''
+        third_child_category = ''
+        fourth_child_category = ''
         ############## PROPAGAR VISIT ############
+        returns = []
+        index = 0
         self.visit(node.op, childparams)
         for child in node.values:
-            self.visit(child, childparams.addParam('role', exprRoles[0]))
+            returns[index] = self.visit(child, childparams.addParam('role', exprRoles[0]))
+            depth = max(depth, returns[index].depth)
+            if(index == 0): first_child_category = returns[index].category
+            if(index == 1): second_child_category = returns[index].category
+            if(index == 2): third_child_category = returns[index].category
+            if(index == 3): fourth_child_category = returns[index].category
+            index += 1
+        ########## ENTITIE PROPERTIES ############
+        expr.sourceCode = ast.unparse(node)
+        expr.height = params.depth
+        expr.first_child_category = first_child_category
+        expr.second_child_category = second_child_category
+        expr.third_child_category = third_child_category
+        expr.fourth_child_category = fourth_child_category
+        expr.depth = depth
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     
     def visit_NamedExpr(self : Self, node : ast.NamedExpr , params : Dict) -> Dict: 
@@ -1376,11 +1398,17 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["AssignExpLHS", "AssignExpRHS"]
         ############## PROPAGAR VISIT ############
-        self.visit(node.target, childparams.addParam('role', exprRoles[0]))
-        self.visit(node.value, childparams.addParam('role', exprRoles[1]))
+        target = self.visit(node.target, childparams.addParam('role', exprRoles[0]))
+        value = self.visit(node.value, childparams.addParam('role', exprRoles[1]))
+        ########## ENTITIE PROPERTIES ############
+        expr.sourceCode = ast.unparse(node)
+        expr.height = params.depth
+        expr.first_child_category = target.category
+        expr.second_child_category = value.category
+        expr.depth = max(target.depth, value.depth)
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     
     def visit_BinOp(self : Self, node : ast.BinOp , params : Dict) -> Dict: 
@@ -1407,11 +1435,17 @@ class Visitor_info(NodeVisitor):
             case ast.Pow: role = exprRoles[2]
             case ast.BitAnd, ast.BitOr, ast.BitXor: role = exprRoles[4]
             case default: role = exprRoles[0]
-        self.visit(node.left, childparams.addParam('role', role))
-        self.visit(node.right, childparams.addParam('role', role))
+        left = self.visit(node.left, childparams.addParam('role', role))
+        right = self.visit(node.right, childparams.addParam('role', role))
+        ########## ENTITIE PROPERTIES ############
+        expr.sourceCode = ast.unparse(node)
+        expr.height = params.depth
+        expr.first_child_category = left.category
+        expr.second_child_category = right.category
+        expr.depth = max(left.depth, right.depth)
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
     
     
     def visit_UnaryOp(self : Self, node : ast.UnaryOp , params : Dict) -> Dict: 
@@ -1432,10 +1466,15 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["Arithmetic"]
         ############## PROPAGAR VISIT ############
         self.visit(node.op, childparams)
-        self.visit(node.operand, childparams.addParam('role', exprRoles[0]))
+        operand = self.visit(node.operand, childparams.addParam('role', exprRoles[0]))
+        ########## ENTITIE PROPERTIES ############
+        expr.sourceCode = ast.unparse(node)
+        expr.height = params.depth
+        expr.first_child_category = operand.category
+        expr.depth = operand.depth
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
     
     
     def visit_Lambda(self : Self, node : ast.Lambda , params : Dict) -> Dict: 
@@ -1454,13 +1493,35 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["LambdaBody"]
+        ########## ENTITIE PROPERTIES ############
+        depth = 0
+        first_child_category = ''
+        second_child_category = ''
+        third_child_category = ''
+        fourth_child_category = ''
         ############## PROPAGAR VISIT ############
+        returns = []
+        index = 0
         self.visit(node.args, childparams)
         for child in node.body:
-            self.visit(child, childparams.addParam('role', exprRoles[0]))
+            returns[index] = self.visit(child, childparams.addParam('role', exprRoles[0]))
+            depth = max(depth, returns[index].depth)
+            if(index == 0): first_child_category = returns[index].category
+            if(index == 1): second_child_category = returns[index].category
+            if(index == 2): third_child_category = returns[index].category
+            if(index == 3): fourth_child_category = returns[index].category
+            index += 1
+        ########## ENTITIE PROPERTIES ############
+        expr.sourceCode = ast.unparse(node)
+        expr.height = params.depth
+        expr.first_child_category = first_child_category
+        expr.second_child_category = second_child_category
+        expr.third_child_category = third_child_category
+        expr.fourth_child_category = fourth_child_category
+        expr.depth = depth
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
     
     
     def visit_Ifexp(self : Self, node : ast.IfExp , params : Dict) -> Dict: 
@@ -1480,12 +1541,19 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["TernaryCondition", "TernaryIfBody", "TernaryElseBody"]
         ############## PROPAGAR VISIT ############
-        self.visit(node.test, childparams.addParam('role', exprRoles[0]))
-        self.visit(node.body, childparams.addParam('role', exprRoles[1]))
-        self.visit(node.orelse, childparams.addParam('role', exprRoles[2]))
+        test = self.visit(node.test, childparams.addParam('role', exprRoles[0]))
+        body = self.visit(node.body, childparams.addParam('role', exprRoles[1]))
+        orelse = self.visit(node.orelse, childparams.addParam('role', exprRoles[2]))
+        ########## ENTITIE PROPERTIES ############
+        expr.sourceCode = ast.unparse(node)
+        expr.height = params.depth
+        expr.first_child_category = test.category
+        expr.second_child_category = body.category
+        expr.third_child_category = orelse.category
+        expr.depth = max(max(body.depth,orelse.depth),test.depth)
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
-        return
+        return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     ######################### COMPREHENSIONS #############################
 
@@ -1507,13 +1575,41 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["ComprenhensionElement"]
+        ########## ENTITIE PROPERTIES ############
+        depth = 0
+        second_child_category = ''
+        third_child_category = ''
+        fourth_child_category = ''
+        numOfIfs = 0
+        isAsync = False
         ############## PROPAGAR VISIT ############
+        returns = []
+        index = 0
         for child in node.generators:
-            self.visit(child, childparams)
-        self.visit(node.elt, childparams.addParam('role', exprRoles[0]))
+            returns[index] = self.visit(child, childparams)
+            if(index == 0): second_child_category = returns[index].category
+            if(index == 1): third_child_category = returns[index].category
+            if(index == 2): fourth_child_category = returns[index].category
+            depth = max(depth, returns[index].depth)
+            numOfIfs += len(child.ifs)
+            if(child.is_async): isAsync = True
+            index += 1
+        elt = self.visit(node.elt, childparams.addParam('role', exprRoles[0]))
+        ########## ENTITIE PROPERTIES ############
+        expr.sourceCode = ast.unparse(node)
+        expr.height = params.depth
+        expr.first_child_category = elt.category
+        expr.second_child_category = second_child_category
+        expr.third_child_category = third_child_category
+        expr.fourth_child_category = fourth_child_category
+        expr.depth = max(elt.depth, depth)
+        #--------------- COMP --------------------
+        comp.numberOfIfs = numOfIfs
+        comp.numberOfGenerators = len(node.generators)
+        comp.isAsync = isAsync
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : comp, 'dbnode' : dbnode, 'expr': expr})
-        return
+        return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     
     def visit_SetComp(self : Self, node : ast.SetComp , params : Dict) -> Dict: 
@@ -1533,13 +1629,41 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["ComprenhensionElement"]
+        ########## ENTITIE PROPERTIES ############
+        depth = 0
+        second_child_category = ''
+        third_child_category = ''
+        fourth_child_category = ''
+        numOfIfs = 0
+        isAsync = False
         ############## PROPAGAR VISIT ############
+        returns = []
+        index = 0
         for child in node.generators:
-            self.visit(child, childparams)
-        self.visit(node.elt, childparams.addParam('role', exprRoles[0]))
+            returns[index] = self.visit(child, childparams)
+            if(index == 0): second_child_category = returns[index].category
+            if(index == 1): third_child_category = returns[index].category
+            if(index == 2): fourth_child_category = returns[index].category
+            depth = max(depth, returns[index].depth)
+            numOfIfs += len(child.ifs)
+            if(child.is_async): isAsync = True
+            index += 1
+        elt = self.visit(node.elt, childparams.addParam('role', exprRoles[0]))
+        ########## ENTITIE PROPERTIES ############
+        expr.sourceCode = ast.unparse(node)
+        expr.height = params.depth
+        expr.first_child_category = elt.category
+        expr.second_child_category = second_child_category
+        expr.third_child_category = third_child_category
+        expr.fourth_child_category = fourth_child_category
+        expr.depth = max(elt.depth, depth)
+        #--------------- COMP --------------------
+        comp.numberOfIfs = numOfIfs
+        comp.numberOfGenerators = len(node.generators)
+        comp.isAsync = isAsync
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : comp, 'dbnode' : dbnode, 'expr': expr})
-        return
+        return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     
     def visit_DictComp(self : Self, node : ast.DictComp , params : Dict) -> Dict: 
@@ -1559,14 +1683,40 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["DictionaryLiteralKey", "DictionaryLiteralValue"]
+        ########## ENTITIE PROPERTIES ############
+        depth = 0
+        third_child_category = ''
+        fourth_child_category = ''
+        numOfIfs = 0
+        isAsync = False
         ############## PROPAGAR VISIT ############
+        returns = []
+        index = 0
         for child in node.generators:
-            self.visit(child, childparams)
-        self.visit(node.key, childparams.addParam('role', exprRoles[0]))
-        self.visit(node.value, childparams.addParam('role', exprRoles[1]))
+            returns[index] = self.visit(child, childparams)
+            if(index == 0): third_child_category = returns[index].category
+            if(index == 1): fourth_child_category = returns[index].category
+            depth = max(depth, returns[index].depth)
+            numOfIfs += len(child.ifs)
+            if(child.is_async): isAsync = True
+            index += 1
+        key = self.visit(node.key, childparams.addParam('role', exprRoles[0]))
+        value = self.visit(node.value, childparams.addParam('role', exprRoles[1]))
+        ########## ENTITIE PROPERTIES ############
+        expr.sourceCode = ast.unparse(node)
+        expr.height = params.depth
+        expr.first_child_category = key.category
+        expr.second_child_category = value.category
+        expr.third_child_category = third_child_category
+        expr.fourth_child_category = fourth_child_category
+        expr.depth = max(max(key.depth, value.depth), depth)
+        #--------------- COMP --------------------
+        comp.numberOfIfs = numOfIfs
+        comp.numberOfGenerators = len(node.generators)
+        comp.isAsync = isAsync
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : comp, 'dbnode' : dbnode, 'expr': expr})
-        return
+        return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     
     def visit_GeneratorExp(self : Self, node : ast.GeneratorExp , params : Dict) -> Dict: 
@@ -1586,13 +1736,41 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params.depth + 1, "parent_id" : id}
         exprRoles = ["ComprenhensionElement"]
+        ########## ENTITIE PROPERTIES ############
+        depth = 0
+        second_child_category = ''
+        third_child_category = ''
+        fourth_child_category = ''
+        numOfIfs = 0
+        isAsync = False
         ############## PROPAGAR VISIT ############
+        returns = []
+        index = 0
         for child in node.generators:
-            self.visit(child, childparams)
-        self.visit(node.elt, childparams.addParam('role', exprRoles[0]))
+            returns[index] = self.visit(child, childparams)
+            if(index == 0): second_child_category = returns[index].category
+            if(index == 1): third_child_category = returns[index].category
+            if(index == 2): fourth_child_category = returns[index].category
+            depth = max(depth, returns[index].depth)
+            numOfIfs += len(child.ifs)
+            if(child.is_async): isAsync = True
+            index += 1
+        elt = self.visit(node.elt, childparams.addParam('role', exprRoles[0]))
+        ########## ENTITIE PROPERTIES ############
+        expr.sourceCode = ast.unparse(node)
+        expr.height = params.depth
+        expr.first_child_category = elt.category
+        expr.second_child_category = second_child_category
+        expr.third_child_category = third_child_category
+        expr.fourth_child_category = fourth_child_category
+        expr.depth = max(elt.depth, depth)
+        #--------------- COMP --------------------
+        comp.numberOfIfs = numOfIfs
+        comp.numberOfGenerators = len(node.generators)
+        comp.isAsync = isAsync
         ############## VISITOR DB ################
         visitor_db.visit(node, {'node' : comp, 'dbnode' : dbnode, 'expr': expr})
-        return
+        return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     ######################################################################
 
@@ -2152,12 +2330,20 @@ class Visitor_info(NodeVisitor):
     def visit_Comprehension(self : Self, node : ast.comprehension , params : Dict) -> Dict: 
         ############# PARAMS #####################
         exprRoles = ["ComprehensionTarget", "ComprehensionIter", "ComprehensionIf"]
+        ########## ENTITIE PROPERTIES ############
+        depth = 0
         ############## PROPAGAR VISIT ############
-        self.visit(node.target, params.addParam('role', exprRoles[0]))
-        self.visit(node.iter, params.addParam('role', exprRoles[1]))
+        returns = []
+        index = 0
+        target = self.visit(node.target, params.addParam('role', exprRoles[0]))
+        iter = self.visit(node.iter, params.addParam('role', exprRoles[1]))
         for child in node.ifs:
-            self.visit(child, params.addParam('role', exprRoles[2]))
-        return
+            returns[index] = self.visit(child, params.addParam('role', exprRoles[2]))
+            depth = max(depth, returns[index].depth)
+            index += 1
+        ########## ENTITIE PROPERTIES ############
+        depth = max(max(target.depth, iter.depth), depth)
+        return {'id' : params.parent.id, 'category' : params.parent.category, 'depth' : depth + 1}
     
     def visit_Arguments(self : Self, node : ast.arguments , params : Dict) -> Dict: 
         ############# PARAMS #####################
