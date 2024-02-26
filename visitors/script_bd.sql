@@ -24,6 +24,38 @@ CREATE TABLE PROGRAMS (
     experticeLevel BOOLEAN
 );
 
+-- Creación de la tabla IMPORTS
+CREATE TABLE IMPORTS (
+    import_id INTEGER PRIMARY KEY,
+    numberImports INTEGER,
+    moduleImportsPct REAL CHECK (moduleImportsPct >= 0 AND moduleImportsPct <= 1),
+    averageImportedModules REAL,
+    fromImportsPct REAL CHECK (fromImportsPct >= 0 AND fromImportsPct <= 1),
+    averageFromImportedModules REAL,
+    averageAsInImportedModules REAL,
+    localImportsPct REAL CHECK (localImportsPct >= 0 AND localImportsPct <= 1),
+    user_id INTEGER,
+    experticeLevel BOOLEAN
+);
+
+-- Creación de la tabla PARAMETERS
+CREATE TABLE PARAMETERS (
+    parameters_id INTEGER PRIMARY KEY,
+    parametersRole VARCHAR(255),
+    numberOfParams INTEGER,
+    posOnlyParamPct REAL CHECK (posOnlyParamPct >= 0 AND posOnlyParamPct <= 1),
+    varParamPct REAL CHECK (varParamPct >= 0 AND varParamPct <= 1),
+    hasVarParam BOOLEAN,
+    typeAnnotationPct REAL CHECK (typeAnnotationPct >= 0 AND typeAnnotationPct <= 1),
+    kwOnlyParamPct REAL CHECK (kwOnlyParamPct >= 0 AND kwOnlyParamPct <= 1),
+    defaultValuePct REAL CHECK (defaultValuePct >= 0 AND defaultValuePct <= 1),
+    hasKWParam BOOLEAN,
+    nameConvention VARCHAR(255),
+    user_id INTEGER,
+    experticeLevel BOOLEAN,
+    FOREIGN KEY (parent_id) REFERENCES NODES(node_id)
+);
+
 -- Creación de la tabla MODULES
 CREATE TABLE MODULES (
     module_id INTEGER PRIMARY KEY,
@@ -46,20 +78,7 @@ CREATE TABLE MODULES (
     import_id INTEGER,
     FOREIGN KEY (module_id) REFERENCES NODES(node_id),
     FOREIGN KEY (program_id) REFERENCES PROGRAMS(program_id),
-    FOREIGN KEY (import_id) REFERENCES IMPORTS(import_id)
-    user_id INTEGER,
-    experticeLevel BOOLEAN
-);
-
--- Creación de la tabla IMPORTS
-CREATE TABLE IMPORTS (
-    import_id INTEGER PRIMARY KEY,
-    numberImports INTEGER,
-    moduleImportsPct REAL CHECK (moduleImportsPct >= 0 AND moduleImportsPct <= 1),
-    averageImportedModules REAL,
-    fromImportsPct REAL CHECK (fromImportsPct >= 0 AND fromImportsPct <= 1),
-    averageAsInImportedModules REAL,
-    localImportsPct REAL CHECK (localImportsPct >= 0 AND localImportsPct <= 1)
+    FOREIGN KEY (import_id) REFERENCES IMPORTS(import_id),
     user_id INTEGER,
     experticeLevel BOOLEAN
 );
@@ -91,7 +110,7 @@ CREATE TABLE CLASSDEFS (
     sourceCode VARCHAR(255),
     module_id INTEGER,
     FOREIGN KEY (classdef_id) REFERENCES NODES(node_id),
-    FOREIGN KEY (module_id) REFERENCES MODULES(module_id)
+    FOREIGN KEY (module_id) REFERENCES MODULES(module_id),
     user_id INTEGER,
     experticeLevel BOOLEAN
 );
@@ -116,7 +135,7 @@ CREATE TABLE FUNCTIONDEFS (
     parameters_id INTEGER,
     FOREIGN KEY (functiondef_id) REFERENCES NODES(node_id),
     FOREIGN KEY (module_id) REFERENCES MODULES(module_id),
-    FOREIGN KEY (parameters_id) REFERENCES PARAMETERS(parameters_id)
+    FOREIGN KEY (parameters_id) REFERENCES PARAMETERS(parameters_id),
     user_id INTEGER,
     experticeLevel BOOLEAN
 );
@@ -132,7 +151,7 @@ CREATE TABLE METHODDEFS (
     isWrapper BOOLEAN,
     isCached BOOLEAN,
     functiondef_id INTEGER,
-    FOREIGN KEY (methoddef_id) REFERENCES FUNCTIONDEFS(functiondef_id)
+    FOREIGN KEY (methoddef_id) REFERENCES FUNCTIONDEFS(functiondef_id),
     user_id INTEGER,
     experticeLevel BOOLEAN
 );
@@ -156,7 +175,7 @@ CREATE TABLE STATEMENTS (
     FOREIGN KEY (first_child_id) REFERENCES NODES(node_id),
     FOREIGN KEY (second_child_id) REFERENCES NODES(node_id),
     FOREIGN KEY (third_child_id) REFERENCES NODES(node_id),
-    FOREIGN KEY (parent_id) REFERENCES NODES(node_id)
+    FOREIGN KEY (parent_id) REFERENCES NODES(node_id),
     user_id INTEGER,
     experticeLevel BOOLEAN
 );
@@ -176,7 +195,7 @@ CREATE TABLE CASES (
     averageMatchAs REAL CHECK (averageMatchAs >= 0 AND averageMatchAs <= 1),
     averageMatchOr REAL CHECK (averageMatchOr >= 0 AND averageMatchOr <= 1),
     statement_id INTEGER,
-    FOREIGN KEY (statement_id) REFERENCES NODES(node_id)
+    FOREIGN KEY (statement_id) REFERENCES NODES(node_id),
     user_id INTEGER,
     experticeLevel BOOLEAN
 );
@@ -191,23 +210,7 @@ CREATE TABLE HANDLERS (
     hasStar BOOLEAN,
     statement_id INTEGER,
     FOREIGN KEY (handler_id) REFERENCES NODES(node_id),
-    FOREIGN KEY (statement_id) REFERENCES NODES(node_id)
-    user_id INTEGER,
-    experticeLevel BOOLEAN
-);
-
--- Creación de la tabla PARAMETERS
-CREATE TABLE PARAMETERS (
-    parameters_id INTEGER PRIMARY KEY,
-    numberOfParams INTEGER,
-    posOnlyParamPct REAL CHECK (posOnlyParamPct >= 0 AND posOnlyParamPct <= 1),
-    varParamPct REAL CHECK (varParamPct >= 0 AND varParamPct <= 1),
-    hasVarParam BOOLEAN,
-    typeAnnotationPct REAL CHECK (typeAnnotationPct >= 0 AND typeAnnotationPct <= 1),
-    kwOnlyParamPct REAL CHECK (kwOnlyParamPct >= 0 AND kwOnlyParamPct <= 1),
-    defaultValuePct REAL CHECK (defaultValuePct >= 0 AND defaultValuePct <= 1),
-    hasKWParam BOOLEAN,
-    nameConvention VARCHAR(255)
+    FOREIGN KEY (statement_id) REFERENCES NODES(node_id),
     user_id INTEGER,
     experticeLevel BOOLEAN
 );
@@ -216,17 +219,22 @@ CREATE TABLE PARAMETERS (
 CREATE TABLE EXPRESSIONS (
     expression_id INTEGER PRIMARY KEY,
     category VARCHAR(255),
+    parent VARCHAR(255),
     first_child_category VARCHAR(255),
     second_child_category VARCHAR(255),
     third_child_category VARCHAR(255),
     fourth_child_category VARCHAR(255),
+    first_child_id VARCHAR(255),
+    second_child_id VARCHAR(255),
+    third_child_id VARCHAR(255),
+    fourth_child_id VARCHAR(255),
     expressionRole VARCHAR(255),
     height INTEGER,
     depth INTEGER,
     sourceCode VARCHAR(255),
     parent_id INTEGER,
     FOREIGN KEY (expression_id) REFERENCES NODES(node_id),
-    FOREIGN KEY (parent_id) REFERENCES NODES(node_id)
+    FOREIGN KEY (parent_id) REFERENCES NODES(node_id),
     user_id INTEGER,
     experticeLevel BOOLEAN
 );
@@ -239,7 +247,7 @@ CREATE TABLE COMPREHENSIONS (
     isAsync BOOLEAN,
     expression_id INTEGER,
     FOREIGN KEY (expression_id) REFERENCES EXPRESSIONS(expression_id),
-    PRIMARY KEY (expression_id)
+    PRIMARY KEY (expression_id),
     user_id INTEGER,
     experticeLevel BOOLEAN
 );
@@ -251,7 +259,7 @@ CREATE TABLE CALLARGS (
     namedArgsPct REAL CHECK (namedArgsPct >= 0 AND namedArgsPct <= 1),
     doubleStarArgsPct REAL CHECK (doubleStarArgsPct >= 0 AND doubleStarArgsPct <= 1),
     expression_id INTEGER,
-    FOREIGN KEY (expression_id) REFERENCES EXPRESSIONS(expression_id)
+    FOREIGN KEY (expression_id) REFERENCES EXPRESSIONS(expression_id),
     user_id INTEGER,
     experticeLevel BOOLEAN
 );
@@ -263,7 +271,7 @@ CREATE TABLE FSTRINGS (
     expressionsPct REAL CHECK (expressionsPct >= 0 AND expressionsPct <= 1),
     expression_id INTEGER,
     FOREIGN KEY (expression_id) REFERENCES EXPRESSIONS(expression_id),
-    PRIMARY KEY (expression_id)
+    PRIMARY KEY (expression_id),
     user_id INTEGER,
     experticeLevel BOOLEAN
 );
@@ -276,7 +284,7 @@ CREATE TABLE VARIABLES (
     isMagic BOOLEAN,
     expression_id INTEGER,
     FOREIGN KEY (expression_id) REFERENCES EXPRESSIONS(expression_id),
-    PRIMARY KEY (expression_id)
+    PRIMARY KEY (expression_id),
     user_id INTEGER,
     experticeLevel BOOLEAN
 );
@@ -288,7 +296,7 @@ CREATE TABLE VECTORS (
     homogeneous BOOLEAN,
     expression_id INTEGER,
     FOREIGN KEY (expression_id) REFERENCES EXPRESSIONS(expression_id),
-    PRIMARY KEY (expression_id)
+    PRIMARY KEY (expression_id),
     user_id INTEGER,
     experticeLevel BOOLEAN
 );

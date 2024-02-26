@@ -1,6 +1,6 @@
 import ast
-from visitors.visitor import Visitor
-import visitors.accepts as accepts
+from visitor import Visitor
+import accepts as accepts
 
 class Visitor_print(Visitor):
 

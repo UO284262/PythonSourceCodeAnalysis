@@ -15,139 +15,139 @@ class Visitor_db(NodeVisitor):
     
     def visit_Module(self, node: dbentities.DBModule, params):
         self.insert_module(params["node"])
-        self.insert_import(params["dbimport"])
-        self.insert_node(params["dbnode"])
         writeOnDB(self.sql_insert, self.datos_a_insertar)
         pass
     
     def visit_FunctionDef(self, node: ast.FunctionDef, params):
-        self.insert_functiondef(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_functiondef(params["node"])
+        self.insert_parameter(params["dbparams"])
         pass
     
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef, params):
-        self.insert_functiondef(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_functiondef(params["node"])
+        self.insert_parameter(params["dbparams"])
         pass
     
     def visit_ClassDef(self, node: ast.ClassDef, params):
-        self.insert_classdef(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_classdef(params["node"])
         pass
 
     ############################### STATEMENTS #############################
     
     def visit_Return(self, node: ast.Return, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         pass
     
     def visit_Delete(self, node: ast.Delete, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         pass
     
     def visit_Assign(self, node: ast.Assign, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         pass
     
     def visit_TypeAlias(self, node: ast.TypeAlias, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         pass
     
     def visit_AugAssign(self, node: ast.AugAssign, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         pass
     
     def visit_AnnAssign(self, node: ast.AnnAssign, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         pass
     
     def visit_For(self, node: ast.For, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         pass
     
     def visit_AsyncFor(self, node: ast.AsyncFor, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         pass
     
     def visit_While(self, node: ast.While, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         pass
     
     def visit_If(self, node: ast.If, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         pass
     
     def visit_With(self, node: ast.With, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         pass
     
     def visit_AsyncWith(self, node: ast.AsyncWith, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         pass
     
     def visit_Match(self, node: ast.Match, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         self.insert_case(params["case"])
         pass
     
     def visit_Raise(self, node: ast.Raise, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         pass
     
     def visit_Try(self, node: ast.Try, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         self.insert_handler(params["handler"])
         pass
     
     def visit_TryStar(self, node: ast.Try, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         self.insert_handler(params["handler"])
         pass
     
     def visit_Assert(self, node: ast.Assert, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         pass
     
     def visit_Global(self, node: ast.Global, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         pass
     
     def visit_NonLocal(self, node: ast.Nonlocal, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         pass
     
     def visit_Pass(self, node: ast.Pass, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         pass
     
     def visit_Break(self, node: ast.Break, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         pass
     
     def visit_Continue(self, node: ast.Continue, params):
-        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_statement(params["node"])
         pass
 
     ############################ IMPORTS ##################################
@@ -163,167 +163,167 @@ class Visitor_db(NodeVisitor):
     ############################ EXPRESSIONS ##################################
     
     def visit_BoolOp(self, node: ast.BoolOp, params):
-        self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["node"])
         pass
     
     def visit_NamedExpr(self, node: ast.NamedExpr, params):
-        self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["node"])
         pass
     
     def visit_BinOp(self, node: ast.BinOp, params):
-        self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["node"])
         pass
     
     def visit_UnaryOp(self, node: ast.UnaryOp, params):
-        self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["node"])
         pass
     
     def visit_Lambda(self, node: ast.Lambda, params):
-        self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["node"])
         pass
     
     def visit_IfExp(self, node: ast.IfExp, params):
-        self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["node"])
         pass
 
     ######################### COMPREHENSIONS #############################
     
     def visit_ListComp(self, node: ast.ListComp, params):
-        self.insert_comprehension(params["node"])
-        self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["expr"])
+        self.insert_comprehension(params["node"])
         pass
     
     def visit_SetComp(self, node: ast.SetComp, params):
-        self.insert_comprehension(params["node"])
-        self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["expr"])
+        self.insert_comprehension(params["node"])
         pass
     
     def visit_DictComp(self, node: ast.DictComp, params):
-        self.insert_comprehension(params["node"])
-        self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["expr"])
+        self.insert_comprehension(params["node"])
         pass
     
     def visit_GeneratorExp(self, node: ast.GeneratorExp, params):
-        self.insert_comprehension(params["node"])
-        self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["expr"])
+        self.insert_comprehension(params["node"])
         pass
 
     ######################################################################
     
     def visit_Await(self, node: ast.Await, params):
-        self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["node"])
         pass
     
     def visit_Yield(self, node: ast.Yield, params):
-        self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["node"])
         pass
     
     def visit_YieldFrom(self, node: ast.YieldFrom, params):
-        self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["node"])
         pass
     
     def visit_Compare(self, node: ast.Compare, params):
-        self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["node"])
         pass
 
     ########################## call_args ###########################
     
     def visit_Call(self, node: ast.Call, params):
-        self.insert_callarg(params["node"])        
-        self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["expr"])
+        self.insert_callarg(params["node"])
         pass
 
     ################################################################
     
     def visit_FormattedValue(self, node: ast.FormattedValue, params):
-        self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["node"])
         pass
 
     ########################### F-strings #####################################
     
     def visit_JoinedStr(self, node: ast.JoinedStr, params):
-        self.insert_fstring(params["node"])
-        self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["node"])
+        self.insert_fstring(params)
         pass
 
     ###########################################################################
     
     def visit_Constant(self, node: ast.Constant, params):
-        self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["node"])
         pass
     
     def visit_Attribute(self, node: ast.Attribute, params):
-        self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["node"])
         pass
     
     def visit_Subscript(self, node: ast.Subscript, params):
-        self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["node"])
         pass
     
     def visit_Starred(self, node: ast.Starred, params):
-        self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["node"])
         pass
 
     ############################# Variable ##################################
     
     def visit_Name(self, node: ast.Name, params):
-        self.insert_variable(params["node"])        
+        self.insert_node(params["dbnode"])
         self.insert_expression(params["expr"])
-        self.insert_node(params["dbnode"])        
+        self.insert_variable(params["node"])
         pass
 
     ############################### Vectors #################################
     
     def visit_List(self, node: ast.List, params):
-        self.insert_vector(params["node"])
-        self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["expr"])
+        self.insert_vector(params["node"])
         pass
     
     def visit_Tuple(self, node: ast.Tuple, params):
-        self.insert_vector(params["node"])
-        self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["expr"])
+        self.insert_vector(params["node"])
         pass
     
     def visit_Dict(self, node: ast.Dict, params):
-        self.insert_vector(params["node"])
-        self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["expr"])
+        self.insert_vector(params["node"])
         pass
     
     def visit_Set(self, node: ast.Set, params):
-        self.insert_vector(params["node"])
-        self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["expr"])
+        self.insert_vector(params["node"])
         pass
 
     ########################################################################
     
     def visit_Slice(self, node: ast.Slice, params):
-        self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.insert_expression(params["node"])
         pass
     
     def visit_ExceptHandler(self, node: ast.ExceptHandler, params):
@@ -355,12 +355,6 @@ class Visitor_db(NodeVisitor):
     def visit_MatchOr(self, node: ast.MatchOr, params):
         pass
 
-    ########################## visit extras #################################
-
-    def visit_Arguments(self, node: ast.arguments, params):
-        self.insert_parameter(params["dbparams"])
-        pass
-
     def insert_functiondef(self : Self, node: dbentities.DBFunctionDef):
         sql_insert = '''INSERT INTO FunctionDefs (
                             functiondef_id,
@@ -379,9 +373,9 @@ class Visitor_db(NodeVisitor):
                             sourceCode, 
                             module_id,
                             parameters_id,
-                            user_id,
+                            userID,
                             experticeLevel) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %s, %d, %s, %s, %d, %f, %s, %d, %s, %s, %d, %f, %s, %s, %s, %s, %f);'''
         datos_a_insertar = (node.functiondef_id,
                             node.nameConvention, 
                             node.numberOfCharacters, 
@@ -398,7 +392,7 @@ class Visitor_db(NodeVisitor):
                             node.sourceCode, 
                             node.module_id,
                             node.parameters_id,
-                            node.user_id,
+                            node.userId,
                             node.experticeLevel)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
@@ -423,9 +417,9 @@ class Visitor_db(NodeVisitor):
                             program_id, 
                             path, 
                             import_id,
-                            user_id,
+                            userID,
                             experticeLevel) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %s, %s, %s, %f, %f, %d, %d, %f, %f, %f, %d, %d, %f, %s, %s, %s, %s, %s, %f);'''
         datos_a_insertar = (node.module_id, 
                             node.name, 
                             node.nameConvention, 
@@ -444,7 +438,7 @@ class Visitor_db(NodeVisitor):
                             node.program_id, 
                             node.path, 
                             node.import_id,
-                            node.user_id,
+                            node.userId,
                             node.experticeLevel)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
@@ -471,18 +465,17 @@ class Visitor_db(NodeVisitor):
                             averageFromImportedModules, 
                             averageAsInImportedModules, 
                             localImportsPct,
-                            user_id,
+                            userID,
                             experticeLevel) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %d, %f, %d, %f, %d, %d, %f, %s, %f);'''
         datos_a_insertar = (node.import_id,
                             node.numberImports,
                             node.moduleImportsPct, 
                             node.averageImportedModules, 
                             node.fromImportsPct, 
-                            node.averageFromImportedModules,
                             node.averageAsInImportedModules, 
                             node.localImportsPct,
-                            node.user_id,
+                            node.userId,
                             node.experticeLevel)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
@@ -515,9 +508,9 @@ class Visitor_db(NodeVisitor):
                             propertyMethodsPct
                             sourceCode, 
                             module_id,
-                            user_id,
+                            userID,
                             experticeLevel) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %s, %s, %d, %d, %d, %d, %s, %s, %d, %f, %f, %s, %d, %d, %f, %f, %f, %f, %f, %f, %f, %f, %f, %s, %s, %s, %f);'''
         datos_a_insertar = (node.classdef_id,
                             node.nameConvention, 
                             node.isEnumClass, 
@@ -543,7 +536,7 @@ class Visitor_db(NodeVisitor):
                             node.abstractMethodsPct, 
                             node.sourceCode, 
                             node.module_id,
-                            node.user_id,
+                            node.userId,
                             node.experticeLevel)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
@@ -559,9 +552,9 @@ class Visitor_db(NodeVisitor):
                             isProperty, 
                             isWrapper, 
                             isCached,
-                            user_id,
+                            userID,
                             experticeLevel) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %f);'''
         datos_a_insertar = (node.methoddef_id,
                             node.classdef_id, 
                             node.isClassMethod, 
@@ -571,7 +564,7 @@ class Visitor_db(NodeVisitor):
                             node.isProperty, 
                             node.isWrapper, 
                             node.isCached,
-                            node.user_id,
+                            node.userId,
                             node.experticeLevel)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
@@ -591,9 +584,9 @@ class Visitor_db(NodeVisitor):
                             second_child_id, 
                             third_child_id,
                             parent_id,
-                            user_id,
+                            userID,
                             experticeLevel) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %s, %s, %s, %d, %d, %s, %s, %d, %s, %s, %s, %s, %s, %f);'''
         datos_a_insertar = (node.statement_id,
                             node.category, 
                             node.parent, 
@@ -607,7 +600,7 @@ class Visitor_db(NodeVisitor):
                             node.second_child_id, 
                             node.third_child_id,
                             node.parent_id,
-                            node.user_id,
+                            node.userId,
                             node.experticeLevel)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
@@ -626,9 +619,9 @@ class Visitor_db(NodeVisitor):
                             averageMatchStar, 
                             averageMatchAs, 
                             averageMatchOr,
-                            user_id,
+                            userID,
                             experticeLevel) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %d, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %s, %s, %f);'''
         datos_a_insertar = (node.statement_id,
                             node.numberOfCases, 
                             node.guards, 
@@ -641,7 +634,7 @@ class Visitor_db(NodeVisitor):
                             node.averageMatchStar, 
                             node.averageMatchAs, 
                             node.averageMatchOr,
-                            node.user_id,
+                            node.userId,
                             node.experticeLevel)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
@@ -654,23 +647,23 @@ class Visitor_db(NodeVisitor):
                             hasCatchAll, 
                             averageBodyCount, 
                             hasStar,
-                            user_id,
+                            userID,
                             experticeLevel) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %d, %s, %s, %f, %s, %s, %f);'''
         datos_a_insertar = (node.statement_id,
                             node.numberOfHandlers, 
                             node.hasFinally, 
                             node.hasCatchAll, 
                             node.averageBodyCount, 
                             node.hasStar,
-                            node.user_id,
+                            node.userId,
                             node.experticeLevel)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
         
     def insert_expression(self : Self, node: dbentities.DBExpression):
         sql_insert = '''INSERT INTO Expressions (
-                            expression_id,
+                            expression_id
                             category, 
                             first_child_category, 
                             second_child_category, 
@@ -682,9 +675,9 @@ class Visitor_db(NodeVisitor):
                             depth, 
                             sourceCode, 
                             parent_id,
-                            user_id,
+                            userID,
                             experticeLevel) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %d, %d, %s, %s, %s, %f);'''
         datos_a_insertar = (node.expression_id,
                             node.category, 
                             node.first_child_category, 
@@ -697,7 +690,7 @@ class Visitor_db(NodeVisitor):
                             node.depth, 
                             node.sourceCode, 
                             node.parent_id,
-                            node.user_id,
+                            node.userId,
                             node.experticeLevel)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
@@ -709,15 +702,15 @@ class Visitor_db(NodeVisitor):
                             numberOfIfs, 
                             numberOfGenerators, 
                             isAsync,
-                            user_id,
+                            userID,
                             experticeLevel) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %s, %d, %d, %s, %s, %f);'''
         datos_a_insertar = (node.expression_id,
                             node.category, 
                             node.numberOfIfs, 
                             node.numberOfGenerators, 
                             node.isAsync,
-                            node.user_id,
+                            node.userId,
                             node.experticeLevel)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
@@ -728,14 +721,14 @@ class Visitor_db(NodeVisitor):
                             numberOfElements, 
                             constantsPct, 
                             expressionsPct,
-                            user_id,
+                            userID,
                             experticeLevel) 
-                        VALUES (%s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %d, %f, %f, %s, %f);'''
         datos_a_insertar = (node.expression_id,
                             node.numberOfElements, 
                             node.constantsPct, 
                             node.expressionsPct,
-                            node.user_id,
+                            node.userId,
                             node.experticeLevel)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
@@ -746,14 +739,14 @@ class Visitor_db(NodeVisitor):
                             numberArgs, 
                             namedArgsPct, 
                             doubleStarArgsPct,
-                            user_id,
+                            userID,
                             experticeLevel) 
-                        VALUES (%s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %d, %f, %f, %s, %f);'''
         datos_a_insertar = (node.expression_id,
                             node.numberArgs, 
                             node.namedArgsPct, 
                             node.doubleStarArgsPct,
-                            node.user_id,
+                            node.userId,
                             node.experticeLevel)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
@@ -765,15 +758,15 @@ class Visitor_db(NodeVisitor):
                             numberOfCharacters, 
                             isPrivate,
                             isMagic,
-                            user_id,
+                            userID,
                             experticeLevel) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %s, %d, %s, %s, %s, %f);'''
         datos_a_insertar = (node.expression_id,
                             node.nameConvention, 
                             node.numberOfCharacters, 
                             node.isPrivate,
                             node.isMagic,
-                            node.user_id,
+                            node.userId,
                             node.experticeLevel)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
@@ -784,14 +777,14 @@ class Visitor_db(NodeVisitor):
                             category,
                             numberOfElements,
                             homogeneous,
-                            user_id,
+                            userID,
                             experticeLevel) 
-                        VALUES (%s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %s, %d, %s, %s, %f);'''
         datos_a_insertar = (node.expression_id,
                             node.category,
                             node.numberOfElements,
                             node.homogeneous,
-                            node.user_id,
+                            node.userId,
                             node.experticeLevel)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
@@ -808,9 +801,9 @@ class Visitor_db(NodeVisitor):
                             defaultValuePct, 
                             hasKWParam, 
                             nameConvention,
-                            user_id,
+                            userID,
                             experticeLevel) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %d, %f, %f, %s, %f, %f, %f, %s, %s, %s, %f);'''
         datos_a_insertar = (node.parameter_id,
                             node.numberOfParams, 
                             node.posOnlyParamPct, 
@@ -821,7 +814,7 @@ class Visitor_db(NodeVisitor):
                             node.defaultValuePct, 
                             node.hasKWParam, 
                             node.nameConvention,
-                            node.user_id,
+                            node.userId,
                             node.experticeLevel)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)

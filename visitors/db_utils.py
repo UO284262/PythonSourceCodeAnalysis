@@ -18,17 +18,17 @@ cursor = conexion.cursor()
 def writeOnDB(sql_insert, datos_a_insertar):
     # Ejemplo de inserción de datos
     try:
-
+        size = len(sql_insert)
         # Ejecutar la consulta
-        for i in range(len(sql_insert)):
-            cursor.execute(sql_insert[i], datos_a_insertar[i])
+        for i in range(size):
+            cursor.execute(sql_insert[size - i - 1], datos_a_insertar[size - i - 1])
 
             # Confirmar la transacción
             conexion.commit()
 
     except Exception as e:
         # Manejar cualquier error
-        print(f"Error: {e}")
+        print(f"Error: {e.with_traceback(None)}")
         conexion.rollback()
 
     finally:
@@ -38,7 +38,7 @@ def writeOnDB(sql_insert, datos_a_insertar):
 
 def init_db():
     try:
-        with open("db/script_bd.sql", "r") as script_file:
+        with open("visitors/script_bd.sql", "r") as script_file:
             script = script_file.read()
         cursor.execute(script)
 

@@ -1,5 +1,5 @@
 import ast
-from visitors.visitor import Visitor
+from visitor import Visitor
 
 ####### SPECIAL ACCEPTS ##########
 

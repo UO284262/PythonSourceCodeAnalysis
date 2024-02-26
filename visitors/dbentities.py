@@ -13,7 +13,7 @@ class DBNode:
 class DBProgram:
     def __init__(self, category = None, name: str = None,  hasSubDirsWithCode: bool = None,  hasPackages: bool = None,  numberOfModules: int = None, 
                  numberOfSubDirsWithCode: int = None,  numberOfPackages: int = None,  classDefsPct: int = None,  functionDefsPct: int = None, 
-                 enumDefsPct: int = None,  hasCodeRootPackage: bool = None,  averageDefsPerModule: int = None,  user_id = None, node = None, experticeLevel = None):
+                 enumDefsPct: int = None,  hasCodeRootPackage: bool = None,  averageDefsPerModule: int = None,  node = None, user_id = None, experticeLevel = None):
         self.user_id = user_id
         self.experticeLevel = experticeLevel
         self.node = node
@@ -29,7 +29,6 @@ class DBProgram:
         self.enumDefsPct = enumDefsPct
         self.hasCodeRootPackage = hasCodeRootPackage
         self.averageDefsPerModule = averageDefsPerModule
-        self.user_id = user_id
         self.program_id = 0
 
 class DBModule:
@@ -43,6 +42,7 @@ class DBModule:
         self.experticeLevel = experticeLevel
         self.node = node
         self.table = "Modules"
+        self.category = "Module"
         self.module_id = module_id
         self.name = name
         self.nameConvention = nameConvention
@@ -189,7 +189,7 @@ class DBParameter:
         self.defaultValuePct = defaultValuePct
         self.hasKWParam = hasKWParam
         self.nameConvention = nameConvention
-        self.parameter_id = 0
+        self.parameters_id = 0
 
 class DBStatement:
     def __init__(self,  statement_id = None,  category: str = None,  parent: str = None,  statementRole: str = None, 
