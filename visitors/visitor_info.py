@@ -3,12 +3,11 @@ import re
 from typing import Dict, Self
 import uuid
 from util import opCategory, constCategory
+from util import IDGetter
 from My_NodeVisitor import NodeVisitor
 from visitor import Visitor
 import dbentities as dbentities
 from visitor_db import Visitor_db
-
-visitor_db = Visitor_db()
 
 def what_it_is(method):
     what_it_is = {'magic' : False, 'private' : False, 'abstract' : False, 'wrapper' : False, 'cached' : False, 'static' : False, 'classmethod' : False, 'property' : False}
@@ -45,6 +44,10 @@ def sumMatch(dict_1 : Dict, dict_2):
 
 class Visitor_info(NodeVisitor):
 
+    def __init__(self):
+        self.idGetter = IDGetter()
+        self.visitor_db = Visitor_db()
+
     def visit_Program(self: Self, params : Dict):
         #PREGUNTAR COMO HACER ESTO
         pass
@@ -58,10 +61,8 @@ class Visitor_info(NodeVisitor):
         module = dbentities.DBModule()
         dbimport = dbentities.DBImport()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
-        import_id = uuid.uuid1().int % 10000
-        dbnode.node_id = module.module_id = id
-        dbimport.import_id = module.import_id = import_id
+        id = self.idGetter.getID()
+        dbnode.node_id = module.module_id = dbimport.import_id = module.import_id = id
         ############# PARAMS #####################
         childparams = {"parent" : module, "depth" : 1, "parent_id" : id, "role" : "Module"}
         ############## PROPAGAR VISIT ############
@@ -145,7 +146,7 @@ class Visitor_info(NodeVisitor):
         dbimport.averageImportedModules = simpleImportModulesNum/siindex if(siindex > 0) else 0
         dbimport.averageFromImportedModules = fromImportModulesNum/fiindex if(fiindex > 0) else 0
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : module, 'dbnode' : dbnode, 'dbimport' : dbimport})
+        self.visitor_db.visit(node, {'node' : module, 'dbnode' : dbnode, 'dbimport' : dbimport})
         return
     
     def visit_FunctionDef(self : Self, node : ast.FunctionDef , params : Dict) -> Dict: 
@@ -154,10 +155,8 @@ class Visitor_info(NodeVisitor):
         function = dbentities.DBFunctionDef()
         if(isMethod): method = dbentities.DBMethodDef()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
-        params_id = uuid.uuid1().int % 10000
-        function.parameters_id = params_id
-        dbnode.node_id = function.functiondef_id = id
+        id = self.idGetter.getID()
+        dbnode.node_id = function.functiondef_id = function.parameters_id = id
         dbnode.parent_id = function.module_id = params["parent_id"]
         if(isMethod):
             method.classdef_id = params["parent_id"]
@@ -173,7 +172,7 @@ class Visitor_info(NodeVisitor):
         ########## ENTITIE PROPERTIES ############
         numberOfBodyExpr = 0
         ############## PROPAGAR VISIT ############
-        args = self.visit(node.args, {"parent": function, "depth": params["depth"] + 1, "params_id": params_id, "dbparams": dbparams, "role" : "FunctionParams"})
+        args = self.visit(node.args, {"parent": function, "depth": params["depth"] + 1, "params_id": id, "dbparams": dbparams, "role" : "FunctionParams"})
         for child in node.body:
             if(isinstance(child,ast.Expr)):
                 self.visit(child, addParam(childparams,"role", exprRoles[2]))
@@ -208,7 +207,7 @@ class Visitor_info(NodeVisitor):
             method.isWrapper = whatitis.wrapper
             method.isCached = whatitis.cached
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : function, 'dbnode' : dbnode, 'dbparams': dbparams})
+        self.visitor_db.visit(node, {'node' : function, 'dbnode' : dbnode})
         if(isMethod):
             return {'method': method, 'function': function, 'args': args, 'typeAnnotations' : args["typeAnnotations"]}
         else:
@@ -219,12 +218,9 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         function = dbentities.DBFunctionDef()
         if(isMethod): method = dbentities.DBMethodDef()
-        dbparams = dbentities.DBParameter()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
-        params_id = uuid.uuid1().int % 10000
-        dbparams.parameters_id = function.parameters_id = params_id
-        dbnode.node_id = function.functiondef_id = id
+        id = self.idGetter.getID()
+        dbnode.node_id = function.functiondef_id = function.parameters_id = id
         dbnode.parent_id = function.module_id = params["parent_id"]
         if(isMethod):
             method.classdef_id = params["parent_id"]
@@ -240,7 +236,7 @@ class Visitor_info(NodeVisitor):
         ########## ENTITIE PROPERTIES ############
         numberOfBodyExpr = 0
         ############## PROPAGAR VISIT ############
-        args = self.visit(node.args, {"parent": function, "depth": params["depth"] + 1, "params_id": params_id, "dbparams": dbparams, "role" : "FunctionParams"})
+        args = self.visit(node.args, {"parent": function, "depth": params["depth"] + 1, "params_id": id, "dbparams": dbparams, "role" : "FunctionParams"})
         for child in node.body:
             if(isinstance(child,ast.Expr)):
                 self.visit(child, addParam(childparams,"role", exprRoles[2]))
@@ -275,7 +271,7 @@ class Visitor_info(NodeVisitor):
             method.isWrapper = whatitis.wrapper
             method.isCached = whatitis.cached
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : function, 'dbnode' : dbnode, 'dbparams': dbparams})
+        self.visitor_db.visit(node, {'node' : function, 'dbnode' : dbnode})
         if(isMethod):
             return {'method': method, 'function': function, 'args': args,  'typeAnnotations' : args["typeAnnotations"]}
         else:
@@ -285,7 +281,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         classdef = dbentities.DBClassDef()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = classdef.classdef_id = id
         dbnode.parent_id = classdef.module_id = params["parent_id"]
         ############# PARAMS #####################
@@ -363,7 +359,7 @@ class Visitor_info(NodeVisitor):
         classdef.propertyMethodsPct = numberOfPropertyMethods/numberOfMethods
         classdef.sourceCode = ast.unparse(node)
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : classdef, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : classdef, 'dbnode' : dbnode})
         return {'methodCount' : numberOfMethods, 'typeAnnotations' : numberOfMethodTypeAnnotations, 'numberOfMethodStmt' : numberOfMethodStmt}
 
     ############################### STATEMENTS #############################
@@ -372,7 +368,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -396,14 +392,14 @@ class Visitor_info(NodeVisitor):
         stmt.hasOrElse = None
         stmt.bodySize = None
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1}
 
     def visit_Delete(self : Self, node : ast.Delete , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -432,14 +428,14 @@ class Visitor_info(NodeVisitor):
         stmt.hasOrElse = None
         stmt.bodySize = None
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1}
 
     def visit_Assign(self : Self, node : ast.Assign , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -470,14 +466,14 @@ class Visitor_info(NodeVisitor):
         stmt.hasOrElse = None
         stmt.bodySize = None
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1}
     
     def visit_TypeAlias(self : Self, node : ast.TypeAlias , params : Dict) -> Dict:
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -497,21 +493,21 @@ class Visitor_info(NodeVisitor):
         returns[1] = self.visit(node.value, addParam(childparams,'role', roles[1]))
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
-        stmt.depth = max(returns[0].depth, returns[1].depth)
-        stmt.first_child_id = returns[0].id
-        stmt.second_child_id = returns[1].id
+        stmt.depth = max(returns[0]["depth"], returns[1]["depth"])
+        stmt.first_child_id = returns[0]["id"]
+        stmt.second_child_id = returns[1]["id"]
         stmt.sourceCode = ast.unparse(node)
         stmt.hasOrElse = None
         stmt.bodySize = None
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1}
     
     def visit_AugAssign(self : Self, node : ast.AugAssign , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -529,21 +525,21 @@ class Visitor_info(NodeVisitor):
         returns[1] = self.visit(node.value, addParam(childparams,'role', roles[1]))
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
-        stmt.depth = max(returns[0].depth, returns[1].depth)
-        stmt.first_child_id = returns[0].id
-        stmt.second_child_id = returns[1].id
+        stmt.depth = max(returns[0]["depth"], returns[1]["depth"])
+        stmt.first_child_id = returns[0]["id"]
+        stmt.second_child_id = returns[1]["id"]
         stmt.sourceCode = ast.unparse(node)
         stmt.hasOrElse = None
         stmt.bodySize = None
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1}
 
     def visit_AnnAssign(self : Self, node : ast.AnnAssign , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -562,24 +558,24 @@ class Visitor_info(NodeVisitor):
         if(node.value): returns[2] = self.visit(node.value, addParam(childparams,'role', roles[2]))
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
-        stmt.depth = max(returns[0].depth, returns[1].depth)
-        stmt.first_child_id = returns[0].id
-        stmt.second_child_id = returns[1].id
+        stmt.depth = max(returns[0]["depth"], returns[1]["depth"])
+        stmt.first_child_id = returns[0]["id"]
+        stmt.second_child_id = returns[1]["id"]
         if(returns[2]): 
-            stmt.third_child_id = returns[2].id
-            stmt.depth = max(stmt.depth, returns[2].depth)
+            stmt.third_child_id = returns[2]["id"]
+            stmt.depth = max(stmt.depth, returns[2]["depth"])
         stmt.sourceCode = ast.unparse(node)
         stmt.hasOrElse = None
         stmt.bodySize = None
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1}
 
     def visit_For(self : Self, node : ast.For , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -624,7 +620,7 @@ class Visitor_info(NodeVisitor):
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = index
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1}
 
     
@@ -632,7 +628,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -677,7 +673,7 @@ class Visitor_info(NodeVisitor):
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = index
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1}
 
     
@@ -685,7 +681,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -729,7 +725,7 @@ class Visitor_info(NodeVisitor):
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = index
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1}
 
 
@@ -737,7 +733,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -782,7 +778,7 @@ class Visitor_info(NodeVisitor):
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = bodySize
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1}
 
 
@@ -790,7 +786,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -827,7 +823,7 @@ class Visitor_info(NodeVisitor):
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = index
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1}
 
     
@@ -835,7 +831,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -871,7 +867,7 @@ class Visitor_info(NodeVisitor):
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = index
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1}
 
     
@@ -880,7 +876,7 @@ class Visitor_info(NodeVisitor):
         stmt = dbentities.DBStatement()
         case = dbentities.DBCase()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -947,7 +943,7 @@ class Visitor_info(NodeVisitor):
         case.averageMatchOr = numberOfCasesOr/totalCases
         case.statement_id = id
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode, 'case': case})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode, 'case': case})
         return {'id' : id, 'depth' : stmt.depth + 1}
 
     
@@ -955,7 +951,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -989,7 +985,7 @@ class Visitor_info(NodeVisitor):
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = None
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1}
     
     def visit_Try(self : Self, node : ast.Try , params : Dict) -> Dict: 
@@ -997,7 +993,7 @@ class Visitor_info(NodeVisitor):
         stmt = dbentities.DBStatement()
         handler = dbentities.DBHandler()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = handler.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1063,7 +1059,7 @@ class Visitor_info(NodeVisitor):
         handler.averageBodyCount = handlersBodies/handler.numberOfHandlers
         handler.hasStar = False
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode, 'handler' : handler})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode, 'handler' : handler})
         return {'id' : id, 'depth' : stmt.depth + 1}
 
     
@@ -1072,7 +1068,7 @@ class Visitor_info(NodeVisitor):
         stmt = dbentities.DBStatement()
         handler = dbentities.DBHandler()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = handler.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1138,7 +1134,7 @@ class Visitor_info(NodeVisitor):
         handler.averageBodyCount = handlersBodies/handler.numberOfHandlers
         handler.hasStar = True
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode, 'handler' : handler})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode, 'handler' : handler})
         return {'id' : id, 'depth' : stmt.depth + 1}
 
     
@@ -1146,7 +1142,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES #######################
@@ -1172,7 +1168,7 @@ class Visitor_info(NodeVisitor):
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = None
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1}
 
     
@@ -1180,7 +1176,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1196,7 +1192,7 @@ class Visitor_info(NodeVisitor):
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = None
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1}
 
     
@@ -1204,7 +1200,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1220,7 +1216,7 @@ class Visitor_info(NodeVisitor):
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = None
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1}
 
     
@@ -1228,7 +1224,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1244,7 +1240,7 @@ class Visitor_info(NodeVisitor):
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = None
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1}
 
     
@@ -1252,7 +1248,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1268,7 +1264,7 @@ class Visitor_info(NodeVisitor):
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = None
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1}
 
     
@@ -1276,7 +1272,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = stmt.statement_id = id
         dbnode.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1292,7 +1288,7 @@ class Visitor_info(NodeVisitor):
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = None
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1}
 
     ############################ IMPORTS ##################################
@@ -1301,7 +1297,7 @@ class Visitor_info(NodeVisitor):
     def visit_Import(self : Self, node : ast.Import , params : Dict) -> Dict: 
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         stmt.statement_id = id
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
@@ -1313,14 +1309,14 @@ class Visitor_info(NodeVisitor):
         for alias in node.names:
             if(alias.asname): asnames += 1
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt})
+        self.visitor_db.visit(node, {'node' : stmt})
         return {'id' : id, 'depth' : stmt.depth + 1, 'importedModules' : len(node.names), 'asnames' : asnames}
 
     
     def visit_ImportFrom(self : Self, node : ast.ImportFrom , params : Dict) -> Dict: 
         stmt = dbentities.DBStatement()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         stmt.statement_id = id
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
@@ -1332,7 +1328,7 @@ class Visitor_info(NodeVisitor):
         for alias in node.names:
             if(alias.asname): asnames += 1
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : stmt})
+        self.visitor_db.visit(node, {'node' : stmt})
         return {'id' : id, 'depth' : stmt.depth + 1, 'importedModules' : len(node.names), 'asnames' : asnames}
 
     ############################ EXPRESSIONS ##################################
@@ -1341,7 +1337,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1388,7 +1384,7 @@ class Visitor_info(NodeVisitor):
         expr.fourth_child_id = fourth_child_id
         expr.depth = depth
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     
@@ -1396,7 +1392,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES #######################
@@ -1420,7 +1416,7 @@ class Visitor_info(NodeVisitor):
         expr.second_child_id = value["id"]
         expr.depth = max(target["depth"], value["depth"])
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     
@@ -1428,7 +1424,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1459,7 +1455,7 @@ class Visitor_info(NodeVisitor):
         expr.second_child_id = right["id"]
         expr.depth = max(left["depth"], right["depth"])
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
     
     
@@ -1467,7 +1463,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1489,7 +1485,7 @@ class Visitor_info(NodeVisitor):
         expr.first_child_id = operand["id"]
         expr.depth = operand["depth"]
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
     
     
@@ -1497,8 +1493,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
-        params_id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1523,7 +1518,7 @@ class Visitor_info(NodeVisitor):
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
-        args = self.visit(node.args, addParam(addParam(childparams, "params_id", params_id), "role", "LambdaParams"))
+        args = self.visit(node.args, addParam(addParam(childparams, "params_id", id), "role", "LambdaParams"))
         for child in node.body:
             returns.append(self.visit(child, addParam(childparams,'role', exprRoles[0])))
             depth = max(depth, returns[index]["depth"])
@@ -1545,7 +1540,7 @@ class Visitor_info(NodeVisitor):
         expr.fourth_child_id = fourth_child_id
         expr.depth = depth
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
     
     
@@ -1553,7 +1548,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1580,7 +1575,7 @@ class Visitor_info(NodeVisitor):
         expr.third_child_id = orelse["id"]
         expr.depth = max(max(body["depth"],orelse["depth"]),test["depth"])
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     ######################### COMPREHENSIONS #############################
@@ -1591,7 +1586,7 @@ class Visitor_info(NodeVisitor):
         expr = dbentities.DBExpression()
         comp = dbentities.DBComprehension()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = comp.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1643,7 +1638,7 @@ class Visitor_info(NodeVisitor):
         comp.numberOfGenerators = len(node.generators)
         comp.isAsync = isAsync
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : comp, 'dbnode' : dbnode, 'expr': expr})
+        self.visitor_db.visit(node, {'node' : comp, 'dbnode' : dbnode, 'expr': expr})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     
@@ -1652,7 +1647,7 @@ class Visitor_info(NodeVisitor):
         expr = dbentities.DBExpression()
         comp = dbentities.DBComprehension()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = comp.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1704,7 +1699,7 @@ class Visitor_info(NodeVisitor):
         comp.numberOfGenerators = len(node.generators)
         comp.isAsync = isAsync
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : comp, 'dbnode' : dbnode, 'expr': expr})
+        self.visitor_db.visit(node, {'node' : comp, 'dbnode' : dbnode, 'expr': expr})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     
@@ -1713,7 +1708,7 @@ class Visitor_info(NodeVisitor):
         expr = dbentities.DBExpression()
         comp = dbentities.DBComprehension()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = comp.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1763,7 +1758,7 @@ class Visitor_info(NodeVisitor):
         comp.numberOfGenerators = len(node.generators)
         comp.isAsync = isAsync
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : comp, 'dbnode' : dbnode, 'expr': expr})
+        self.visitor_db.visit(node, {'node' : comp, 'dbnode' : dbnode, 'expr': expr})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     
@@ -1772,7 +1767,7 @@ class Visitor_info(NodeVisitor):
         expr = dbentities.DBExpression()
         comp = dbentities.DBComprehension()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = comp.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1824,7 +1819,7 @@ class Visitor_info(NodeVisitor):
         comp.numberOfGenerators = len(node.generators)
         comp.isAsync = isAsync
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : comp, 'dbnode' : dbnode, 'expr': expr})
+        self.visitor_db.visit(node, {'node' : comp, 'dbnode' : dbnode, 'expr': expr})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     ######################################################################
@@ -1834,7 +1829,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1855,7 +1850,7 @@ class Visitor_info(NodeVisitor):
         expr.first_child_id = value["id"]
         expr.depth = value["depth"]
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     
@@ -1863,7 +1858,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1886,7 +1881,7 @@ class Visitor_info(NodeVisitor):
             expr.first_child_id = value["id"]
             expr.depth = value["depth"]
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     
@@ -1894,7 +1889,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1915,7 +1910,7 @@ class Visitor_info(NodeVisitor):
         expr.first_child_id = value["id"]
         expr.depth = value["depth"]
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     
@@ -1923,7 +1918,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -1973,7 +1968,7 @@ class Visitor_info(NodeVisitor):
         expr.fourth_child_id = fourth_child_id
         expr.depth = max(left["depth"], depth)
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     ########################## call_args ###########################
@@ -1984,7 +1979,7 @@ class Visitor_info(NodeVisitor):
         expr = dbentities.DBExpression()
         callArgs = dbentities.DBCallArg()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = callArgs.expression_id = id
         ############ CATEGORIES ##################
         expr.category = node.__doc__.split('(')[0]
@@ -2046,7 +2041,7 @@ class Visitor_info(NodeVisitor):
         callArgs.namedArgsPct = namedArgs/callArgs.numberArgs
         callArgs.doubleStarArgsPct = staredArgs/callArgs.numberArgs
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : callArgs, 'dbnode' : dbnode, 'expr' : expr})
+        self.visitor_db.visit(node, {'node' : callArgs, 'dbnode' : dbnode, 'expr' : expr})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     ################################################################
@@ -2055,7 +2050,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -2081,7 +2076,7 @@ class Visitor_info(NodeVisitor):
             expr.second_child_id = spec["id"]
             expr.depth = max(spec["depth"], expr.depth)
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     ########################### F-strings #####################################
@@ -2092,7 +2087,7 @@ class Visitor_info(NodeVisitor):
         expr = dbentities.DBExpression()
         fstr = dbentities.DBFString()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = fstr.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -2138,7 +2133,7 @@ class Visitor_info(NodeVisitor):
         expr.fourth_child_id = fourth_child_id
         expr.depth = depth
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : fstr, 'dbnode' : dbnode, 'expr' : expr})
+        self.visitor_db.visit(node, {'node' : fstr, 'dbnode' : dbnode, 'expr' : expr})
         return  {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     ###########################################################################
@@ -2148,7 +2143,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -2162,7 +2157,7 @@ class Visitor_info(NodeVisitor):
         expr.height = params["depth"]
         expr.depth = 0
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return  {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     
@@ -2170,7 +2165,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -2191,7 +2186,7 @@ class Visitor_info(NodeVisitor):
         expr.first_child_id = value["id"]
         expr.depth = value["depth"]
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     
@@ -2199,7 +2194,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -2223,7 +2218,7 @@ class Visitor_info(NodeVisitor):
         expr.second_child_id = slice["id"]
         expr.depth = max(slice["depth"],value["depth"])
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     
@@ -2231,7 +2226,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -2252,7 +2247,7 @@ class Visitor_info(NodeVisitor):
         expr.first_child_id = value["id"]
         expr.depth = value["depth"]
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     ############################# Variable ##################################
@@ -2263,7 +2258,7 @@ class Visitor_info(NodeVisitor):
         expr = dbentities.DBExpression()
         var = dbentities.DBVariable()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = var.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -2286,7 +2281,7 @@ class Visitor_info(NodeVisitor):
             else:
                 var.isPrivate = True
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : var, 'dbnode' : dbnode, 'expr' : expr})
+        self.visitor_db.visit(node, {'node' : var, 'dbnode' : dbnode, 'expr' : expr})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     ############################### Vectors #################################
@@ -2297,7 +2292,7 @@ class Visitor_info(NodeVisitor):
         expr = dbentities.DBExpression()
         vct = dbentities.DBVector()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = vct.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -2349,7 +2344,7 @@ class Visitor_info(NodeVisitor):
         vct.numberOfElements = len(node.elts)
         vct.homogeneous = homogeneous
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : vct, 'dbnode' : dbnode, 'expr' : expr})
+        self.visitor_db.visit(node, {'node' : vct, 'dbnode' : dbnode, 'expr' : expr})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     
@@ -2358,7 +2353,7 @@ class Visitor_info(NodeVisitor):
         expr = dbentities.DBExpression()
         vct = dbentities.DBVector()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = vct.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -2410,7 +2405,7 @@ class Visitor_info(NodeVisitor):
         vct.numberOfElements = len(node.elts)
         vct.homogeneous = homogeneous
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : vct, 'dbnode' : dbnode, 'expr' : expr})
+        self.visitor_db.visit(node, {'node' : vct, 'dbnode' : dbnode, 'expr' : expr})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     
@@ -2419,7 +2414,7 @@ class Visitor_info(NodeVisitor):
         expr = dbentities.DBExpression()
         vct = dbentities.DBVector()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = vct.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -2479,7 +2474,7 @@ class Visitor_info(NodeVisitor):
         vct.numberOfElements = len(node.elts)
         vct.homogeneous = homogeneous
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : vct, 'dbnode' : dbnode, 'expr' : expr})
+        self.visitor_db.visit(node, {'node' : vct, 'dbnode' : dbnode, 'expr' : expr})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     
@@ -2488,7 +2483,7 @@ class Visitor_info(NodeVisitor):
         expr = dbentities.DBExpression()
         vct = dbentities.DBVector()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = vct.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -2540,7 +2535,7 @@ class Visitor_info(NodeVisitor):
         vct.numberOfElements = len(node.elts)
         vct.homogeneous = homogeneous
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : vct, 'dbnode' : dbnode, 'expr' : expr})
+        self.visitor_db.visit(node, {'node' : vct, 'dbnode' : dbnode, 'expr' : expr})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     ########################################################################
@@ -2550,7 +2545,7 @@ class Visitor_info(NodeVisitor):
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
-        id = uuid.uuid1().int % 10000
+        id = self.idGetter.getID()
         dbnode.node_id = expr.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
@@ -2603,7 +2598,7 @@ class Visitor_info(NodeVisitor):
                     expr.first_child_id = step["id"]
         expr.depth = depth
         ############## VISITOR DB ################
-        visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
+        self.visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     ############################### Cases ###################################
@@ -2799,7 +2794,7 @@ class Visitor_info(NodeVisitor):
         dbparams.defaultValuePct = (len(node.kw_defaults) + len(node.defaults))/numberOfParams if numberOfParams > 0 else 0
         dbparams.hasKWParam = True if node.kwarg else False
         ############## VISITOR DB ################
-        visitor_db.visit(node, {"dbparams" : dbparams})
+        self.visitor_db.visit(node, {"dbparams" : dbparams})
         return {"typeAnnotations" : numberOfAnnotations, "numberOfArgs" : numberOfParams}
     
     def visit_Arg(self : Self, node : ast.arg , params : Dict) -> Dict:

@@ -1,14 +1,14 @@
 -- Creación de la tabla NODES
 CREATE TABLE NODES (
-    node_id INTEGER PRIMARY KEY,
+    node_id BIGINT PRIMARY KEY,
     parent_table VARCHAR(255),
-    parent_id INTEGER,
+    parent_id BIGINT,
     FOREIGN KEY (parent_id) REFERENCES NODES(node_id)
 );
 
 -- Creación de la tabla PROGRAMS
 CREATE TABLE PROGRAMS (
-    program_id INTEGER PRIMARY KEY,
+    program_id BIGINT PRIMARY KEY,
     name VARCHAR(255),
     hasSubDirsWithCode BOOLEAN,
     hasPackages BOOLEAN,
@@ -20,27 +20,14 @@ CREATE TABLE PROGRAMS (
     enumDefsPct REAL CHECK (enumDefsPct >= 0 AND enumDefsPct <= 1),
     hasCodeRootPackage BOOLEAN,
     avegareDefsPerModule REAL,
-    user_id INTEGER,
-    experticeLevel BOOLEAN
-);
-
--- Creación de la tabla IMPORTS
-CREATE TABLE IMPORTS (
-    import_id INTEGER PRIMARY KEY,
-    numberImports INTEGER,
-    moduleImportsPct REAL CHECK (moduleImportsPct >= 0 AND moduleImportsPct <= 1),
-    averageImportedModules REAL,
-    fromImportsPct REAL CHECK (fromImportsPct >= 0 AND fromImportsPct <= 1),
-    averageFromImportedModules REAL,
-    averageAsInImportedModules REAL,
-    localImportsPct REAL CHECK (localImportsPct >= 0 AND localImportsPct <= 1),
-    user_id INTEGER,
+    user_id BIGINT,
     experticeLevel BOOLEAN
 );
 
 -- Creación de la tabla PARAMETERS
 CREATE TABLE PARAMETERS (
-    parameters_id INTEGER PRIMARY KEY,
+    parameters_id BIGINT PRIMARY KEY,
+    parent_id BIGINT,
     parametersRole VARCHAR(255),
     numberOfParams INTEGER,
     posOnlyParamPct REAL CHECK (posOnlyParamPct >= 0 AND posOnlyParamPct <= 1),
@@ -51,14 +38,15 @@ CREATE TABLE PARAMETERS (
     defaultValuePct REAL CHECK (defaultValuePct >= 0 AND defaultValuePct <= 1),
     hasKWParam BOOLEAN,
     nameConvention VARCHAR(255),
-    user_id INTEGER,
+    user_id BIGINT,
     experticeLevel BOOLEAN,
-    FOREIGN KEY (parent_id) REFERENCES NODES(node_id)
+    FOREIGN KEY (parent_id) REFERENCES NODES(node_id),
+    FOREIGN KEY (parameters_id) REFERENCES NODES(node_id)
 );
 
 -- Creación de la tabla MODULES
 CREATE TABLE MODULES (
-    module_id INTEGER PRIMARY KEY,
+    module_id BIGINT PRIMARY KEY,
     name VARCHAR(255),
     nameConvention VARCHAR(255),
     hasDocString BOOLEAN,
@@ -74,18 +62,32 @@ CREATE TABLE MODULES (
     typeAnnotationsPct REAL CHECK (typeAnnotationsPct >= 0 AND typeAnnotationsPct <= 1),
     hasEntryPoint BOOLEAN,
     path VARCHAR(255),
-    program_id INTEGER,
-    import_id INTEGER,
+    program_id BIGINT,
+    import_id BIGINT,
     FOREIGN KEY (module_id) REFERENCES NODES(node_id),
     FOREIGN KEY (program_id) REFERENCES PROGRAMS(program_id),
-    FOREIGN KEY (import_id) REFERENCES IMPORTS(import_id),
-    user_id INTEGER,
+    user_id BIGINT,
     experticeLevel BOOLEAN
+);
+
+-- Creación de la tabla IMPORTS
+CREATE TABLE IMPORTS (
+    import_id BIGINT PRIMARY KEY,
+    numberImports INTEGER,
+    moduleImportsPct REAL CHECK (moduleImportsPct >= 0 AND moduleImportsPct <= 1),
+    averageImportedModules REAL,
+    fromImportsPct REAL CHECK (fromImportsPct >= 0 AND fromImportsPct <= 1),
+    averageFromImportedModules REAL,
+    averageAsInImportedModules REAL,
+    localImportsPct REAL CHECK (localImportsPct >= 0 AND localImportsPct <= 1),
+    user_id BIGINT,
+    experticeLevel BOOLEAN,
+    FOREIGN KEY (import_id) REFERENCES NODES(node_id)
 );
 
 -- Creación de la tabla CLASSDEFS
 CREATE TABLE CLASSDEFS (
-    classdef_id INTEGER PRIMARY KEY,
+    classdef_id BIGINT PRIMARY KEY,
     nameConvention VARCHAR(255),
     isEnumClass BOOLEAN,
     numberOfCharacters INTEGER,
@@ -108,16 +110,16 @@ CREATE TABLE CLASSDEFS (
     staticMethodsPct REAL CHECK (staticMethodsPct >= 0 AND staticMethodsPct <= 1),
     abstractMethodsPct REAL CHECK (abstractMethodsPct >= 0 AND abstractMethodsPct <= 1),
     sourceCode VARCHAR(255),
-    module_id INTEGER,
+    module_id BIGINT,
     FOREIGN KEY (classdef_id) REFERENCES NODES(node_id),
-    FOREIGN KEY (module_id) REFERENCES MODULES(module_id),
-    user_id INTEGER,
+    FOREIGN KEY (module_id) REFERENCES NODES(node_id),
+    user_id BIGINT,
     experticeLevel BOOLEAN
 );
 
 -- Creación de la tabla FUNCTIONDEFS
 CREATE TABLE FUNCTIONDEFS (
-    functiondef_id INTEGER PRIMARY KEY,
+    functiondef_id BIGINT PRIMARY KEY,
     nameConvention VARCHAR(255),
     numberOfCharacters INTEGER,
     isPrivate BOOLEAN,
@@ -131,18 +133,17 @@ CREATE TABLE FUNCTIONDEFS (
     height INTEGER,
     typeAnnotationsPct REAL CHECK (typeAnnotationsPct >= 0 AND typeAnnotationsPct <= 1),
     sourceCode VARCHAR(255),
-    module_id INTEGER,
-    parameters_id INTEGER,
+    module_id BIGINT,
+    parameters_id BIGINT,
     FOREIGN KEY (functiondef_id) REFERENCES NODES(node_id),
-    FOREIGN KEY (module_id) REFERENCES MODULES(module_id),
-    FOREIGN KEY (parameters_id) REFERENCES PARAMETERS(parameters_id),
-    user_id INTEGER,
+    FOREIGN KEY (module_id) REFERENCES NODES(node_id),
+    user_id BIGINT,
     experticeLevel BOOLEAN
 );
 
 -- Creación de la tabla METHODDEFS
 CREATE TABLE METHODDEFS (
-    methoddef_id INTEGER PRIMARY KEY,
+    methoddef_id BIGINT PRIMARY KEY,
     isClassMethod BOOLEAN,
     isStaticMethod BOOLEAN,
     isConstructorMethod BOOLEAN,
@@ -150,15 +151,16 @@ CREATE TABLE METHODDEFS (
     isProperty BOOLEAN,
     isWrapper BOOLEAN,
     isCached BOOLEAN,
-    functiondef_id INTEGER,
-    FOREIGN KEY (methoddef_id) REFERENCES FUNCTIONDEFS(functiondef_id),
-    user_id INTEGER,
+    classdef_id BIGINT,
+    FOREIGN KEY (methoddef_id) REFERENCES NODES(node_id),
+    FOREIGN KEY (classdef_id) REFERENCES NODES(node_id),
+    user_id BIGINT,
     experticeLevel BOOLEAN
 );
 
 -- Creación de la tabla STATEMENTS
 CREATE TABLE STATEMENTS (
-    statement_id INTEGER PRIMARY KEY,
+    statement_id BIGINT PRIMARY KEY,
     category VARCHAR(255),
     parent VARCHAR(255),
     statementRole VARCHAR(255),
@@ -167,22 +169,22 @@ CREATE TABLE STATEMENTS (
     sourceCode VARCHAR(255),
     hasOrElse BOOLEAN,
     bodySize INTEGER,
-    first_child_id INTEGER,
-    second_child_id INTEGER,
-    third_child_id INTEGER,
-    parent_id INTEGER,
+    first_child_id BIGINT,
+    second_child_id BIGINT,
+    third_child_id BIGINT,
+    parent_id BIGINT,
     FOREIGN KEY (statement_id) REFERENCES NODES(node_id),
     FOREIGN KEY (first_child_id) REFERENCES NODES(node_id),
     FOREIGN KEY (second_child_id) REFERENCES NODES(node_id),
     FOREIGN KEY (third_child_id) REFERENCES NODES(node_id),
     FOREIGN KEY (parent_id) REFERENCES NODES(node_id),
-    user_id INTEGER,
+    user_id BIGINT,
     experticeLevel BOOLEAN
 );
 
 -- Creación de la tabla CASES
 CREATE TABLE CASES (
-    case_id INTEGER PRIMARY KEY,
+    statement_id BIGINT PRIMARY KEY,
     numberOfCases INTEGER,
     guards REAL CHECK (guards >= 0 AND guards <= 1),
     averageBodyCount REAL,
@@ -194,109 +196,105 @@ CREATE TABLE CASES (
     averageMatchStar REAL CHECK (averageMatchStar >= 0 AND averageMatchStar <= 1),
     averageMatchAs REAL CHECK (averageMatchAs >= 0 AND averageMatchAs <= 1),
     averageMatchOr REAL CHECK (averageMatchOr >= 0 AND averageMatchOr <= 1),
-    statement_id INTEGER,
     FOREIGN KEY (statement_id) REFERENCES NODES(node_id),
-    user_id INTEGER,
+    user_id BIGINT,
     experticeLevel BOOLEAN
 );
 
 -- Creación de la tabla HANDLERS
 CREATE TABLE HANDLERS (
-    handler_id INTEGER PRIMARY KEY,
+    statement_id BIGINT PRIMARY KEY,
     numberOfHandlers INTEGER,
     hasFinally BOOLEAN,
     hasCatchAll BOOLEAN,
     averageBodyCOunt REAL,
     hasStar BOOLEAN,
-    statement_id INTEGER,
-    FOREIGN KEY (handler_id) REFERENCES NODES(node_id),
     FOREIGN KEY (statement_id) REFERENCES NODES(node_id),
-    user_id INTEGER,
+    user_id BIGINT,
     experticeLevel BOOLEAN
 );
 
 -- Creación de la tabla EXPRESSIONS
 CREATE TABLE EXPRESSIONS (
-    expression_id INTEGER PRIMARY KEY,
+    expression_id BIGINT PRIMARY KEY,
     category VARCHAR(255),
     parent VARCHAR(255),
     first_child_category VARCHAR(255),
     second_child_category VARCHAR(255),
     third_child_category VARCHAR(255),
     fourth_child_category VARCHAR(255),
-    first_child_id VARCHAR(255),
-    second_child_id VARCHAR(255),
-    third_child_id VARCHAR(255),
-    fourth_child_id VARCHAR(255),
+    first_child_id BIGINT,
+    second_child_id BIGINT,
+    third_child_id BIGINT,
+    fourth_child_id BIGINT,
     expressionRole VARCHAR(255),
     height INTEGER,
     depth INTEGER,
     sourceCode VARCHAR(255),
-    parent_id INTEGER,
+    parent_id BIGINT,
     FOREIGN KEY (expression_id) REFERENCES NODES(node_id),
+    FOREIGN KEY (first_child_id) REFERENCES NODES(node_id),
+    FOREIGN KEY (second_child_id) REFERENCES NODES(node_id),
+    FOREIGN KEY (third_child_id) REFERENCES NODES(node_id),
+    FOREIGN KEY (fourth_child_id) REFERENCES NODES(node_id),
     FOREIGN KEY (parent_id) REFERENCES NODES(node_id),
-    user_id INTEGER,
+    user_id BIGINT,
     experticeLevel BOOLEAN
 );
 
 -- Creación de la tabla COMPREHENSIONS
 CREATE TABLE COMPREHENSIONS (
+    expression_id BIGINT PRIMARY KEY,
     category VARCHAR(255),
     numberOfIfs INTEGER,
     numberOfGenerators INTEGER,
     isAsync BOOLEAN,
-    expression_id INTEGER,
-    FOREIGN KEY (expression_id) REFERENCES EXPRESSIONS(expression_id),
-    PRIMARY KEY (expression_id),
-    user_id INTEGER,
+    FOREIGN KEY (expression_id) REFERENCES NODES(node_id),
+    user_id BIGINT,
     experticeLevel BOOLEAN
 );
 
 -- Creación de la tabla CALLARGS
 CREATE TABLE CALLARGS (
-    callArgs_id INTEGER PRIMARY KEY,
+    expression_id BIGINT PRIMARY KEY,
     numberArgs INTEGER,
     namedArgsPct REAL CHECK (namedArgsPct >= 0 AND namedArgsPct <= 1),
     doubleStarArgsPct REAL CHECK (doubleStarArgsPct >= 0 AND doubleStarArgsPct <= 1),
-    expression_id INTEGER,
-    FOREIGN KEY (expression_id) REFERENCES EXPRESSIONS(expression_id),
-    user_id INTEGER,
+    FOREIGN KEY (expression_id) REFERENCES NODES(node_id),
+    user_id BIGINT,
     experticeLevel BOOLEAN
 );
 
 -- Creación de la tabla FSTRINGS
 CREATE TABLE FSTRINGS (
+    expression_id BIGINT PRIMARY KEY,
     numberOfElements INTEGER,
     constantsPct REAL CHECK (constantsPct >= 0 AND constantsPct <= 1),
     expressionsPct REAL CHECK (expressionsPct >= 0 AND expressionsPct <= 1),
-    expression_id INTEGER,
-    FOREIGN KEY (expression_id) REFERENCES EXPRESSIONS(expression_id),
-    PRIMARY KEY (expression_id),
-    user_id INTEGER,
+    FOREIGN KEY (expression_id) REFERENCES NODES(node_id),
+    user_id BIGINT,
     experticeLevel BOOLEAN
 );
 
 -- Creación de la tabla VARIABLES
 CREATE TABLE VARIABLES (
+    expression_id BIGINT PRIMARY KEY,
     nameConvention VARCHAR(255),
     numberOfCharacters INTEGER,
     isPrivate BOOLEAN,
     isMagic BOOLEAN,
-    expression_id INTEGER,
-    FOREIGN KEY (expression_id) REFERENCES EXPRESSIONS(expression_id),
-    PRIMARY KEY (expression_id),
-    user_id INTEGER,
+    FOREIGN KEY (expression_id) REFERENCES NODES(node_id),
+    user_id BIGINT,
     experticeLevel BOOLEAN
 );
 
 -- Creación de la tabla VECTORS
 CREATE TABLE VECTORS (
+    expression_id BIGINT PRIMARY KEY,
     category VARCHAR(255),
     numberOfElements INTEGER,
     homogeneous BOOLEAN,
-    expression_id INTEGER,
-    FOREIGN KEY (expression_id) REFERENCES EXPRESSIONS(expression_id),
-    PRIMARY KEY (expression_id),
-    user_id INTEGER,
+    FOREIGN KEY (expression_id) REFERENCES NODES(node_id),
+    user_id BIGINT,
     experticeLevel BOOLEAN
 );

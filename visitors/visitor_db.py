@@ -676,6 +676,10 @@ class Visitor_db(NodeVisitor):
                             second_child_category, 
                             third_child_category, 
                             fourth_child_category, 
+                            first_child_id, 
+                            second_child_id, 
+                            third_child_id, 
+                            fourth_child_id,
                             parent, 
                             expressionRole, 
                             height, 
@@ -684,13 +688,17 @@ class Visitor_db(NodeVisitor):
                             parent_id,
                             user_id,
                             experticeLevel) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.expression_id,
                             node.category, 
                             node.first_child_category, 
                             node.second_child_category, 
                             node.third_child_category, 
                             node.fourth_child_category, 
+                            node.first_child_id,
+                            node.second_child_id,
+                            node.third_child_id,
+                            node.fourth_child_id,
                             node.parent, 
                             node.expressionRole, 
                             node.height, 
@@ -798,7 +806,9 @@ class Visitor_db(NodeVisitor):
         
     def insert_parameter(self : Self, node: dbentities.DBParameter):
         sql_insert = '''INSERT INTO Parameters (
-                            parameter_id,
+                            parameters_id,
+                            parent_id,
+                            parametersRole,
                             numberOfParams, 
                             posOnlyParamPct, 
                             varParamPct, 
@@ -810,8 +820,10 @@ class Visitor_db(NodeVisitor):
                             nameConvention,
                             user_id,
                             experticeLevel) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
-        datos_a_insertar = (node.parameter_id,
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
+        datos_a_insertar = (node.parameters_id,
+                            node.parent_id,
+                            node.parametersRole,
                             node.numberOfParams, 
                             node.posOnlyParamPct, 
                             node.varParamPct, 
