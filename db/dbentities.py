@@ -1,5 +1,3 @@
-import uuid
-
 class DBNode:
     def __init__(self, parent_table = None, parent_id = None,  node = None, user_id = None, experticeLevel = None):
         self.user_id = user_id
@@ -13,7 +11,7 @@ class DBNode:
 class DBProgram:
     def __init__(self, category = None, name: str = None,  hasSubDirsWithCode: bool = None,  hasPackages: bool = None,  numberOfModules: int = None, 
                  numberOfSubDirsWithCode: int = None,  numberOfPackages: int = None,  classDefsPct: int = None,  functionDefsPct: int = None, 
-                 enumDefsPct: int = None,  hasCodeRootPackage: bool = None,  averageDefsPerModule: int = None,  user_id = None, node = None, experticeLevel = None):
+                 enumDefsPct: int = None,  hasCodeRootPackage: bool = None,  averageDefsPerModule: int = None,  node = None, user_id = None, experticeLevel = None):
         self.user_id = user_id
         self.experticeLevel = experticeLevel
         self.node = node
@@ -29,7 +27,6 @@ class DBProgram:
         self.enumDefsPct = enumDefsPct
         self.hasCodeRootPackage = hasCodeRootPackage
         self.averageDefsPerModule = averageDefsPerModule
-        self.user_id = user_id
         self.program_id = 0
 
 class DBModule:
@@ -43,6 +40,7 @@ class DBModule:
         self.experticeLevel = experticeLevel
         self.node = node
         self.table = "Modules"
+        self.category = "Module"
         self.module_id = module_id
         self.name = name
         self.nameConvention = nameConvention
@@ -95,6 +93,7 @@ class DBClassDef:
         self.experticeLevel = experticeLevel
         self.node = node
         self.table = "ClassDefs"
+        self.category = "ClassDef"
         self.classdef_id = classdef_id
         self.nameConvention = nameConvention
         self.isEnumClass = isEnumClass
@@ -134,6 +133,7 @@ class DBFunctionDef:
         self.experticeLevel = experticeLevel
         self.node = node
         self.table = "FunctionDefs"
+        self.category = "FunctionDef"
         self.functiondef_id = functiondef_id
         self.nameConvention = nameConvention
         self.numberOfCharacters = numberOfCharacters
@@ -160,6 +160,7 @@ class DBMethodDef:
         self.experticeLevel = experticeLevel
         self.node = node
         self.table = "MethodDefs"
+        self.category = "MethodDef"
         self.methoddef_id = methoddef_id
         self.classdef_id = classdef_id
         self.isClassMethod = isClassMethod
@@ -171,11 +172,12 @@ class DBMethodDef:
         self.isCached = isCached
 
 class DBParameter:
-    def __init__(self,  numberOfParams: int = None, 
+    def __init__(self,  numberOfParams: int = None, parent_id: int = None,
                  posOnlyParamPct: float = None,  varParamPct: float = None, 
                  hasVarParam: bool = None,  typeAnnotationPct: float = None, 
                  kwOnlyParamPct: float = None,  defaultValuePct: float = None, 
-                 hasKWParam: bool = None,  nameConvention: str = None,  node = None, user_id = None, experticeLevel = None):
+                 hasKWParam: bool = None,  nameConvention: str = None,  node = None,
+                 user_id = None, experticeLevel = None, parametersRole : str = None):
         self.user_id = user_id
         self.experticeLevel = experticeLevel
         self.node = node
@@ -189,7 +191,9 @@ class DBParameter:
         self.defaultValuePct = defaultValuePct
         self.hasKWParam = hasKWParam
         self.nameConvention = nameConvention
-        self.parameter_id = 0
+        self.parameters_id = 0
+        self.parent_id = parent_id
+        self.parametersRole = parametersRole
 
 class DBStatement:
     def __init__(self,  statement_id = None,  category: str = None,  parent: str = None,  statementRole: str = None, 
@@ -218,7 +222,9 @@ class DBStatement:
 class DBExpression:
     def __init__(self,  expression_id = None,  category: str = None, 
                  first_child_category: str = None,  second_child_category: str = None, 
-                 third_child_category: str = None,  fourth_child_category: str = None, 
+                 third_child_category: str = None,  fourth_child_category: str = None,
+                 first_child_id: str = None, second_child_id: str = None,
+                 third_child_id: str = None, fourth_child_id: str = None,
                  parent: str = None,  expressionRole: str = None,  height: int = None, 
                  depth: int = None,  sourceCode: str = None,  parent_id = None,  node = None, user_id = None, experticeLevel = None):
         self.user_id = user_id
@@ -231,6 +237,10 @@ class DBExpression:
         self.second_child_category = second_child_category
         self.third_child_category = third_child_category
         self.fourth_child_category = fourth_child_category
+        self.first_child_id = first_child_id
+        self.second_child_id = second_child_id
+        self.third_child_id = third_child_id
+        self.fourth_child_id = fourth_child_id
         self.parent = parent
         self.expressionRole = expressionRole
         self.height = height

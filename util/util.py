@@ -1,4 +1,5 @@
 import ast
+from db.db_utils import getCurrentID
 
 def opCategory(node):
     op = node.op.__doc__
@@ -13,8 +14,8 @@ def opCategory(node):
         case 'Invert': return 'UnaryBWNot' 
 
 def constCategory(node: ast.Constant):
-    type = node.value.split('')[1]
-    match type:
+    const_type = type(node.value) #.split('')[1]
+    match const_type:
         case 'int': return 'IntLiteral'
         case 'float': return 'FloatLiteral'
         case 'NoneType': return 'NoneLiteral'
@@ -22,3 +23,18 @@ def constCategory(node: ast.Constant):
         case 'str': return 'StringLiteral'
         case 'ellipsis': return 'EllipsisLiteral'
         case _: return 'ComplexLiteral'
+
+class IDGetter():
+
+    def __init__(self):
+        self.currentID = self.getCurrentID()
+
+    def getCurrentID(self):
+        currentID = getCurrentID()
+        if currentID == -1: raise RuntimeError("ID getter not working")
+        return currentID
+
+    def getID(self):
+        aux = self.currentID + 1
+        self.currentID += 1
+        return aux

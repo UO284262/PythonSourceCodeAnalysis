@@ -1,17 +1,17 @@
 from ast import AST, iter_fields
 
-_const_node_type_names = {
-    bool: 'NameConstant',  # should be before int
-    type(None): 'NameConstant',
-    int: 'Num',
-    float: 'Num',
-    complex: 'Num',
-    str: 'Str',
-    bytes: 'Bytes',
-    type(...): 'Ellipsis',
-}
-
 class NodeVisitor(object):
+    def __init__(self):
+        self._const_node_type_names = {
+            bool: 'NameConstant',  # should be before int
+            type(None): 'NameConstant',
+            int: 'Num',
+            float: 'Num',
+            complex: 'Num',
+            str: 'Str',
+            bytes: 'Bytes',
+            type(...): 'Ellipsis',
+        }
     """
     A node visitor base class that walks the abstract syntax tree and calls a
     visitor function for every node found.  This function may return a value
@@ -49,9 +49,9 @@ class NodeVisitor(object):
 
     def visit_Constant(self, node, params):
         value = node.value
-        type_name = _const_node_type_names.get(type(value))
+        type_name = self._const_node_type_names.get(type(value))
         if type_name is None:
-            for cls, name in _const_node_type_names.items():
+            for cls, name in self._const_node_type_names.items():
                 if isinstance(value, cls):
                     type_name = name
                     break

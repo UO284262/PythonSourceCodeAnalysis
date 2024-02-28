@@ -1,11 +1,8 @@
 import ast
 from typing import Dict, Self
-import uuid
-import util as util
-from My_NodeVisitor import NodeVisitor
-from visitor import Visitor
-import dbentities as dbentities
-from db_utils import writeOnDB
+from visitors.My_NodeVisitor import NodeVisitor
+import db.dbentities as dbentities
+from db.db_utils import writeOnDB
 
 class Visitor_db(NodeVisitor):
 
@@ -18,6 +15,8 @@ class Visitor_db(NodeVisitor):
         self.insert_import(params["dbimport"])
         self.insert_node(params["dbnode"])
         writeOnDB(self.sql_insert, self.datos_a_insertar)
+        self.sql_insert = []
+        self.datos_a_insertar = []
         pass
     
     def visit_FunctionDef(self, node: ast.FunctionDef, params):
@@ -99,8 +98,8 @@ class Visitor_db(NodeVisitor):
     
     def visit_Match(self, node: ast.Match, params):
         self.insert_statement(params["node"])
-        self.insert_node(params["dbnode"])
         self.insert_case(params["case"])
+        self.insert_node(params["dbnode"])
         pass
     
     def visit_Raise(self, node: ast.Raise, params):
@@ -110,14 +109,14 @@ class Visitor_db(NodeVisitor):
     
     def visit_Try(self, node: ast.Try, params):
         self.insert_statement(params["node"])
-        self.insert_node(params["dbnode"])
         self.insert_handler(params["handler"])
+        self.insert_node(params["dbnode"])
         pass
     
     def visit_TryStar(self, node: ast.Try, params):
         self.insert_statement(params["node"])
-        self.insert_node(params["dbnode"])
         self.insert_handler(params["handler"])
+        self.insert_node(params["dbnode"])
         pass
     
     def visit_Assert(self, node: ast.Assert, params):
@@ -153,11 +152,9 @@ class Visitor_db(NodeVisitor):
     ############################ IMPORTS ##################################
     
     def visit_Import(self, node: ast.Import, params):
-        self.insert_statement(params["node"])
         pass
     
     def visit_ImportFrom(self, node: ast.ImportFrom, params):
-        self.insert_statement(params["node"])
         pass
 
     ############################ EXPRESSIONS ##################################
@@ -837,3 +834,6 @@ class Visitor_db(NodeVisitor):
                             node.experticeLevel)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
+    
+class A:
+    pass

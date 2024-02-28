@@ -1,13 +1,12 @@
 import ast
 import re
+import os
 from typing import Dict, Self
-import uuid
-from util import opCategory, constCategory
-from util import IDGetter
-from My_NodeVisitor import NodeVisitor
-from visitor import Visitor
-import dbentities as dbentities
-from visitor_db import Visitor_db
+from util.util import opCategory, constCategory
+from util.util import IDGetter
+import db.dbentities as dbentities
+from visitors.visitor_db import Visitor_db
+from visitors.My_NodeVisitor import NodeVisitor
 
 def what_it_is(method):
     what_it_is = {'magic' : False, 'private' : False, 'abstract' : False, 'wrapper' : False, 'cached' : False, 'static' : False, 'classmethod' : False, 'property' : False}
@@ -49,8 +48,74 @@ class Visitor_info(NodeVisitor):
         self.visitor_db = Visitor_db()
 
     def visit_Program(self: Self, params : Dict):
-        #PREGUNTAR COMO HACER ESTO
-        pass
+        dbprogram = dbentities.DBProgram()
+        ########## ENTITIE PROPERTIES ############
+        numOfDirs = 0
+        numOfPackages = 0
+        name = params["path"].split("\\")[-1]
+        totalClassDefs = 0
+        totalFunctionDefs = 0
+        totalEnumDefs = 0
+        ############## PROPAGAR VISIT ############
+        modules = []
+        index = 0
+        for directorio_actual, subdirectorios, archivos in os.walk(params["path"]):
+            """
+            if(directorio_actual.split("\\")[-2] == name):
+                hasInitPy = False
+                hasPy = False
+                for archivo in archivos:
+                    if archivo == '__init__.py': 
+                        hasInitPy = True
+                    elif archivo.endswith('.py'):
+                        hasPy = True
+                if hasInitPy: numOfPackages += 1
+                elif hasPy: numOfDirs += 1
+            """
+            hasInitPy = False
+            hasPy = False
+            hasCodeRoot = False
+            for archivo in archivos:
+                if(directorio_actual.split("\\")[-1] != name):
+                    if archivo == '__init__.py': 
+                        hasInitPy = True
+                    elif archivo.endswith('.py'):
+                        hasPy = True
+                else:
+                    if archivo.endswith('.py'): 
+                        hasCodeRoot = True
+                ruta_completa = os.path.join(directorio_actual, archivo)
+                if(archivo.endswith('.py') and not 'MACOSX' in ruta_completa):
+                    with open(ruta_completa, "r",  encoding='utf-8') as f:
+                        try:
+                            contenido = f.read()
+                            module_ast = ast.parse(contenido)
+                            modules.append(self.visit(module_ast, {"user_id" : params["user_id"], "experticeLevel" : params["experticeLevel"], "filename" : archivo, "path" : ruta_completa}))
+                            totalClassDefs += modules[index]["classdefs"]
+                            totalEnumDefs += modules[index]["enumDefs"]
+                            totalFunctionDefs += modules[index]["functionDefs"]
+                            index += 1
+                        except Exception as e:
+                            print(f"Error: {e.with_traceback(None)}")
+                            # NO COMPILAN
+                            pass
+            if hasInitPy: numOfPackages += 1
+            elif hasPy: numOfDirs += 1
+        ########## ENTITIE PROPERTIES ############
+        if(index > 0):
+            totalDefs = totalClassDefs + totalEnumDefs+ totalFunctionDefs
+            dbprogram.numberOfPackages = numOfPackages
+            dbprogram.numberOfSubDirsWithCode = numOfDirs
+            dbprogram.hasCodeRootPackage = hasCodeRoot
+            dbprogram.hasPackages = numOfPackages > 0
+            dbprogram.hasSubDirsWithCode = numOfDirs > 0
+            dbprogram.numberOfModules = index
+            dbprogram.averageDefsPerModule = totalDefs/index
+            dbprogram.classDefsPct = totalClassDefs/totalDefs if totalDefs > 0 else 0
+            dbprogram.functionDefsPct = totalFunctionDefs/totalDefs if totalDefs > 0 else 0
+            dbprogram.enumDefsPct = totalEnumDefs/totalDefs if totalDefs > 0 else 0
+        ############## VISITOR DB ################                  
+        return
 
     # params = [parent, parent_id = node]
     def visit_Expr(self: Self, node : ast.Expr, params : Dict):
@@ -62,6 +127,8 @@ class Visitor_info(NodeVisitor):
         dbimport = dbentities.DBImport()
         ############ IDS #########################
         id = self.idGetter.getID()
+        if(id == 85):
+            print(1)
         dbnode.node_id = module.module_id = dbimport.import_id = module.import_id = id
         ############# PARAMS #####################
         childparams = {"parent" : module, "depth" : 1, "parent_id" : id, "role" : "Module"}
@@ -128,6 +195,8 @@ class Visitor_info(NodeVisitor):
         module.hasDocString = (isinstance(node.body[0],ast.Constant)) and isinstance(node.body[0].value, str)
         module.globalStmtsPct = count["stmt"]/index if(index > 0) else 0
         module.globalExpressions = count["expr"]/index if(index > 0) else 0
+        module.numberOfClasses = count["classes"]
+        module.numberOfFunctions = count["function"]
         enumClassFunctSum = (count["function"] + count["enum"] + count["classes"])
         module.classDefsPct = count["classes"]/enumClassFunctSum if(enumClassFunctSum > 0) else 0
         module.functionDefsPct = count["function"]/enumClassFunctSum if(enumClassFunctSum > 0) else 0
@@ -147,7 +216,7 @@ class Visitor_info(NodeVisitor):
         dbimport.averageFromImportedModules = fromImportModulesNum/fiindex if(fiindex > 0) else 0
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node' : module, 'dbnode' : dbnode, 'dbimport' : dbimport})
-        return
+        return {"classdefs" : count["classes"], "functionDefs" : count["function"], "enumDefs" : count["enum"]}
     
     def visit_FunctionDef(self : Self, node : ast.FunctionDef , params : Dict) -> Dict: 
         isMethod = params["parent"].table == 'ClassDefs'
@@ -172,7 +241,7 @@ class Visitor_info(NodeVisitor):
         ########## ENTITIE PROPERTIES ############
         numberOfBodyExpr = 0
         ############## PROPAGAR VISIT ############
-        args = self.visit(node.args, {"parent": function, "depth": params["depth"] + 1, "params_id": id, "dbparams": dbparams, "role" : "FunctionParams"})
+        args = self.visit(node.args, {"parent": function, "depth": params["depth"] + 1, "params_id": id, "role" : "FunctionParams"})
         for child in node.body:
             if(isinstance(child,ast.Expr)):
                 self.visit(child, addParam(childparams,"role", exprRoles[2]))
@@ -236,7 +305,7 @@ class Visitor_info(NodeVisitor):
         ########## ENTITIE PROPERTIES ############
         numberOfBodyExpr = 0
         ############## PROPAGAR VISIT ############
-        args = self.visit(node.args, {"parent": function, "depth": params["depth"] + 1, "params_id": id, "dbparams": dbparams, "role" : "FunctionParams"})
+        args = self.visit(node.args, {"parent": function, "depth": params["depth"] + 1, "params_id": id, "role" : "FunctionParams"})
         for child in node.body:
             if(isinstance(child,ast.Expr)):
                 self.visit(child, addParam(childparams,"role", exprRoles[2]))
@@ -1351,14 +1420,14 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["Logical"]
         ########## ENTITIE PROPERTIES ############
         depth = 0
-        first_child_category = ''
-        second_child_category = ''
-        third_child_category = ''
-        fourth_child_category = ''
-        first_child_id = ''
-        second_child_id = ''
-        third_child_id = ''
-        fourth_child_id = ''
+        first_child_category = None
+        second_child_category = None
+        third_child_category = None
+        fourth_child_category = None
+        first_child_id = None
+        second_child_id = None
+        third_child_id = None
+        fourth_child_id = None
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
@@ -1507,14 +1576,14 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["LambdaBody"]
         ########## ENTITIE PROPERTIES ############
         depth = 0
-        first_child_category = ''
-        second_child_category = ''
-        third_child_category = ''
-        fourth_child_category = ''
-        first_child_id = ''
-        second_child_id = ''
-        third_child_id = ''
-        fourth_child_id = ''
+        first_child_category = None
+        second_child_category = None
+        third_child_category = None
+        fourth_child_category = None
+        first_child_id = None
+        second_child_id = None
+        third_child_id = None
+        fourth_child_id = None
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
@@ -1600,12 +1669,12 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["ComprenhensionElement"]
         ########## ENTITIE PROPERTIES ############
         depth = 0
-        second_child_category = ''
-        third_child_category = ''
-        fourth_child_category = ''
-        second_child_id = ''
-        third_child_id = ''
-        fourth_child_id = ''
+        second_child_category = None
+        third_child_category = None
+        fourth_child_category = None
+        second_child_id = None
+        third_child_id = None
+        fourth_child_id = None
         numOfIfs = 0
         isAsync = False
         ############## PROPAGAR VISIT ############
@@ -1661,12 +1730,12 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["ComprenhensionElement"]
         ########## ENTITIE PROPERTIES ############
         depth = 0
-        second_child_category = ''
-        third_child_category = ''
-        fourth_child_category = ''
-        second_child_id = ''
-        third_child_id = ''
-        fourth_child_id = ''
+        second_child_category = None
+        third_child_category = None
+        fourth_child_category = None
+        second_child_id = None
+        third_child_id = None
+        fourth_child_id = None
         numOfIfs = 0
         isAsync = False
         ############## PROPAGAR VISIT ############
@@ -1722,10 +1791,10 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["DictionaryLiteralKey", "DictionaryLiteralValue"]
         ########## ENTITIE PROPERTIES ############
         depth = 0
-        third_child_category = ''
-        fourth_child_category = ''
-        third_child_id = ''
-        fourth_child_id = ''
+        third_child_category = None
+        fourth_child_category = None
+        third_child_id = None
+        fourth_child_id = None
         numOfIfs = 0
         isAsync = False
         ############## PROPAGAR VISIT ############
@@ -1781,12 +1850,12 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["ComprenhensionElement"]
         ########## ENTITIE PROPERTIES ############
         depth = 0
-        second_child_category = ''
-        third_child_category = ''
-        fourth_child_category = ''
-        second_child_id = ''
-        third_child_id = ''
-        fourth_child_id = ''
+        second_child_category = None
+        third_child_category = None
+        fourth_child_category = None
+        second_child_id = None
+        third_child_id = None
+        fourth_child_id = None
         numOfIfs = 0
         isAsync = False
         ############## PROPAGAR VISIT ############
@@ -1932,14 +2001,14 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["Compare", "Relational", "Is", "In"]
         ########## ENTITIE PROPERTIES ############
         depth = 0
-        first_child_category = ''
-        second_child_category = ''
-        third_child_category = ''
-        fourth_child_category = ''
-        first_child_id = ''
-        second_child_id = ''
-        third_child_id = ''
-        fourth_child_id = ''
+        first_child_category = None
+        second_child_category = None
+        third_child_category = None
+        fourth_child_category = None
+        first_child_id = None
+        second_child_id = None
+        third_child_id = None
+        fourth_child_id = None
         ############## PROPAGAR VISIT ############
         left = self.visit(node.left, addParam(childparams,'role', exprRoles[0]))
         index = 0
@@ -1994,14 +2063,14 @@ class Visitor_info(NodeVisitor):
         depth = 0
         namedArgs = 0
         staredArgs = 0
-        first_child_category = ''
-        second_child_category = ''
-        third_child_category = ''
-        fourth_child_category = ''
-        first_child_id = ''
-        second_child_id = ''
-        third_child_id = ''
-        fourth_child_id = ''
+        first_child_category = None
+        second_child_category = None
+        third_child_category = None
+        fourth_child_category = None
+        first_child_id = None
+        second_child_id = None
+        third_child_id = None
+        fourth_child_id = None
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
@@ -2101,19 +2170,19 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["FString"]
         ########## ENTITIE PROPERTIES ############
         depth = 0
-        first_child_category = ''
-        second_child_category = ''
-        third_child_category = ''
-        fourth_child_category = ''
-        first_child_id = ''
-        second_child_id = ''
-        third_child_id = ''
-        fourth_child_id = ''
+        first_child_category = None
+        second_child_category = None
+        third_child_category = None
+        fourth_child_category = None
+        first_child_id = None
+        second_child_id = None
+        third_child_id = None
+        fourth_child_id = None
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
         for child in node.values:
-            returns.append(self.visit(child, addParam(childparams,'node', exprRoles[0])))
+            returns.append(self.visit(child, addParam(childparams,'role', exprRoles[0])))
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
             if(index == 2): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
@@ -2308,14 +2377,14 @@ class Visitor_info(NodeVisitor):
         depth = 0
         homogeneous = True
         lastType = None
-        first_child_category = ''
-        second_child_category = ''
-        third_child_category = ''
-        fourth_child_category = ''
-        first_child_id = ''
-        second_child_id = ''
-        third_child_id = ''
-        fourth_child_id = ''
+        first_child_category = None
+        second_child_category = None
+        third_child_category = None
+        fourth_child_category = None
+        first_child_id = None
+        second_child_id = None
+        third_child_id = None
+        fourth_child_id = None
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
@@ -2369,14 +2438,14 @@ class Visitor_info(NodeVisitor):
         depth = 0
         homogeneous = True
         lastType = None
-        first_child_category = ''
-        second_child_category = ''
-        third_child_category = ''
-        fourth_child_category = ''
-        first_child_id = ''
-        second_child_id = ''
-        third_child_id = ''
-        fourth_child_id = ''
+        first_child_category = None
+        second_child_category = None
+        third_child_category = None
+        fourth_child_category = None
+        first_child_id = None
+        second_child_id = None
+        third_child_id = None
+        fourth_child_id = None
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
@@ -2430,14 +2499,14 @@ class Visitor_info(NodeVisitor):
         depth = 0
         homogeneous = True
         lastType = None
-        first_child_category = ''
-        second_child_category = ''
-        third_child_category = ''
-        fourth_child_category = ''
-        first_child_id = ''
-        second_child_id = ''
-        third_child_id = ''
-        fourth_child_id = ''
+        first_child_category = None
+        second_child_category = None
+        third_child_category = None
+        fourth_child_category = None
+        first_child_id = None
+        second_child_id = None
+        third_child_id = None
+        fourth_child_id = None
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
@@ -2499,14 +2568,14 @@ class Visitor_info(NodeVisitor):
         depth = 0
         homogeneous = True
         lastType = None
-        first_child_category = ''
-        second_child_category = ''
-        third_child_category = ''
-        fourth_child_category = ''
-        first_child_id = ''
-        second_child_id = ''
-        third_child_id = ''
-        fourth_child_id = ''
+        first_child_category = None
+        second_child_category = None
+        third_child_category = None
+        fourth_child_category = None
+        first_child_id = None
+        second_child_id = None
+        third_child_id = None
+        fourth_child_id = None
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
