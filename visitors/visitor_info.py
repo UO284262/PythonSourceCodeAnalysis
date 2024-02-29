@@ -8,40 +8,57 @@ import db.dbentities as dbentities
 from visitors.visitor_db import Visitor_db
 from visitors.My_NodeVisitor import NodeVisitor
 
-def what_it_is(method):
-    what_it_is = {'magic' : False, 'private' : False, 'abstract' : False, 'wrapper' : False, 'cached' : False, 'static' : False, 'classmethod' : False, 'property' : False}
-    magic_patron = re.compile(r'^__\w+__$')
-    private_patron = re.compile(r'^_\w+$')
-    what_it_is.magic = magic_patron.match(method.name)
-    what_it_is.private = private_patron.match(method.name)
-    for decorator in method.decorator_list:
-        if(decorator.id == "abstractmethod"): what_it_is.abstract = True
-        if(decorator.id == "wraps"): what_it_is.wrapper = True
-        if(decorator.id == "cache"): what_it_is.cached = True
-        if(decorator.id == "staticmethod"): what_it_is.static = True
-        if(decorator.id == "classmethod"): what_it_is.classmethod = True
-        if(decorator.id == "property"): what_it_is.property = True
-    return what_it_is
-
-def addParam(dict_1 : Dict, param, value):
-    new_dict = dict_1.copy()
-    new_dict[param] = value
-    return new_dict
-
-def sumMatch(dict_1 : Dict, dict_2):
-    {
-        'matchValue' : dict_1.matchValue + dict_2.matchValue, 
-        'matchSingleton' : dict_1.matchSingleton + dict_2.matchSingleton, 
-        'matchSequence' : dict_1.matchSequence + dict_2.matchSequence, 
-        'matchMapping' : dict_1.matchMapping + dict_2.matchMapping, 
-        'matchClass' : dict_1.matchClass + dict_2.matchClass, 
-        'matchStar' : dict_1.matchStar + dict_2.matchStar, 
-        'matchAs' : dict_1.matchAs + dict_2.matchAs, 
-        'matchOr' : dict_1.matchOr + dict_2.matchOr, 
-        'depth' : max(dict_1.depth,dict_2.depth)
-    }
-
 class Visitor_info(NodeVisitor):
+
+    def whatItIs(self, method):
+        whatItIs = {'magic' : False, 'private' : False, 'abstract' : False, 'wrapper' : False, 'cached' : False, 'static' : False, 'classmethod' : False, 'property' : False}
+        magic_patron = re.compile(r'^__\w+__$')
+        private_patron = re.compile(r'^_\w+$')
+        whatItIs["magic"] = True if magic_patron.match(method.name) else False
+        whatItIs["private"] = True if private_patron.match(method.name) else False
+        for decorator in method.decorator_list:
+            if(decorator.id == "abstractmethod"): whatItIs["abstract"] = True
+            if(decorator.id == "wraps"): whatItIs["wrapper"] = True
+            if(decorator.id == "cache"): whatItIs["cached"] = True
+            if(decorator.id == "staticmethod"): whatItIs["static"] = True
+            if(decorator.id == "classmethod"): whatItIs["classmethod"] = True
+            if(decorator.id == "property"): whatItIs["property"] = True
+        return whatItIs
+
+    def nameConvention(self, name):
+        lower_patron = re.compile(r'^[a-z]+$')
+        upper_patron = re.compile(r'^[A-Z_]+$')
+        camelLow_patron = re.compile(r'^[a-z][a-zA-Z]*$')
+        camelUp_patron = re.compile(r'^[A-Z][a-zA-Z]*$')
+        snakeCase_patron = re.compile(r'^[a-z_]+$')
+        discard_patron = re.compile(r'^_+$')
+        if(discard_patron.match(name)): return 'Discard'
+        elif(snakeCase_patron.match(name)): return 'SnakeCase'
+        elif(upper_patron.match(name)): return 'Upper'
+        elif(lower_patron.match(name)): return 'Lower'
+        elif(camelLow_patron.match(name)): return 'CamelLow'
+        elif(camelUp_patron.match(name)): return 'CamelUp'
+        else: return 'NoNameConvention'
+
+
+
+    def addParam(self, dict_1 : Dict, param, value):
+        new_dict = dict_1.copy()
+        new_dict[param] = value
+        return new_dict
+
+    def sumMatch(self, dict_1 : Dict, dict_2):
+        {
+            'matchValue' : dict_1["matchValue"] + dict_2["matchValue"], 
+            'matchSingleton' : dict_1["matchSingleton"] + dict_2["matchSingleton"], 
+            'matchSequence' : dict_1["matchSequence"] + dict_2["matchSequence"], 
+            'matchMapping' : dict_1["matchMapping"] + dict_2["matchMapping"], 
+            'matchClass' : dict_1["matchClass"] + dict_2["matchClass"], 
+            'matchStar' : dict_1["matchStar"] + dict_2["matchStar"], 
+            'matchAs' : dict_1["matchAs"] + dict_2["matchAs"], 
+            'matchOr' : dict_1["matchOr"] + dict_2["matchOr"], 
+            'depth' : max(dict_1["depth"],dict_2["depth"])
+        }
 
     def __init__(self):
         self.idGetter = IDGetter()
@@ -87,18 +104,24 @@ class Visitor_info(NodeVisitor):
                 ruta_completa = os.path.join(directorio_actual, archivo)
                 if(archivo.endswith('.py') and not 'MACOSX' in ruta_completa):
                     with open(ruta_completa, "r",  encoding='utf-8') as f:
+                        module_ast = None
                         try:
                             contenido = f.read()
                             module_ast = ast.parse(contenido)
-                            modules.append(self.visit(module_ast, {"user_id" : params["user_id"], "experticeLevel" : params["experticeLevel"], "filename" : archivo, "path" : ruta_completa}))
-                            totalClassDefs += modules[index]["classdefs"]
-                            totalEnumDefs += modules[index]["enumDefs"]
-                            totalFunctionDefs += modules[index]["functionDefs"]
-                            index += 1
                         except Exception as e:
-                            print(f"Error: {e.with_traceback(None)}")
                             # NO COMPILAN
                             pass
+                        if module_ast:
+                            try:
+                                modules.append(self.visit(module_ast, {"user_id" : params["user_id"], "experticeLevel" : params["experticeLevel"], "filename" : archivo, "path" : ruta_completa}))
+                                totalClassDefs += modules[index]["classdefs"]
+                                totalEnumDefs += modules[index]["enumDefs"]
+                                totalFunctionDefs += modules[index]["functionDefs"]
+                                index += 1
+                            except Exception as e:
+                                raise e
+                                # NO COMPILAN
+                                pass
             if hasInitPy: numOfPackages += 1
             elif hasPy: numOfDirs += 1
         ########## ENTITIE PROPERTIES ############
@@ -114,7 +137,8 @@ class Visitor_info(NodeVisitor):
             dbprogram.classDefsPct = totalClassDefs/totalDefs if totalDefs > 0 else 0
             dbprogram.functionDefsPct = totalFunctionDefs/totalDefs if totalDefs > 0 else 0
             dbprogram.enumDefsPct = totalEnumDefs/totalDefs if totalDefs > 0 else 0
-        ############## VISITOR DB ################                  
+        ############## VISITOR DB ################  
+            self.visitor_db.visit_Program(dbprogram, {})                
         return
 
     # params = [parent, parent_id = node]
@@ -161,27 +185,27 @@ class Visitor_info(NodeVisitor):
             if(isinstance(child,ast.Expr)): count["expr"] += 1
             elif(isinstance(child,ast.ClassDef)): 
                 count["classes"] += 1
-                classes[cindex] = returns[index]
+                classes.append(returns[index])
                 numberOfMethodStmt += returns[index]["numberOfMethodStmt"]
                 methodCount += returns[index]["methodCount"]
                 typeAnnotations += returns[index]["typeAnnotations"]
                 cindex += 1
             elif(isinstance(child,ast.FunctionDef) or isinstance(child,ast.AsyncFunctionDef)): 
                 count["function"] += 1
-                functions[findex] = returns[index]
-                functionsBodySize += returns[index]["function.bodyCount"]
+                functions.append(returns[index])
+                functionsBodySize += returns[index]["function"].bodyCount
                 typeAnnotations += returns[index]["typeAnnotations"]
                 findex += 1
             #elif(isinstance(child,ast.enum)): count["enum"] += 1 ?
             elif(isinstance(child,ast.Import)): 
                 simpleImportNum += 1
-                simpleImports[siindex] = returns[index]
+                simpleImports.append(returns[index])
                 siindex += 1
                 simpleImportModulesNum += returns[index]["importedModules"]
                 if(siindex + fiindex != index): localImports += 1
             elif(isinstance(child,ast.ImportFrom)):
                 fromImportNum += 1
-                fromImports[fiindex] = returns[index]
+                fromImports.append(returns[index])
                 fiindex += 1
                 asnames += returns[index]["asnames"]
                 fromImportModulesNum += returns[index]["importedModules"]
@@ -192,6 +216,7 @@ class Visitor_info(NodeVisitor):
             index += 1
         ########## ENTITIE PROPERTIES ############
         module.name = params["filename"]
+        module.nameConvention = self.nameConvention(module.name)
         module.hasDocString = (isinstance(node.body[0],ast.Constant)) and isinstance(node.body[0].value, str)
         module.globalStmtsPct = count["stmt"]/index if(index > 0) else 0
         module.globalExpressions = count["expr"]/index if(index > 0) else 0
@@ -241,23 +266,23 @@ class Visitor_info(NodeVisitor):
         ########## ENTITIE PROPERTIES ############
         numberOfBodyExpr = 0
         ############## PROPAGAR VISIT ############
-        args = self.visit(node.args, {"parent": function, "depth": params["depth"] + 1, "params_id": id, "role" : "FunctionParams"})
+        args = self.visit(node.args, self.addParam(self.addParam(childparams, "params_id", id), "role" , "FunctionParams"))
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                self.visit(child, addParam(childparams,"role", exprRoles[2]))
+                self.visit(child, self.addParam(childparams,"role", exprRoles[2]))
                 numberOfBodyExpr += 1
             else:
-                self.visit(child, addParam(childparams,"role", stmtRoles[0]))
+                self.visit(child, self.addParam(childparams,"role", stmtRoles[0]))
         for child in node.decorator_list:
-            self.visit(child, addParam(childparams,"role", exprRoles[0]))
+            self.visit(child, self.addParam(childparams,"role", exprRoles[0]))
         if(node.returns):
-            self.visit(node.returns, addParam(childparams,"role", exprRoles[1]))
+            self.visit(node.returns, self.addParam(childparams,"role", exprRoles[1]))
         for child in node.type_params:
             self.visit(child, childparams)
         ########## ENTITIE PROPERTIES ############
-        whatitis = what_it_is(node)
-        function.isPrivate = whatitis.private
-        function.isMagic = whatitis.magic
+        whatitis = self.whatItIs(node)
+        function.isPrivate = whatitis["private"]
+        function.isMagic = whatitis["magic"]
         function.bodyCount = len(node.body)
         function.isAsync = False
         function.numberOfDecorators = len(node.decorator_list)
@@ -268,19 +293,19 @@ class Visitor_info(NodeVisitor):
         function.typeAnnotationsPct = args["typeAnnotations"]/(args["numberOfArgs"] + 1)
         function.sourceCode = ast.unparse(node)
         if(isMethod):
-            method.isClassMethod = whatitis.classmethod
-            method.isStaticMethod = whatitis.static
+            method.isClassMethod = whatitis["classmethod"]
+            method.isStaticMethod = whatitis["static"]
             method.isConstructorMethod = node.name == '__init__'
-            method.isAbstractMethod = whatitis.abstract
-            method.isProperty = whatitis.property
-            method.isWrapper = whatitis.wrapper
-            method.isCached = whatitis.cached
+            method.isAbstractMethod = whatitis["abstract"]
+            method.isProperty = whatitis["property"]
+            method.isWrapper = whatitis["wrapper"]
+            method.isCached = whatitis["cached"]
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node' : function, 'dbnode' : dbnode})
         if(isMethod):
             return {'method': method, 'function': function, 'args': args, 'typeAnnotations' : args["typeAnnotations"]}
         else:
-            return{'node': function, 'typeAnnotations' : args["typeAnnotations"]}
+            return{'function': function, 'typeAnnotations' : args["typeAnnotations"]}
     
     def visit_AsyncFunctionDef(self : Self, node : ast.AsyncFunctionDef , params : Dict) -> Dict: 
         isMethod = params["parent"].table == 'ClassDefs'
@@ -305,23 +330,23 @@ class Visitor_info(NodeVisitor):
         ########## ENTITIE PROPERTIES ############
         numberOfBodyExpr = 0
         ############## PROPAGAR VISIT ############
-        args = self.visit(node.args, {"parent": function, "depth": params["depth"] + 1, "params_id": id, "role" : "FunctionParams"})
+        args = self.visit(node.args, self.addParam(self.addParam(childparams, "params_id", id), "role" , "FunctionParams"))
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                self.visit(child, addParam(childparams,"role", exprRoles[2]))
+                self.visit(child, self.addParam(childparams,"role", exprRoles[2]))
                 numberOfBodyExpr += 1
             else:
-                self.visit(child, addParam(childparams,"role", stmtRoles[0]))
+                self.visit(child, self.addParam(childparams,"role", stmtRoles[0]))
         for child in node.decorator_list:
-            self.visit(child, addParam(childparams,"role", exprRoles[0]))
+            self.visit(child, self.addParam(childparams,"role", exprRoles[0]))
         if(node.returns):
-            self.visit(node.returns, addParam(childparams,"role", exprRoles[1]))
+            self.visit(node.returns, self.addParam(childparams,"role", exprRoles[1]))
         for child in node.type_params:
             self.visit(child, childparams)
         ########## ENTITIE PROPERTIES ############
-        whatitis = what_it_is(node)
-        function.isPrivate = whatitis.private
-        function.isMagic = whatitis.magic
+        whatitis = self.whatItIs(node)
+        function.isPrivate = whatitis["private"]
+        function.isMagic = whatitis["magic"]
         function.bodyCount = len(node.body)
         function.isAsync = True
         function.numberOfDecorators = len(node.decorator_list)
@@ -332,19 +357,19 @@ class Visitor_info(NodeVisitor):
         function.typeAnnotationsPct = args["typeAnnotations"]/(args["numberOfArgs"] + 1)
         function.sourceCode = ast.unparse(node)
         if(isMethod):
-            method.isClassMethod = whatitis.classmethod
-            method.isStaticMethod = whatitis.static
+            method.isClassMethod = whatitis["classmethod"]
+            method.isStaticMethod = whatitis["static"]
             method.isConstructorMethod = node.name == '__init__'
-            method.isAbstractMethod = whatitis.abstract
-            method.isProperty = whatitis.property
-            method.isWrapper = whatitis.wrapper
-            method.isCached = whatitis.cached
+            method.isAbstractMethod = whatitis["abstract"]
+            method.isProperty = whatitis["property"]
+            method.isWrapper = whatitis["wrapper"]
+            method.isCached = whatitis["cached"]
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node' : function, 'dbnode' : dbnode})
         if(isMethod):
             return {'method': method, 'function': function, 'args': args,  'typeAnnotations' : args["typeAnnotations"]}
         else:
-            return{'node': function, 'typeAnnotations' : args["typeAnnotations"]}
+            return{'function': function, 'typeAnnotations' : args["typeAnnotations"]}
         
     def visit_ClassDef(self : Self, node : ast.ClassDef , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
@@ -376,8 +401,9 @@ class Visitor_info(NodeVisitor):
         numberOfPropertyMethods = 0
         ############## PROPAGAR VISIT ############
         for child in node.bases:
-            self.visit(child, addParam(childparams,"role", exprRoles[0]))
-            classdef.isEnumClass = (child.id == 'Enum')
+            self.visit(child, self.addParam(childparams,"role", exprRoles[0]))
+            if(isinstance(child, ast.Name)): classdef.isEnumClass = (child.id == 'Enum')
+            else: classdef.isEnumClass = (child.attr == 'Enum')
         for child in node.keywords:
             if(child.arg == 'metaclass'): metaclassNumber += 1
             else : keywordNumber += 1
@@ -385,24 +411,24 @@ class Visitor_info(NodeVisitor):
         for child in node.body:
             if(isinstance(child,ast.Expr)):
                 expressionNumber += 1
-                self.visit(child, addParam(childparams,"role", exprRoles[2]))
+                self.visit(child, self.addParam(childparams,"role", exprRoles[2]))
             else:
                 if(isinstance(child, ast.AnnAssign) or isinstance(child, ast.AugAssign) or isinstance(child, ast.Assign)): assignmentNumber += 1
-                returns = self.visit(child, addParam(childparams,"role", stmtRoles[0]))
+                returns = self.visit(child, self.addParam(childparams,"role", stmtRoles[0]))
                 if(isinstance(child,ast.FunctionDef) or isinstance(child,ast.AsyncFunctionDef)):
                     numberOfMethods += 1
-                    numberOfMethodStmt += returns["function"]["bodyCount"]
+                    numberOfMethodStmt += returns["function"].bodyCount
                     numberOfMethodParamsRet += (returns["args"]["numberOfArgs"] + 1)
                     numberOfMethodTypeAnnotations += returns["args"]["typeAnnotations"]
-                    if(returns["function"]["isMagic"]): numberOfMagicMethods += 1
-                    if(returns["function"]["isPrivate"]): numberOfPrivateMethods += 1
-                    if(returns["function"]["isAsync"]): numberOfAsyncMethods += 1
-                    if(returns["method"]["isAbstractMethod"]): numberOfAbstractMethods += 1
-                    if(returns["method"]["isClassMethod"]): numberOfClassMethods += 1
-                    if(returns["method"]["isStaticMethod"]): numberOfStaticMethods += 1
-                    if(returns["method"]["isProperty"]): numberOfPropertyMethods += 1
+                    if(returns["function"].isMagic): numberOfMagicMethods += 1
+                    if(returns["function"].isPrivate): numberOfPrivateMethods += 1
+                    if(returns["function"].isAsync): numberOfAsyncMethods += 1
+                    if(returns["method"].isAbstractMethod): numberOfAbstractMethods += 1
+                    if(returns["method"].isClassMethod): numberOfClassMethods += 1
+                    if(returns["method"].isStaticMethod): numberOfStaticMethods += 1
+                    if(returns["method"].isProperty): numberOfPropertyMethods += 1
         for child in node.decorator_list:
-            self.visit(child, addParam(childparams,"role", exprRoles[1]))
+            self.visit(child, self.addParam(childparams,"role", exprRoles[1]))
         for child in node.type_params:
             self.visit(child, childparams)
         ########## ENTITIE PROPERTIES ############
@@ -448,6 +474,8 @@ class Visitor_info(NodeVisitor):
         stmt.statementRole = params["role"]
         ############# PARAMS #####################
         childparams = {"parent" : stmt, "depth" : params["depth"] + 1, "parent_id" : id, "role" : "Return"}
+        ########## ENTITIE PROPERTIES ############
+        returns = None
         ############## PROPAGAR VISIT ############
         if(node.value): returns = self.visit(node.value, childparams)
         ########## ENTITIE PROPERTIES ############
@@ -479,20 +507,27 @@ class Visitor_info(NodeVisitor):
         stmt.statementRole = params["role"]
         ############# PARAMS #####################
         childparams = {"parent" : stmt, "depth" : params["depth"] + 1, "parent_id" : id, "role" : "Delete"}
+        ########## ENTITIE PROPERTIES ############
+        depth = 0
+        first_child_id = None
+        second_child_id = None
+        third_child_id = None
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
         for child in node.targets:
             returns.append(self.visit(child, childparams))
+            depth = max(depth, returns[index]["depth"])
+            if(index == 0): first_child_id = returns[index]["id"]
+            if(index == 1): second_child_id = returns[index]["id"]
+            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
-        stmt.depth = 0
-        for i in range(len(returns)):
-            if(returns[i]["depth"] > stmt.depth): stmt.depth = returns[i]["depth"]
-            if(i == 1): stmt.first_child_id = returns[i]["id"]
-            if(i == 2): stmt.second_child_id = returns[i]["id"]
-            if(i == 3): stmt.third_child_id = returns[i]["id"]
+        stmt.depth = depth
+        stmt.first_child_id = first_child_id
+        stmt.second_child_id = second_child_id
+        stmt.third_child_id = third_child_id
         stmt.sourceCode = ast.unparse(node)
         stmt.hasOrElse = None
         stmt.bodySize = None
@@ -516,21 +551,29 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : stmt, "depth" : params["depth"] + 1, "parent_id" : id}
         roles = ["AssignLHS", "AssignRHS"]
+        ########## ENTITIE PROPERTIES ############
+        depth = 0
+        first_child_id = None
+        second_child_id = None
+        third_child_id = None
         ############## PROPAGAR VISIT ############
         returns_targets = []
         index = 0
         for child in node.targets:
-            returns_targets.append(self.visit(child, addParam(childparams,'role',roles[0])))
+            returns_targets.append(self.visit(child, self.addParam(childparams,'role',roles[0])))
+            depth = max(depth, returns_targets[index]["depth"])
+            if(index == 0): first_child_id = returns_targets[index]["id"]
+            if(index == 1): second_child_id = returns_targets[index]["id"]
+            if(index == 2): third_child_id = returns_targets[index]["id"]
             index += 1
-        returns_value = self.visit(node.value, addParam(childparams,'role',roles[1]))
+        returns_value = self.visit(node.value, self.addParam(childparams,'role',roles[1]))
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.depth = 0
-        for i in range(len(returns_targets)):
-            if(returns_targets[i]["depth"] > stmt.depth): stmt.depth = returns_targets[i]["depth"]
-            if(i == 1): stmt.first_child_id = returns_targets[i]["id"]
-            if(i == 2): stmt.second_child_id = returns_targets[i]["id"]
-            if(i == 3): stmt.third_child_id = returns_targets[i]["id"]
+        stmt.depth = max(returns_value["depth"],depth)
+        stmt.first_child_id = first_child_id
+        stmt.second_child_id = second_child_id
+        stmt.third_child_id = third_child_id
         stmt.sourceCode = ast.unparse(node)
         stmt.hasOrElse = None
         stmt.bodySize = None
@@ -558,8 +601,8 @@ class Visitor_info(NodeVisitor):
         returns = []
         for child in node.type_params:
             self.visit(child, childparams)
-        returns[0] = self.visit(node.name, addParam(childparams,'role', roles[0]))
-        returns[1] = self.visit(node.value, addParam(childparams,'role', roles[1]))
+        returns.append(self.visit(node.name, self.addParam(childparams,'role', roles[0])))
+        returns.append(self.visit(node.value, self.addParam(childparams,'role', roles[1])))
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.depth = max(returns[0]["depth"], returns[1]["depth"])
@@ -590,8 +633,8 @@ class Visitor_info(NodeVisitor):
         roles = ["AugmentedAssigmentLHS", "AugmentedAssigmentRHS"]
         ############## PROPAGAR VISIT ############
         returns = []
-        returns[0] = self.visit(node.target, addParam(childparams,'role', roles[0]))
-        returns[1] = self.visit(node.value, addParam(childparams,'role', roles[1]))
+        returns.append(self.visit(node.target, self.addParam(childparams,'role', roles[0])))
+        returns.append(self.visit(node.value, self.addParam(childparams,'role', roles[1])))
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.depth = max(returns[0]["depth"], returns[1]["depth"])
@@ -622,9 +665,9 @@ class Visitor_info(NodeVisitor):
         roles = ["VarDefVarName", "VarDefType", "VarDefInitValue"]
         ############## PROPAGAR VISIT ############
         returns = []
-        returns[0] = self.visit(node.target, addParam(childparams,'role', roles[0]))
-        returns[1] = self.visit(node.annotation, addParam(childparams,'role', roles[1]))
-        if(node.value): returns[2] = self.visit(node.value, addParam(childparams,'role', roles[2]))
+        returns.append(self.visit(node.target, self.addParam(childparams,'role', roles[0])))
+        returns.append(self.visit(node.annotation, self.addParam(childparams,'role', roles[1])))
+        if(node.value): returns.append(self.visit(node.value, self.addParam(childparams,'role', roles[2])))
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.depth = max(returns[0]["depth"], returns[1]["depth"])
@@ -659,33 +702,43 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["ForElement", "ForEnumerable", "ForBody", "ForElseBody"]
         ########## ENTITIE PROPERTIES ############
         stmt.hasOrElse = False
+        depth = 0
+        first_child_id = None
+        second_child_id = None
+        third_child_id = None
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
-        returns_target = self.visit(node.target, addParam(childparams,'role', exprRoles[0]))
-        returns_iter = self.visit(node.iter, addParam(childparams,'role', exprRoles[1]))
+        returns_target = self.visit(node.target, self.addParam(childparams,'role', exprRoles[0]))
+        returns_iter = self.visit(node.iter, self.addParam(childparams,'role', exprRoles[1]))
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, addParam(childparams,"role", exprRoles[2])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", exprRoles[2])))
             else:
-                returns.append(self.visit(child, addParam(childparams,"role", stmtRoles[0])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", stmtRoles[0])))
+            depth = max(depth, returns[index]["depth"])
+            if(index == 0): first_child_id = returns[index]["id"]
+            if(index == 1): second_child_id = returns[index]["id"]
+            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         for child in node.orelse:
             stmt.hasOrElse = True
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, addParam(childparams,"role", exprRoles[3])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", exprRoles[3])))
             else:
-                returns.append(self.visit(child, addParam(childparams,"role", stmtRoles[1])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", stmtRoles[1])))
+            depth = max(depth, returns[index]["depth"])
+            if(index == 0): first_child_id = returns[index]["id"]
+            if(index == 1): second_child_id = returns[index]["id"]
+            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.height = params["depth"]
-        stmt.depth = 0
-        for i in range(len(returns)):
-            stmt.depth = max(stmt.depth, returns[i]["depth"])
-            if(i == 0): stmt.first_child_id = returns[i]["id"]
-            if(i == 1): stmt.second_child_id = returns[i]["id"]
-            if(i == 2): stmt.third_child_id = returns[i]["id"]
+        stmt.depth = max(returns_target["depth"],max(returns_iter["depth"],depth))
+        stmt.first_child_id = first_child_id
+        stmt.second_child_id = second_child_id
+        stmt.third_child_id = third_child_id
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = index
         ############## VISITOR DB ################
@@ -712,33 +765,43 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["AsyncForElement", "AsyncForEnumerable", "AsyncForBody", "AsyncForElseBody"]
         ########## ENTITIE PROPERTIES ############
         stmt.hasOrElse = False
+        depth = 0
+        first_child_id = None
+        second_child_id = None
+        third_child_id = None
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
-        returns_target = self.visit(node.target, addParam(childparams,'role', exprRoles[0]))
-        returns_iter = self.visit(node.iter, addParam(childparams,'role', exprRoles[1]))
+        returns_target = self.visit(node.target, self.addParam(childparams,'role', exprRoles[0]))
+        returns_iter = self.visit(node.iter, self.addParam(childparams,'role', exprRoles[1]))
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, addParam(childparams,"role", exprRoles[2])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", exprRoles[2])))
             else:
-                returns.append(self.visit(child, addParam(childparams,"role", stmtRoles[0])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", stmtRoles[0])))
+            depth = max(depth, returns[index]["depth"])
+            if(index == 0): first_child_id = returns[index]["id"]
+            if(index == 1): second_child_id = returns[index]["id"]
+            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         for child in node.orelse:
             stmt.hasOrElse = True
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, addParam(childparams,"role", exprRoles[3])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", exprRoles[3])))
             else:
-                returns.append(self.visit(child, addParam(childparams,"role", stmtRoles[1])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", stmtRoles[1])))
+            depth = max(depth, returns[index]["depth"])
+            if(index == 0): first_child_id = returns[index]["id"]
+            if(index == 1): second_child_id = returns[index]["id"]
+            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.height = params["depth"]
-        stmt.depth = 0
-        for i in range(len(returns)):
-            if(returns[i]["depth"] > stmt.depth): stmt.depth = returns[i]["depth"]
-            if(i == 0): stmt.first_child_id = returns[i]["id"]
-            if(i == 1): stmt.second_child_id = returns[i]["id"]
-            if(i == 2): stmt.third_child_id = returns[i]["id"]
+        stmt.depth = max(returns_target["depth"],max(returns_iter["depth"],depth))
+        stmt.first_child_id = first_child_id
+        stmt.second_child_id = second_child_id
+        stmt.third_child_id = third_child_id
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = index
         ############## VISITOR DB ################
@@ -765,32 +828,42 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["WhileCondition", "WhileBody", "WhileElseBody"]
         ########## ENTITIE PROPERTIES ############
         stmt.hasOrElse = False
+        depth = 0
+        first_child_id = None
+        second_child_id = None
+        third_child_id = None
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
-        returns_test = self.visit(node.test, addParam(childparams,'role', exprRoles[0]))
+        returns_test = self.visit(node.test, self.addParam(childparams,'role', exprRoles[0]))
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, addParam(childparams,"role", exprRoles[1])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", exprRoles[1])))
             else:
-                returns.append(self.visit(child, addParam(childparams,"role", stmtRoles[0])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", stmtRoles[0])))
+            depth = max(depth, returns[index]["depth"])
+            if(index == 0): first_child_id = returns[index]["id"]
+            if(index == 1): second_child_id = returns[index]["id"]
+            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         for child in node.orelse:
             stmt.hasOrElse = True
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, addParam(childparams,"role", exprRoles[2])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", exprRoles[2])))
             else:
-                returns.append(self.visit(child, addParam(childparams,"role", stmtRoles[1])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", stmtRoles[1])))
+            depth = max(depth, returns[index]["depth"])
+            if(index == 0): first_child_id = returns[index]["id"]
+            if(index == 1): second_child_id = returns[index]["id"]
+            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.height = params["depth"]
-        stmt.depth = returns_test.depth
-        for i in range(len(returns)):
-            if(returns[i]["depth"] > stmt.depth): stmt.depth = returns[i]["depth"]
-            if(i == 0): stmt.first_child_id = returns[i]["id"]
-            if(i == 1): stmt.second_child_id = returns[i]["id"]
-            if(i == 2): stmt.third_child_id = returns[i]["id"]
+        stmt.depth = max(returns_test["depth"],depth)
+        stmt.first_child_id = first_child_id
+        stmt.second_child_id = second_child_id
+        stmt.third_child_id = third_child_id
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = index
         ############## VISITOR DB ################
@@ -817,33 +890,43 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["IfCondition", "IfBody", "IfElseBody"]
         ########## ENTITIE PROPERTIES ############
         stmt.hasOrElse = False
+        depth = 0
+        first_child_id = None
+        second_child_id = None
+        third_child_id = None
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
-        returns_test = self.visit(node.test, addParam(childparams,'role', exprRoles[0]))
+        returns_test = self.visit(node.test, self.addParam(childparams,'role', exprRoles[0]))
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, addParam(childparams,"role", exprRoles[1])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", exprRoles[1])))
             else:
-                returns.append(self.visit(child, addParam(childparams,"role", stmtRoles[0])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", stmtRoles[0])))
+            depth = max(depth, returns[index]["depth"])
+            if(index == 0): first_child_id = returns[index]["id"]
+            if(index == 1): second_child_id = returns[index]["id"]
+            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         bodySize = index
         for child in node.orelse:
             stmt.hasOrElse = True
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, addParam(childparams,"role", exprRoles[2])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", exprRoles[2])))
             else:
-                returns.append(self.visit(child, addParam(childparams,"role", stmtRoles[1])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", stmtRoles[1])))
+            depth = max(depth, returns[index]["depth"])
+            if(index == 0): first_child_id = returns[index]["id"]
+            if(index == 1): second_child_id = returns[index]["id"]
+            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.height = params["depth"]
-        stmt.depth = returns_test.depth
-        for i in range(len(returns)):
-            if(returns[i]["depth"] > stmt.depth): stmt.depth = returns[i]["depth"]
-            if(i == 0): stmt.first_child_id = returns[i]["id"]
-            if(i == 1): stmt.second_child_id = returns[i]["id"]
-            if(i == 2): stmt.third_child_id = returns[i]["id"]
+        stmt.depth = max(returns_test["depth"],depth)
+        stmt.first_child_id = first_child_id
+        stmt.second_child_id = second_child_id
+        stmt.third_child_id = third_child_id
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = bodySize
         ############## VISITOR DB ################
@@ -868,27 +951,34 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : stmt, "depth" : params["depth"] + 1, "parent_id" : id}
         stmtRoles = ["With"]
         exprRoles = ["WithElement", "WithAs", "WithBody"]
+        ########## ENTITIE PROPERTIES ############
+        depth = 0
+        first_child_id = None
+        second_child_id = None
+        third_child_id = None
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, addParam(childparams,"role", exprRoles[2])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", exprRoles[2])))
             else:
-                returns.append(self.visit(child, addParam(childparams,"role", stmtRoles[0])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", stmtRoles[0])))
+            depth = max(depth, returns[index]["depth"])
+            if(index == 0): first_child_id = returns[index]["id"]
+            if(index == 1): second_child_id = returns[index]["id"]
+            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         for child in node.items:
-            self.visit(child, addParam(addParam(childparams,"role_ctx", exprRoles[0]),'role_vars', exprRoles[1]))
+            self.visit(child, self.addParam(self.addParam(childparams,"role_ctx", exprRoles[0]),'role_vars', exprRoles[1]))
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.height = params["depth"]
         stmt.hasOrElse = None
-        stmt.depth = 0
-        for i in range(len(returns)):
-            if(returns[i]["depth"] > stmt.depth): stmt.depth = returns[i]["depth"]
-            if(i == 0): stmt.first_child_id = returns[i]["id"]
-            if(i == 1): stmt.second_child_id = returns[i]["id"]
-            if(i == 2): stmt.third_child_id = returns[i]["id"]
+        stmt.depth = depth
+        stmt.first_child_id = first_child_id
+        stmt.second_child_id = second_child_id
+        stmt.third_child_id = third_child_id
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = index
         ############## VISITOR DB ################
@@ -913,26 +1003,33 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : stmt, "depth" : params["depth"] + 1, "parent_id" : id}
         stmtRoles = ["AsyncWith"]
         exprRoles = ["AsyncWithElement", "AsyncWithAs", "AsyncWithBody"]
+        ########## ENTITIE PROPERTIES ############
+        depth = 0
+        first_child_id = None
+        second_child_id = None
+        third_child_id = None
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, addParam(childparams,"role", exprRoles[2])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", exprRoles[2])))
             else:
-                returns.append(self.visit(child, addParam(childparams,"role", stmtRoles[0])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", stmtRoles[0])))
+            depth = max(depth, returns[index]["depth"])
+            if(index == 0): first_child_id = returns[index]["id"]
+            if(index == 1): second_child_id = returns[index]["id"]
+            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         for child in node.items:
-            self.visit(child, addParam(addParam(childparams,"role_ctx", exprRoles[0]),'role_vars', exprRoles[1]))
+            self.visit(child, self.addParam(self.addParam(childparams,"role_ctx", exprRoles[0]),'role_vars', exprRoles[1]))
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.hasOrElse = None
-        stmt.depth = 0
-        for i in range(len(returns)):
-            if(returns[i]["depth"] > stmt.depth): stmt.depth = returns[i]["depth"]
-            if(i == 0): stmt.first_child_id = returns[i]["id"]
-            if(i == 1): stmt.second_child_id = returns[i]["id"]
-            if(i == 2): stmt.third_child_id = returns[i]["id"]
+        stmt.depth = depth
+        stmt.first_child_id = first_child_id
+        stmt.second_child_id = second_child_id
+        stmt.third_child_id = third_child_id
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = index
         ############## VISITOR DB ################
@@ -960,20 +1057,20 @@ class Visitor_info(NodeVisitor):
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
-        subject = self.visit(node.subject, addParam(childparams,'role', exprRoles[0]))
+        subject = self.visit(node.subject, self.addParam(childparams,'role', exprRoles[0]))
         for child in node.cases:
             returns.append(self.visit(child, childparams))
+            depth = max(depth, returns[index]["depth"])
+            if(index == 1): second_child_id = returns[index]["id"]
+            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
-        stmt.first_child_id = subject.id
-        stmt.height = params["depth"]
+        stmt.first_child_id = subject["id"]
         stmt.hasOrElse = None
-        stmt.depth = subject.depth
-        for i in range(len(returns)):
-            if(returns[i]["depth"] > stmt.depth): stmt.depth = returns[i]["depth"]
-            if(i == 1): stmt.second_child_id = returns[i]["id"]
-            if(i == 2): stmt.third_child_id = returns[i]["id"]
+        stmt.depth = max(depth,subject["depth"])
+        stmt.second_child_id = second_child_id
+        stmt.third_child_id = third_child_id
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = None
         #-----------------------------------------
@@ -1033,8 +1130,8 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : stmt, "depth" : params["depth"] + 1, "parent_id" : id}
         exprRoles = ["Raise","RaiseFrom"]
         ############## PROPAGAR VISIT ############
-        if(node.exc): exc = self.visit(node.exc, addParam(childparams,'role', exprRoles[0]))
-        if(node.cause): cause = self.visit(node.cause, addParam(childparams,'role', exprRoles[1]))
+        if(node.exc): exc = self.visit(node.exc, self.addParam(childparams,'role', exprRoles[0]))
+        if(node.cause): cause = self.visit(node.cause, self.addParam(childparams,'role', exprRoles[1]))
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.hasOrElse = None
@@ -1075,6 +1172,11 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : stmt, "depth" : params["depth"] + 1, "parent_id" : id}
         stmtRoles = ["Try", "TryElse", "TryFinally", "TryHandler"]
         exprRoles = ["TryBody", "TryElse", "FinallyBody"]
+        ########## ENTITIE PROPERTIES ############
+        depth = 0
+        first_child_id = None
+        second_child_id = None
+        third_child_id = None
         ############## PROPAGAR VISIT ############
         returns = []
         handlers = []
@@ -1084,36 +1186,47 @@ class Visitor_info(NodeVisitor):
         hasOrElse = False
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, addParam(childparams,"role", exprRoles[0])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", exprRoles[0])))
             else:
-                returns.append(self.visit(child, addParam(childparams,"role", stmtRoles[0])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", stmtRoles[0])))
+            depth = max(depth, returns[index]["depth"])
+            if(index == 0): first_child_id = returns[index]["id"]
+            if(index == 1): second_child_id = returns[index]["id"]
+            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         for child in node.orelse:
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, addParam(childparams,"role", exprRoles[1])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", exprRoles[1])))
             else:
-                returns.append(self.visit(child, addParam(childparams,"role", stmtRoles[1])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", stmtRoles[1])))
+            depth = max(depth, returns[index]["depth"])
+            if(index == 0): first_child_id = returns[index]["id"]
+            if(index == 1): second_child_id = returns[index]["id"]
+            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
             hasOrElse = True
         for child in node.finalbody:
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, addParam(childparams,"role", exprRoles[2])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", exprRoles[2])))
             else:
-                returns.append(self.visit(child, addParam(childparams,"role", stmtRoles[2])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", stmtRoles[2])))
+            depth = max(depth, returns[index]["depth"])
+            if(index == 0): first_child_id = returns[index]["id"]
+            if(index == 1): second_child_id = returns[index]["id"]
+            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         for child in node.handlers:
-            handlers[hindex] = self.visit(child, addParam(addParam(childparams,"role", stmtRoles[3]),'handler', handler))
+            handlers.append(self.visit(child, self.addParam(self.addParam(childparams,"role", stmtRoles[3]),'handler', handler)))
+            depth = max(depth, handlers[hindex]["depth"])
             hindex += 1
             handlersBodies += len(child.body)
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.hasOrElse = hasOrElse
-        stmt.depth = 0
-        for i in range(len(returns)):
-            if(returns[i]["depth"] > stmt.depth): stmt.depth = returns[i]["depth"]
-            if(i == 0): stmt.first_child_id = returns[i]["id"]
-            if(i == 1): stmt.second_child_id = returns[i]["id"]
-            if(i == 2): stmt.third_child_id = returns[i]["id"]
+        stmt.depth = depth
+        stmt.first_child_id = first_child_id
+        stmt.second_child_id = second_child_id
+        stmt.third_child_id = third_child_id
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = index + handlersBodies
         #--------------- handler -----------------
@@ -1159,36 +1272,47 @@ class Visitor_info(NodeVisitor):
         handlersBodies = 0
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, addParam(childparams,"role", exprRoles[0])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", exprRoles[0])))
             else:
-                returns.append(self.visit(child, addParam(childparams,"role", stmtRoles[0])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", stmtRoles[0])))
+            depth = max(depth, returns[index]["depth"])
+            if(index == 0): first_child_id = returns[index]["id"]
+            if(index == 1): second_child_id = returns[index]["id"]
+            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         for child in node.orelse:
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, addParam(childparams,"role", exprRoles[1])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", exprRoles[1])))
             else:
-                returns.append(self.visit(child, addParam(childparams,"role", stmtRoles[1])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", stmtRoles[1])))
+            depth = max(depth, returns[index]["depth"])
+            if(index == 0): first_child_id = returns[index]["id"]
+            if(index == 1): second_child_id = returns[index]["id"]
+            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
             hasOrElse = True
         for child in node.finalbody:
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, addParam(childparams,"role", exprRoles[2])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", exprRoles[2])))
             else:
-                returns.append(self.visit(child, addParam(childparams,"role", stmtRoles[2])))
+                returns.append(self.visit(child, self.addParam(childparams,"role", stmtRoles[2])))
+            depth = max(depth, returns[index]["depth"])
+            if(index == 0): first_child_id = returns[index]["id"]
+            if(index == 1): second_child_id = returns[index]["id"]
+            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         for child in node.handlers:
-            handlers[hindex] = self.visit(child, addParam(addParam(childparams,"role", stmtRoles[3]),'handler', handler))
+            handlers.append(self.visit(child, self.addParam(self.addParam(childparams,"role", stmtRoles[3]),'handler', handler)))
+            depth = max(depth, handlers[hindex]["depth"])
             hindex += 1
             handlersBodies += len(child.body)
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.hasOrElse = hasOrElse
-        stmt.depth = 0
-        for i in range(len(returns)):
-            if(returns[i]["depth"] > stmt.depth): stmt.depth = returns[i]["depth"]
-            if(i == 0): stmt.first_child_id = returns[i]["id"]
-            if(i == 1): stmt.second_child_id = returns[i]["id"]
-            if(i == 2): stmt.third_child_id = returns[i]["id"]
+        stmt.depth = depth
+        stmt.first_child_id = first_child_id
+        stmt.second_child_id = second_child_id
+        stmt.third_child_id = third_child_id
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = index + handlersBodies
         #--------------- handler -----------------
@@ -1224,8 +1348,8 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : stmt, "depth" : params["depth"] + 1, "parent_id" : id}
         exprRoles = ["AssertCondition", "AssertMessage"]
         ############## PROPAGAR VISIT ############
-        test = self.visit(node.test, addParam(childparams,'role', exprRoles[0]))
-        if(node.msg): msg = self.visit(node.msg, addParam(childparams,'role', exprRoles[1]))
+        test = self.visit(node.test, self.addParam(childparams,'role', exprRoles[0]))
+        if(node.msg): msg = self.visit(node.msg, self.addParam(childparams,'role', exprRoles[1]))
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.hasOrElse = None
@@ -1433,7 +1557,7 @@ class Visitor_info(NodeVisitor):
         index = 0
         self.visit(node.op, childparams)
         for child in node.values:
-            returns.append(self.visit(child, addParam(childparams,'role', exprRoles[0])))
+            returns.append(self.visit(child, self.addParam(childparams,'role', exprRoles[0])))
             depth = max(depth, returns[index]["depth"])
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
@@ -1474,8 +1598,8 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : expr, "depth" : params["depth"] + 1, "parent_id" : id}
         exprRoles = ["AssignExpLHS", "AssignExpRHS"]
         ############## PROPAGAR VISIT ############
-        target = self.visit(node.target, addParam(childparams,'role', exprRoles[0]))
-        value = self.visit(node.value, addParam(childparams,'role', exprRoles[1]))
+        target = self.visit(node.target, self.addParam(childparams,'role', exprRoles[0]))
+        value = self.visit(node.value, self.addParam(childparams,'role', exprRoles[1]))
         ########## ENTITIE PROPERTIES ############
         expr.sourceCode = ast.unparse(node)
         expr.height = params["depth"]
@@ -1513,8 +1637,8 @@ class Visitor_info(NodeVisitor):
             case ast.Pow: role = exprRoles[2]
             case ast.BitAnd, ast.BitOr, ast.BitXor: role = exprRoles[4]
             case default: role = exprRoles[0]
-        left = self.visit(node.left, addParam(childparams,'role', role))
-        right = self.visit(node.right, addParam(childparams,'role', role))
+        left = self.visit(node.left, self.addParam(childparams,'role', role))
+        right = self.visit(node.right, self.addParam(childparams,'role', role))
         ########## ENTITIE PROPERTIES ############
         expr.sourceCode = ast.unparse(node)
         expr.height = params["depth"]
@@ -1546,7 +1670,7 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["Arithmetic"]
         ############## PROPAGAR VISIT ############
         self.visit(node.op, childparams)
-        operand = self.visit(node.operand, addParam(childparams,'role', exprRoles[0]))
+        operand = self.visit(node.operand, self.addParam(childparams,'role', exprRoles[0]))
         ########## ENTITIE PROPERTIES ############
         expr.sourceCode = ast.unparse(node)
         expr.height = params["depth"]
@@ -1587,9 +1711,9 @@ class Visitor_info(NodeVisitor):
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
-        args = self.visit(node.args, addParam(addParam(childparams, "params_id", id), "role", "LambdaParams"))
+        args = self.visit(node.args, self.addParam(self.addParam(childparams, "params_id", id), "role", "LambdaParams"))
         for child in node.body:
-            returns.append(self.visit(child, addParam(childparams,'role', exprRoles[0])))
+            returns.append(self.visit(child, self.addParam(childparams,'role', exprRoles[0])))
             depth = max(depth, returns[index]["depth"])
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
@@ -1630,9 +1754,9 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : expr, "depth" : params["depth"] + 1, "parent_id" : id}
         exprRoles = ["TernaryCondition", "TernaryIfBody", "TernaryElseBody"]
         ############## PROPAGAR VISIT ############
-        test = self.visit(node.test, addParam(childparams,'role', exprRoles[0]))
-        body = self.visit(node.body, addParam(childparams,'role', exprRoles[1]))
-        orelse = self.visit(node.orelse, addParam(childparams,'role', exprRoles[2]))
+        test = self.visit(node.test, self.addParam(childparams,'role', exprRoles[0]))
+        body = self.visit(node.body, self.addParam(childparams,'role', exprRoles[1]))
+        orelse = self.visit(node.orelse, self.addParam(childparams,'role', exprRoles[2]))
         ########## ENTITIE PROPERTIES ############
         expr.sourceCode = ast.unparse(node)
         expr.height = params["depth"]
@@ -1659,7 +1783,7 @@ class Visitor_info(NodeVisitor):
         dbnode.node_id = expr.expression_id = comp.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
-        expr.category, comp.category = "ListComprehension"
+        expr.category = comp.category = "ListComprehension"
         dbnode.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
@@ -1689,7 +1813,7 @@ class Visitor_info(NodeVisitor):
             numOfIfs += len(child.ifs)
             if(child.is_async): isAsync = True
             index += 1
-        elt = self.visit(node.elt, addParam(childparams,'role', exprRoles[0]))
+        elt = self.visit(node.elt, self.addParam(childparams,'role', exprRoles[0]))
         ########## ENTITIE PROPERTIES ############
         expr.sourceCode = ast.unparse(node)
         expr.height = params["depth"]
@@ -1720,7 +1844,7 @@ class Visitor_info(NodeVisitor):
         dbnode.node_id = expr.expression_id = comp.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
-        expr.category, comp.category = "SetComprehension"
+        expr.category = comp.category = "SetComprehension"
         dbnode.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
@@ -1750,7 +1874,7 @@ class Visitor_info(NodeVisitor):
             numOfIfs += len(child.ifs)
             if(child.is_async): isAsync = True
             index += 1
-        elt = self.visit(node.elt, addParam(childparams,'role', exprRoles[0]))
+        elt = self.visit(node.elt, self.addParam(childparams,'role', exprRoles[0]))
         ########## ENTITIE PROPERTIES ############
         expr.sourceCode = ast.unparse(node)
         expr.height = params["depth"]
@@ -1781,7 +1905,7 @@ class Visitor_info(NodeVisitor):
         dbnode.node_id = expr.expression_id = comp.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
-        expr.category, comp.category = "DictComprehension"
+        expr.category = comp.category = "DictComprehension"
         dbnode.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
@@ -1808,8 +1932,8 @@ class Visitor_info(NodeVisitor):
             numOfIfs += len(child.ifs)
             if(child.is_async): isAsync = True
             index += 1
-        key = self.visit(node.key, addParam(childparams,'role', exprRoles[0]))
-        value = self.visit(node.value, addParam(childparams,'role', exprRoles[1]))
+        key = self.visit(node.key, self.addParam(childparams,'role', exprRoles[0]))
+        value = self.visit(node.value, self.addParam(childparams,'role', exprRoles[1]))
         ########## ENTITIE PROPERTIES ############
         expr.sourceCode = ast.unparse(node)
         expr.height = params["depth"]
@@ -1840,7 +1964,7 @@ class Visitor_info(NodeVisitor):
         dbnode.node_id = expr.expression_id = comp.expression_id = id
         dbnode.parent_id = expr.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
-        expr.category, comp.category = "GeneratorComprehension"
+        expr.category = comp.category = "GeneratorComprehension"
         dbnode.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
@@ -1870,7 +1994,7 @@ class Visitor_info(NodeVisitor):
             numOfIfs += len(child.ifs)
             if(child.is_async): isAsync = True
             index += 1
-        elt = self.visit(node.elt, addParam(childparams,'role', exprRoles[0]))
+        elt = self.visit(node.elt, self.addParam(childparams,'role', exprRoles[0]))
         ########## ENTITIE PROPERTIES ############
         expr.sourceCode = ast.unparse(node)
         expr.height = params["depth"]
@@ -1911,7 +2035,7 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : expr, "depth" : params["depth"] + 1, "parent_id" : id}
         exprRoles = ["Await"]
         ############## PROPAGAR VISIT ############
-        value = self.visit(node.value, addParam(childparams,'role', exprRoles[0]))
+        value = self.visit(node.value, self.addParam(childparams,'role', exprRoles[0]))
         ########## ENTITIE PROPERTIES ############
         expr.sourceCode = ast.unparse(node)
         expr.height = params["depth"]
@@ -1940,7 +2064,7 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : expr, "depth" : params["depth"] + 1, "parent_id" : id}
         exprRoles = ["Yield"]
         ############## PROPAGAR VISIT ############
-        if(node.value): value = self.visit(node.value, addParam(childparams,'role', exprRoles[0]))
+        if(node.value): value = self.visit(node.value, self.addParam(childparams,'role', exprRoles[0]))
         ########## ENTITIE PROPERTIES ############
         expr.sourceCode = ast.unparse(node)
         expr.height = params["depth"]
@@ -1971,7 +2095,7 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : expr, "depth" : params["depth"] + 1, "parent_id" : id}
         exprRoles = ["YieldFrom"]
         ############## PROPAGAR VISIT ############
-        value = self.visit(node.value, addParam(childparams,'role', exprRoles[0]))
+        value = self.visit(node.value, self.addParam(childparams,'role', exprRoles[0]))
         ########## ENTITIE PROPERTIES ############
         expr.sourceCode = ast.unparse(node)
         expr.height = params["depth"]
@@ -2010,14 +2134,14 @@ class Visitor_info(NodeVisitor):
         third_child_id = None
         fourth_child_id = None
         ############## PROPAGAR VISIT ############
-        left = self.visit(node.left, addParam(childparams,'role', exprRoles[0]))
+        left = self.visit(node.left, self.addParam(childparams,'role', exprRoles[0]))
         index = 0
         returns = []
         for child in node.comparators:
             match node.ops[index]:
-                case ast.Is, ast.IsNot: returns.append(self.visit(child, addParam(childparams,'role', exprRoles[2])))
-                case ast.In: returns.append(self.visit(child, addParam(childparams,'role', exprRoles[3])))
-                case default: returns.append(self.visit(child, addParam(childparams,'role', exprRoles[1])))
+                case ast.Is, ast.IsNot: returns.append(self.visit(child, self.addParam(childparams,'role', exprRoles[2])))
+                case ast.In: returns.append(self.visit(child, self.addParam(childparams,'role', exprRoles[3])))
+                case default: returns.append(self.visit(child, self.addParam(childparams,'role', exprRoles[1])))
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
             if(index == 2): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
@@ -2075,21 +2199,21 @@ class Visitor_info(NodeVisitor):
         returns = []
         index = 0
         for child in node.args:
-            returns.append(self.visit(child, addParam(childparams,'role', exprRoles[1])))
+            returns.append(self.visit(child, self.addParam(childparams,'role', exprRoles[1])))
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
             if(index == 2): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
             if(index == 3): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
             depth = max(depth, returns[index]["depth"])
             index += 1
-        func = self.visit(node.func, addParam(childparams,'role', exprRoles[0]))
+        func = self.visit(node.func, self.addParam(childparams,'role', exprRoles[0]))
         for child in node.keywords:
-            returns.append(self.visit(child, childparams))
+            returns.append(self.visit(child, self.addParam(childparams,'role', exprRoles[1])))
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
             if(index == 2): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
             if(index == 3): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
-            if(child.name): namedArgs += 1
+            if(child.arg): namedArgs += 1
             if('**' in ast.unparse(child.value)): staredArgs += 1
             depth = max(depth, returns[index]["depth"])
             index += 1
@@ -2107,15 +2231,15 @@ class Visitor_info(NodeVisitor):
         expr.depth = max(func["depth"], depth)
         #------------- CallArgs ------------------
         callArgs.numberArgs = len(node.args)
-        callArgs.namedArgsPct = namedArgs/callArgs.numberArgs
-        callArgs.doubleStarArgsPct = staredArgs/callArgs.numberArgs
+        callArgs.namedArgsPct = namedArgs/callArgs.numberArgs if callArgs.numberArgs > 0 else 0
+        callArgs.doubleStarArgsPct = staredArgs/callArgs.numberArgs  if callArgs.numberArgs > 0 else 0
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node' : callArgs, 'dbnode' : dbnode, 'expr' : expr})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
 
     ################################################################
 
-    def visit_formattedvalue(self : Self, node : ast.FormattedValue , params : Dict) -> Dict: 
+    def visit_FormattedValue(self : Self, node : ast.FormattedValue , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
@@ -2131,9 +2255,11 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params["depth"] + 1, "parent_id" : id}
         exprRoles = ["FormattedValue", "FormattedFormat"]
+        ########## ENTITIE PROPERTIES ############
+        spec = None
         ############## PROPAGAR VISIT ############
-        value = self.visit(node.value, addParam(childparams,'role', exprRoles[0]))
-        if(node.format_spec): spec = self.visit(node.format_spec, addParam(childparams,'role', exprRoles[1]))
+        value = self.visit(node.value, self.addParam(childparams,'role', exprRoles[0]))
+        if(node.format_spec): spec = self.visit(node.format_spec, self.addParam(childparams,'role', exprRoles[1]))
         ########## ENTITIE PROPERTIES ############
         expr.sourceCode = ast.unparse(node)
         expr.height = params["depth"]
@@ -2182,7 +2308,7 @@ class Visitor_info(NodeVisitor):
         returns = []
         index = 0
         for child in node.values:
-            returns.append(self.visit(child, addParam(childparams,'role', exprRoles[0])))
+            returns.append(self.visit(child, self.addParam(childparams,'role', exprRoles[0])))
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
             if(index == 2): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
@@ -2247,7 +2373,7 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : expr, "depth" : params["depth"] + 1, "parent_id" : id}
         exprRoles = ["Dot"]
         ############## PROPAGAR VISIT ############
-        value = self.visit(node.value, addParam(childparams,'role', exprRoles[0]))
+        value = self.visit(node.value, self.addParam(childparams,'role', exprRoles[0]))
         ########## ENTITIE PROPERTIES ############
         expr.sourceCode = ast.unparse(node)
         expr.height = params["depth"]
@@ -2276,8 +2402,8 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : expr, "depth" : params["depth"] + 1, "parent_id" : id}
         exprRoles = ["Slice", "Indexing"]
         ############## PROPAGAR VISIT ############
-        value = self.visit(node.value, addParam(childparams,'role', exprRoles[1]))
-        slice = self.visit(node.slice, addParam(childparams,'role', exprRoles[0]))
+        value = self.visit(node.value, self.addParam(childparams,'role', exprRoles[1]))
+        slice = self.visit(node.slice, self.addParam(childparams,'role', exprRoles[0]))
         ########## ENTITIE PROPERTIES ############
         expr.sourceCode = ast.unparse(node)
         expr.height = params["depth"]
@@ -2308,7 +2434,7 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : expr, "depth" : params["depth"] + 1, "parent_id" : id}
         exprRoles = ["Star"]
         ############## PROPAGAR VISIT ############
-        value = self.visit(node.value, addParam(childparams,'role', exprRoles[0]))
+        value = self.visit(node.value, self.addParam(childparams,'role', exprRoles[0]))
         ########## ENTITIE PROPERTIES ############
         expr.sourceCode = ast.unparse(node)
         expr.height = params["depth"]
@@ -2389,7 +2515,7 @@ class Visitor_info(NodeVisitor):
         returns = []
         index = 0
         for child in node.elts:
-            returns.append(self.visit(child, addParam(childparams,'role', exprRoles[0])))
+            returns.append(self.visit(child, self.addParam(childparams,'role', exprRoles[0])))
             depth = max(depth, returns[index]["depth"])
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
@@ -2450,7 +2576,7 @@ class Visitor_info(NodeVisitor):
         returns = []
         index = 0
         for child in node.elts:
-            returns.append(self.visit(child, addParam(childparams,'role', exprRoles[0])))
+            returns.append(self.visit(child, self.addParam(childparams,'role', exprRoles[0])))
             depth = max(depth, returns[index]["depth"])
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
@@ -2511,7 +2637,7 @@ class Visitor_info(NodeVisitor):
         returns = []
         index = 0
         for child in node.keys:
-            returns.append(self.visit(child, addParam(childparams,'role', exprRoles[0])))
+            returns.append(self.visit(child, self.addParam(childparams,'role', exprRoles[0])))
             depth = max(depth, returns[index]["depth"])
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
@@ -2519,7 +2645,7 @@ class Visitor_info(NodeVisitor):
             if(index == 3): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
             index += 1
         for child in node.values:
-            returns.append(self.visit(child, addParam(childparams,'role', exprRoles[0])))
+            returns.append(self.visit(child, self.addParam(childparams,'role', exprRoles[0])))
             depth = max(depth, returns[index]["depth"])
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
@@ -2540,7 +2666,7 @@ class Visitor_info(NodeVisitor):
         expr.fourth_child_id = fourth_child_id
         expr.depth = depth
         #-------------- VECTOR -------------------
-        vct.numberOfElements = len(node.elts)
+        vct.numberOfElements = len(node.keys)
         vct.homogeneous = homogeneous
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node' : vct, 'dbnode' : dbnode, 'expr' : expr})
@@ -2580,7 +2706,7 @@ class Visitor_info(NodeVisitor):
         returns = []
         index = 0
         for child in node.elts:
-            returns.append(self.visit(child, addParam(childparams,'role', exprRoles[0])))
+            returns.append(self.visit(child, self.addParam(childparams,'role', exprRoles[0])))
             depth = max(depth, returns[index]["depth"])
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
@@ -2628,16 +2754,19 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["Slice"]
         ########## ENTITIE PROPERTIES ############
         depth = 0
+        step = None
+        lower = None
+        upper = None
         ############## PROPAGAR VISIT ############
         if(node.lower):
-            lower = self.visit(node.lower, addParam(childparams,'role', exprRoles[0]))
-            depth = max(depth, lower.depth)
+            lower = self.visit(node.lower, self.addParam(childparams,'role', exprRoles[0]))
+            depth = max(depth, lower["depth"])
         if(node.upper):
-            upper = self.visit(node.upper, addParam(childparams,'role', exprRoles[0]))
-            depth = max(depth, upper.depth)
+            upper = self.visit(node.upper, self.addParam(childparams,'role', exprRoles[0]))
+            depth = max(depth, upper["depth"])
         if(node.step):
-            step = self.visit(node.step, addParam(childparams,'role', exprRoles[0]))
-            depth = max(depth, step.depth)
+            step = self.visit(node.step, self.addParam(childparams,'role', exprRoles[0]))
+            depth = max(depth, step["depth"])
         ########## ENTITIE PROPERTIES ############
         expr.sourceCode = ast.unparse(node)
         expr.height = params["depth"]
@@ -2677,7 +2806,7 @@ class Visitor_info(NodeVisitor):
         childparams = {"parent" : params["parent"], "depth" : params["depth"] + 1, "parent_id" : params["parent_id"]}
         exprRoles = ["MatchCondition"]
         ############## PROPAGAR VISIT ############
-        self.visit(node.value, addParam(childparams,'role', exprRoles[0]))
+        self.visit(node.value, self.addParam(childparams,'role', exprRoles[0]))
         return {'matchValue' : 1, 'matchSingleton' : 0, 'matchSequence' : 0, 'matchMapping' : 0, 'matchClass' : 0, 'matchStar' : 0, 'matchAs' : 0, 'matchOr' : 0, 'depth' : 1}
 
     
@@ -2696,7 +2825,7 @@ class Visitor_info(NodeVisitor):
         for child in node.patterns:
             childs.append(self.visit(child, childparams))
             index += 1
-            returns = sumMatch(returns,childs[index])
+            returns = self.sumMatch(returns,childs[index])
         returns["depth"] += 1
         return returns
 
@@ -2714,10 +2843,10 @@ class Visitor_info(NodeVisitor):
         for child in node.patterns:
             childs.append(self.visit(child, childparams))
             index += 1
-            returns = sumMatch(returns,childs[index])
+            returns = self.sumMatch(returns,childs[index])
         index = 0
         for child in node.keys:
-            exprs.append(self.visit(child, addParam(childparams,'role', exprRoles[0])))
+            exprs.append(self.visit(child, self.addParam(childparams,'role', exprRoles[0])))
             returns["depth"] = max(returns["depth"], exprs[index]["depth"])
             index += 1
         returns["depth"] += 1
@@ -2731,17 +2860,17 @@ class Visitor_info(NodeVisitor):
         ################ RETURNS #################
         returns = {'matchValue' : 0, 'matchSingleton' : 0, 'matchSequence' : 0, 'matchMapping' : 0, 'matchClass' : 1, 'matchStar' : 0, 'matchAs' : 0, 'matchOr' : 0, 'depth' : 1}
         ############## PROPAGAR VISIT ############
-        cls = self.visit(node.cls, addParam(childparams,'role', exprRoles[0]))
+        cls = self.visit(node.cls, self.addParam(childparams,'role', exprRoles[0]))
         childs = []
         index = 0
         for child in node.patterns:
             childs.append(self.visit(child, childparams))
             index += 1
-            returns = sumMatch(returns,childs[index])
+            returns = self.sumMatch(returns,childs[index])
         for child in node.kwd_patterns:
             childs.append(self.visit(child, childparams))
             index += 1
-            returns = sumMatch(returns,childs[index])
+            returns = self.sumMatch(returns,childs[index])
         returns["depth"] = max(returns["depth"] + 1, cls["depth"])
         return returns
 
@@ -2772,7 +2901,7 @@ class Visitor_info(NodeVisitor):
         for child in node.patterns:
             childs.append(self.visit(child, childparams))
             index += 1
-            returns = sumMatch(returns,childs[index])
+            returns = self.sumMatch(returns,childs[index])
         returns["depth"] += 1
         return returns
     
@@ -2788,17 +2917,17 @@ class Visitor_info(NodeVisitor):
         depth = 0
         isCatchAll = True
         if(node.type): 
-            self.visit(node.type, addParam(childparams,'role', exprRoles[0]))
+            self.visit(node.type, self.addParam(childparams,'role', exprRoles[0]))
             isCatchAll = False
         for child in node.body:
-            returns.append(self.visit(child, addParam(childparams,'role', exprRoles[1])))
+            returns.append(self.visit(child, self.addParam(childparams,'role', exprRoles[1])))
             depth = max(depth,returns[index]["depth"])
             index += 1
         return { 'id' : params["parent_id"], 'depth' : depth, 'isCatchAll' : isCatchAll}
 
     ####################### Visits extra ######################
 
-    def visit_Comprehension(self : Self, node : ast.comprehension , params : Dict) -> Dict: 
+    def visit_comprehension(self : Self, node : ast.comprehension , params : Dict) -> Dict: 
         ############# PARAMS #####################
         exprRoles = ["ComprehensionTarget", "ComprehensionIter", "ComprehensionIf"]
         ########## ENTITIE PROPERTIES ############
@@ -2806,17 +2935,17 @@ class Visitor_info(NodeVisitor):
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
-        target = self.visit(node.target, addParam(params,'role', exprRoles[0]))
-        iter = self.visit(node.iter, addParam(params,'role', exprRoles[1]))
+        target = self.visit(node.target, self.addParam(params,'role', exprRoles[0]))
+        iter = self.visit(node.iter, self.addParam(params,'role', exprRoles[1]))
         for child in node.ifs:
-            returns.append(self.visit(child, addParam(params,'role', exprRoles[2])))
+            returns.append(self.visit(child, self.addParam(params,'role', exprRoles[2])))
             depth = max(depth, returns[index]["depth"])
             index += 1
         ########## ENTITIE PROPERTIES ############
         depth = max(max(target["depth"], iter["depth"]), depth)
         return {'id' : params["parent_id"], 'category' : params["parent"].category, 'depth' : depth + 1}
     
-    def visit_Arguments(self : Self, node : ast.arguments , params : Dict) -> Dict: 
+    def visit_arguments(self : Self, node : ast.arguments , params : Dict) -> Dict: 
         dbparams = dbentities.DBParameter()
         ############### IDS ######################
         dbparams.parameters_id = params["params_id"]
@@ -2831,28 +2960,28 @@ class Visitor_info(NodeVisitor):
         ############## PROPAGAR VISIT ############
         for child in node.posonlyargs:
             arg = self.visit(child, params)
-            if(arg.typeAnnotation): numberOfAnnotations += 1
+            if(arg["typeAnnotation"]): numberOfAnnotations += 1
             numberOfParams += 1
         for child in node.args:
             arg =  self.visit(child, params)
-            if(arg.typeAnnotation): numberOfAnnotations += 1
+            if(arg["typeAnnotation"]): numberOfAnnotations += 1
             numberOfParams += 1
         if(node.vararg): 
             arg =  self.visit(node.vararg, params)
-            if(arg.typeAnnotation): numberOfAnnotations += 1
+            if(arg["typeAnnotation"]): numberOfAnnotations += 1
             numberOfParams += 1
         for child in node.kwonlyargs:
             arg =  self.visit(child, params)
-            if(arg.typeAnnotation): numberOfAnnotations += 1
+            if(arg["typeAnnotation"]): numberOfAnnotations += 1
             numberOfParams += 1
         for child in node.kw_defaults:
-            self.visit(child, addParam(params,'role', exprRoles[0]))
+            self.visit(child, self.addParam(params,'role', exprRoles[0]))
         if(node.kwarg):
             arg = self.visit(node.kwarg, params)
-            if(arg.typeAnnotation): numberOfAnnotations += 1
+            if(arg["typeAnnotation"]): numberOfAnnotations += 1
             numberOfParams += 1
         for child in node.defaults:
-            self.visit(child, addParam(params,'role', exprRoles[0]))
+            self.visit(child, self.addParam(params,'role', exprRoles[0]))
         ########## ENTITIE PROPERTIES ############
         dbparams.numberOfParams = numberOfParams
         dbparams.posOnlyParamPct = len(node.posonlyargs)
@@ -2866,28 +2995,28 @@ class Visitor_info(NodeVisitor):
         self.visitor_db.visit(node, {"dbparams" : dbparams})
         return {"typeAnnotations" : numberOfAnnotations, "numberOfArgs" : numberOfParams}
     
-    def visit_Arg(self : Self, node : ast.arg , params : Dict) -> Dict:
+    def visit_arg(self : Self, node : ast.arg , params : Dict) -> Dict:
         ############# PARAMS ##################### 
         exprRoles = ["TypeAnnotation"]
         ############## PROPAGAR VISIT ############
         if(node.annotation): 
-            self.visit(node.annotation, addParam(params,'role', exprRoles[0]))
+            self.visit(node.annotation, self.addParam(params,'role', exprRoles[0]))
             return {'typeAnnotation' : True}
         return {'typeAnnotation' : False}
     
-    def visit_Keyword(self : Self, node : ast.keyword , params : Dict) -> Dict: 
+    def visit_keyword(self : Self, node : ast.keyword , params : Dict) -> Dict: 
         ############## PROPAGAR VISIT ############
         return self.visit(node.value, params)
     
-    def visit_Withitem(self : Self, node : ast.withitem , params : Dict) -> Dict: 
+    def visit_withitem(self : Self, node : ast.withitem , params : Dict) -> Dict: 
         ############# PARAMS #####################
-        childparams = {"parent" : params["dbnode"], "depth" : params["depth"], "parent_id" : params["parent_id"]}
+        childparams = {"parent" : params["parent"], "depth" : params["depth"], "parent_id" : params["parent_id"]}
         ############## PROPAGAR VISIT ############
-        self.visit(node.context_expr, addParam(childparams, 'role', params["role_ctx"]))
-        if(node.optional_vars): self.visit(node.optional_vars, addParam(childparams,'role', params["role_vars"]))
+        self.visit(node.context_expr, self.addParam(childparams, 'role', params["role_ctx"]))
+        if(node.optional_vars): self.visit(node.optional_vars, self.addParam(childparams,'role', params["role_vars"]))
         return
     
-    def visit_Match_case(self : Self, node : ast.match_case , params : Dict) -> Dict: 
+    def visit_match_case(self : Self, node : ast.match_case , params : Dict) -> Dict: 
         ############# PARAMS #####################
         stmtRoles = ["Case"]
         exprRoles = ["CaseGuard", "CaseBody"]
@@ -2899,26 +3028,26 @@ class Visitor_info(NodeVisitor):
         returns = self.visit(node.pattern, params)
         guards = 0
         if(node.guard): 
-            guard = self.visit(node.guard, addParam(params,'role', exprRoles[0]))
+            guard = self.visit(node.guard, self.addParam(params,'role', exprRoles[0]))
             guards = 1
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                childs.append(self.visit(child, addParam(params,"role", exprRoles[1])))
+                childs.append(self.visit(child, self.addParam(params,"role", exprRoles[1])))
             else:
-                childs.append(self.visit(child, addParam(params,"role", stmtRoles[0])))
+                childs.append(self.visit(child, self.addParam(params,"role", stmtRoles[0])))
             index += 1
         ########## ENTITIE PROPERTIES ############
         for i in range(index):
             depth = max(depth, childs[i]["depth"])
-        returns = addParam(returns,'guards',guards)
-        returns = addParam(returns,'bodyCount',index)
+        returns = self.addParam(returns,'guards',guards)
+        returns = self.addParam(returns,'bodyCount',index)
         return returns
     
     def visit_TypeVar(self : Self, node : ast.TypeVar , params : Dict) -> Dict: 
         ############# PARAMS #####################
         exprRoles = ["TypeVar"]
         ############## PROPAGAR VISIT ############
-        if(node.bound): self.visit(node.bound, addParam(params,'role', exprRoles[0]))
+        if(node.bound): self.visit(node.bound, self.addParam(params,'role', exprRoles[0]))
         return
     
     def visit_ParamSpec(self : Self, node : ast.ParamSpec , params : Dict) -> Dict: 

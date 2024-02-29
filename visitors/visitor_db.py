@@ -9,14 +9,18 @@ class Visitor_db(NodeVisitor):
     def __init__(self):
         self.sql_insert = []
         self.datos_a_insertar = []
+
+    def visit_Program(self, node: dbentities.DBProgram, params):
+        self.insert_program(node)
+        #writeOnDB(self.sql_insert, self.datos_a_insertar)
+        self.sql_insert = []
+        self.datos_a_insertar = []
+        pass
     
     def visit_Module(self, node: dbentities.DBModule, params):
         self.insert_module(params["node"])
         self.insert_import(params["dbimport"])
         self.insert_node(params["dbnode"])
-        writeOnDB(self.sql_insert, self.datos_a_insertar)
-        self.sql_insert = []
-        self.datos_a_insertar = []
         pass
     
     def visit_FunctionDef(self, node: ast.FunctionDef, params):
@@ -357,6 +361,40 @@ class Visitor_db(NodeVisitor):
     def visit_Arguments(self, node: ast.arguments, params):
         self.insert_parameter(params["dbparams"])
         pass
+
+    def insert_program(self : Self, node: dbentities.DBProgram):
+        sql_insert = '''INSERT INTO Programs (
+                            program_id,
+                            name, 
+                            hasSubDirsWithCode, 
+                            hasPackages, 
+                            numberOfModules, 
+                            numberOfSubDirsWithCode, 
+                            numberOfPackages,
+                            classDefsPct, 
+                            functionDefsPct, 
+                            enumDefsPct, 
+                            hasCodeRootPackage, 
+                            averageDefsPerModule, 
+                            user_id,
+                            experticeLevel) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
+        datos_a_insertar = (node.program_id,
+                            node.name, 
+                            node.hasSubDirsWithCode, 
+                            node.hasPackages, 
+                            node.numberOfModules, 
+                            node.numberOfSubDirsWithCode, 
+                            node.numberOfPackages,
+                            node.classDefsPct, 
+                            node.functionDefsPct, 
+                            node.enumDefsPct, 
+                            node.hasCodeRootPackage, 
+                            node.averageDefsPerModule, 
+                            node.user_id,
+                            node.experticeLevel)
+        self.sql_insert.append(sql_insert)
+        self.datos_a_insertar.append(datos_a_insertar)
 
     def insert_functiondef(self : Self, node: dbentities.DBFunctionDef):
         sql_insert = '''INSERT INTO FunctionDefs (
