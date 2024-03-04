@@ -4,6 +4,7 @@ from db.db_utils import init_db
 import os
 import re
 import uuid
+import warnings
 
 directorio_principal = '.\\python_tfg\\20-21'
 
@@ -50,9 +51,8 @@ def visit(visitor):
         if project != ' ':
             user_id = controlUsers(project)
             if(project not in projects):
-                    project_id = uuid.uuid4().int
                     projects.append(project)
-                    visitor.visit_Program({ "path" : project, "project_id" : project_id, "user_id" : user_id, "experticeLevel" : "BEGGINER" })
+                    visitor.visit_Program({ "path" : project, "user_id" : user_id, "experticeLevel" : "BEGGINER" })
     """
     for directorio_actual, subdirectorios, archivos in os.walk(directorio_principal):
         id = controlUsers(directorio_actual)
@@ -67,8 +67,10 @@ def visit(visitor):
 #Visitor_info.visit(ast_1)
 if __name__ == '__main__':
     #init_db()
+    warnings.filterwarnings("error")
     ast_1 = ast.parse(
-    """a = 1""")
+    """a = lambda: 1+1; print() """)
+
 
     visitor = Visitor_info()
 

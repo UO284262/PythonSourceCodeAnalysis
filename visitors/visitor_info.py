@@ -10,6 +10,15 @@ from visitors.My_NodeVisitor import NodeVisitor
 
 class Visitor_info(NodeVisitor):
 
+    def getArgsNameConvention(self, namingConventions : Dict):
+        nameConvention = ''
+        max = 0
+        for nc in namingConventions.keys():
+            if(namingConventions[nc] > max): 
+                max = namingConventions[nc]
+                nameConvention = nc
+        return nameConvention
+
     def whatItIs(self, method):
         whatItIs = {'magic' : False, 'private' : False, 'abstract' : False, 'wrapper' : False, 'cached' : False, 'static' : False, 'classmethod' : False, 'property' : False}
         magic_patron = re.compile(r'^__\w+__$')
@@ -17,12 +26,13 @@ class Visitor_info(NodeVisitor):
         whatItIs["magic"] = True if magic_patron.match(method.name) else False
         whatItIs["private"] = True if private_patron.match(method.name) else False
         for decorator in method.decorator_list:
-            if(decorator.id == "abstractmethod"): whatItIs["abstract"] = True
-            if(decorator.id == "wraps"): whatItIs["wrapper"] = True
-            if(decorator.id == "cache"): whatItIs["cached"] = True
-            if(decorator.id == "staticmethod"): whatItIs["static"] = True
-            if(decorator.id == "classmethod"): whatItIs["classmethod"] = True
-            if(decorator.id == "property"): whatItIs["property"] = True
+            if(isinstance(decorator,ast.Name)):
+                if(decorator.id == "abstractmethod"): whatItIs["abstract"] = True
+                if(decorator.id == "wraps"): whatItIs["wrapper"] = True
+                if(decorator.id == "cache"): whatItIs["cached"] = True
+                if(decorator.id == "staticmethod"): whatItIs["static"] = True
+                if(decorator.id == "classmethod"): whatItIs["classmethod"] = True
+                if(decorator.id == "property"): whatItIs["property"] = True
         return whatItIs
 
     def nameConvention(self, name):
@@ -38,7 +48,8 @@ class Visitor_info(NodeVisitor):
         elif(lower_patron.match(name)): return 'Lower'
         elif(camelLow_patron.match(name)): return 'CamelLow'
         elif(camelUp_patron.match(name)): return 'CamelUp'
-        else: return 'NoNameConvention'
+        else: 
+            return 'NoNameConvention'
 
 
 
@@ -113,11 +124,12 @@ class Visitor_info(NodeVisitor):
                             pass
                         if module_ast:
                             try:
-                                modules.append(self.visit(module_ast, {"user_id" : params["user_id"], "experticeLevel" : params["experticeLevel"], "filename" : archivo, "path" : ruta_completa}))
-                                totalClassDefs += modules[index]["classdefs"]
-                                totalEnumDefs += modules[index]["enumDefs"]
-                                totalFunctionDefs += modules[index]["functionDefs"]
-                                index += 1
+                                if(len(module_ast.body) > 0):
+                                    modules.append(self.visit(module_ast, {"user_id" : params["user_id"], "experticeLevel" : params["experticeLevel"], "filename" : archivo.split('.')[0], "path" : ruta_completa}))
+                                    totalClassDefs += modules[index]["classdefs"]
+                                    totalEnumDefs += modules[index]["enumDefs"]
+                                    totalFunctionDefs += modules[index]["functionDefs"]
+                                    index += 1
                             except Exception as e:
                                 raise e
                                 # NO COMPILAN
@@ -127,6 +139,7 @@ class Visitor_info(NodeVisitor):
         ########## ENTITIE PROPERTIES ############
         if(index > 0):
             totalDefs = totalClassDefs + totalEnumDefs+ totalFunctionDefs
+            dbprogram.program_id = self.idGetter.getID()
             dbprogram.numberOfPackages = numOfPackages
             dbprogram.numberOfSubDirsWithCode = numOfDirs
             dbprogram.hasCodeRootPackage = hasCodeRoot
@@ -265,22 +278,26 @@ class Visitor_info(NodeVisitor):
             exprRoles = ["FuncDecorator", "ReturnType", "FuncBody"]
         ########## ENTITIE PROPERTIES ############
         numberOfBodyExpr = 0
+        depth = 0
         ############## PROPAGAR VISIT ############
         args = self.visit(node.args, self.addParam(self.addParam(childparams, "params_id", id), "role" , "FunctionParams"))
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                self.visit(child, self.addParam(childparams,"role", exprRoles[2]))
+                aux = self.visit(child, self.addParam(childparams,"role", exprRoles[2]))
                 numberOfBodyExpr += 1
             else:
-                self.visit(child, self.addParam(childparams,"role", stmtRoles[0]))
+                aux = self.visit(child, self.addParam(childparams,"role", stmtRoles[0]))
+            depth = max(depth, aux["depth"])
         for child in node.decorator_list:
             self.visit(child, self.addParam(childparams,"role", exprRoles[0]))
         if(node.returns):
-            self.visit(node.returns, self.addParam(childparams,"role", exprRoles[1]))
+            aux = self.visit(node.returns, self.addParam(childparams,"role", exprRoles[1]))
+            depth = max(depth, aux["depth"])
         for child in node.type_params:
             self.visit(child, childparams)
         ########## ENTITIE PROPERTIES ############
         whatitis = self.whatItIs(node)
+        function.nameConvention = self.nameConvention(node.name)
         function.isPrivate = whatitis["private"]
         function.isMagic = whatitis["magic"]
         function.bodyCount = len(node.body)
@@ -303,9 +320,9 @@ class Visitor_info(NodeVisitor):
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node' : function, 'dbnode' : dbnode})
         if(isMethod):
-            return {'method': method, 'function': function, 'args': args, 'typeAnnotations' : args["typeAnnotations"]}
+            return {'method': method, 'function': function, 'args': args, 'typeAnnotations' : args["typeAnnotations"], 'depth' : depth + 1, 'id' : function.functiondef_id}
         else:
-            return{'function': function, 'typeAnnotations' : args["typeAnnotations"]}
+            return{'function': function, 'typeAnnotations' : args["typeAnnotations"], 'depth' : depth + 1, 'id' : function.functiondef_id}
     
     def visit_AsyncFunctionDef(self : Self, node : ast.AsyncFunctionDef , params : Dict) -> Dict: 
         isMethod = params["parent"].table == 'ClassDefs'
@@ -329,22 +346,26 @@ class Visitor_info(NodeVisitor):
             exprRoles = ["FuncDecorator", "ReturnType", "FuncBody"]
         ########## ENTITIE PROPERTIES ############
         numberOfBodyExpr = 0
+        depth = 0
         ############## PROPAGAR VISIT ############
         args = self.visit(node.args, self.addParam(self.addParam(childparams, "params_id", id), "role" , "FunctionParams"))
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                self.visit(child, self.addParam(childparams,"role", exprRoles[2]))
+                aux = self.visit(child, self.addParam(childparams,"role", exprRoles[2]))
                 numberOfBodyExpr += 1
             else:
-                self.visit(child, self.addParam(childparams,"role", stmtRoles[0]))
+                aux = self.visit(child, self.addParam(childparams,"role", stmtRoles[0]))
+            depth = max(depth, aux["depth"])
         for child in node.decorator_list:
             self.visit(child, self.addParam(childparams,"role", exprRoles[0]))
         if(node.returns):
-            self.visit(node.returns, self.addParam(childparams,"role", exprRoles[1]))
+            aux = self.visit(node.returns, self.addParam(childparams,"role", exprRoles[1]))
+            depth = max(depth, aux["depth"])
         for child in node.type_params:
             self.visit(child, childparams)
         ########## ENTITIE PROPERTIES ############
         whatitis = self.whatItIs(node)
+        function.nameConvention = self.nameConvention(node.name)
         function.isPrivate = whatitis["private"]
         function.isMagic = whatitis["magic"]
         function.bodyCount = len(node.body)
@@ -367,9 +388,9 @@ class Visitor_info(NodeVisitor):
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node' : function, 'dbnode' : dbnode})
         if(isMethod):
-            return {'method': method, 'function': function, 'args': args,  'typeAnnotations' : args["typeAnnotations"]}
+            return {'method': method, 'function': function, 'args': args,  'typeAnnotations' : args["typeAnnotations"], 'depth' : depth + 1, 'id' : function.functiondef_id}
         else:
-            return{'function': function, 'typeAnnotations' : args["typeAnnotations"]}
+            return{'function': function, 'typeAnnotations' : args["typeAnnotations"], 'depth' : depth + 1, 'id' : function.functiondef_id}
         
     def visit_ClassDef(self : Self, node : ast.ClassDef , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
@@ -399,6 +420,7 @@ class Visitor_info(NodeVisitor):
         numberOfStaticMethods = 0
         numberOfAbstractMethods = 0
         numberOfPropertyMethods = 0
+        depth = 0
         ############## PROPAGAR VISIT ############
         for child in node.bases:
             self.visit(child, self.addParam(childparams,"role", exprRoles[0]))
@@ -411,7 +433,7 @@ class Visitor_info(NodeVisitor):
         for child in node.body:
             if(isinstance(child,ast.Expr)):
                 expressionNumber += 1
-                self.visit(child, self.addParam(childparams,"role", exprRoles[2]))
+                returns = self.visit(child, self.addParam(childparams,"role", exprRoles[2]))
             else:
                 if(isinstance(child, ast.AnnAssign) or isinstance(child, ast.AugAssign) or isinstance(child, ast.Assign)): assignmentNumber += 1
                 returns = self.visit(child, self.addParam(childparams,"role", stmtRoles[0]))
@@ -427,11 +449,13 @@ class Visitor_info(NodeVisitor):
                     if(returns["method"].isClassMethod): numberOfClassMethods += 1
                     if(returns["method"].isStaticMethod): numberOfStaticMethods += 1
                     if(returns["method"].isProperty): numberOfPropertyMethods += 1
+            depth = max(depth, returns["depth"])
         for child in node.decorator_list:
             self.visit(child, self.addParam(childparams,"role", exprRoles[1]))
         for child in node.type_params:
             self.visit(child, childparams)
         ########## ENTITIE PROPERTIES ############
+        classdef.nameConvention = self.nameConvention(node.name)
         classdef.numberOfMethods = numberOfMethods
         classdef.numberOfDecorators = len(node.decorator_list)
         classdef.numberOfBaseClasses = len(node.bases)
@@ -455,7 +479,7 @@ class Visitor_info(NodeVisitor):
         classdef.sourceCode = ast.unparse(node)
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node' : classdef, 'dbnode' : dbnode})
-        return {'methodCount' : numberOfMethods, 'typeAnnotations' : numberOfMethodTypeAnnotations, 'numberOfMethodStmt' : numberOfMethodStmt}
+        return {'methodCount' : numberOfMethods, 'typeAnnotations' : numberOfMethodTypeAnnotations, 'numberOfMethodStmt' : numberOfMethodStmt, 'id' : classdef.classdef_id, 'depth' : depth + 1}
 
     ############################### STATEMENTS #############################
 
@@ -903,7 +927,8 @@ class Visitor_info(NodeVisitor):
                 returns.append(self.visit(child, self.addParam(childparams,"role", exprRoles[1])))
             else:
                 returns.append(self.visit(child, self.addParam(childparams,"role", stmtRoles[0])))
-            depth = max(depth, returns[index]["depth"])
+            
+                depth = max(depth, returns[index]["depth"])
             if(index == 0): first_child_id = returns[index]["id"]
             if(index == 1): second_child_id = returns[index]["id"]
             if(index == 2): third_child_id = returns[index]["id"]
@@ -1129,6 +1154,9 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : stmt, "depth" : params["depth"] + 1, "parent_id" : id}
         exprRoles = ["Raise","RaiseFrom"]
+        ########## ENTITIE PROPERTIES ############
+        cause = None
+        exc = None
         ############## PROPAGAR VISIT ############
         if(node.exc): exc = self.visit(node.exc, self.addParam(childparams,'role', exprRoles[0]))
         if(node.cause): cause = self.visit(node.cause, self.addParam(childparams,'role', exprRoles[1]))
@@ -1136,16 +1164,16 @@ class Visitor_info(NodeVisitor):
         stmt.height = params["depth"]
         stmt.hasOrElse = None
         if(exc):
-            stmt.first_child_id = exc.id
+            stmt.first_child_id = exc["id"]
             if(cause):
-                stmt.second_child_id = cause.id  
-                stmt.depth = max(exc.depth, cause.depth)
+                stmt.second_child_id = cause["id"]  
+                stmt.depth = max(exc["depth"], cause["depth"])
             else:
-                stmt.depth = exc.depth
+                stmt.depth = exc["depth"]
         else:
             if(cause):
-                stmt.first_child_id = cause.id
-                stmt.depth = cause.depth
+                stmt.first_child_id = cause["id"]
+                stmt.depth = cause["depth"]
             else:
                 stmt.depth = 0
         stmt.sourceCode = ast.unparse(node)
@@ -1237,7 +1265,7 @@ class Visitor_info(NodeVisitor):
             handler.hasFinally = False
         handler.hasCatchAll = False
         for child in handlers:
-            if(child.isCatchAll): handler.hasCatchAll = True
+            if(child["isCatchAll"]): handler.hasCatchAll = True
         handler.averageBodyCount = handlersBodies/handler.numberOfHandlers
         handler.hasStar = False
         ############## VISITOR DB ################
@@ -1698,46 +1726,21 @@ class Visitor_info(NodeVisitor):
         ############# PARAMS #####################
         childparams = {"parent" : expr, "depth" : params["depth"] + 1, "parent_id" : id}
         exprRoles = ["LambdaBody"]
-        ########## ENTITIE PROPERTIES ############
-        depth = 0
-        first_child_category = None
-        second_child_category = None
-        third_child_category = None
-        fourth_child_category = None
-        first_child_id = None
-        second_child_id = None
-        third_child_id = None
-        fourth_child_id = None
         ############## PROPAGAR VISIT ############
-        returns = []
-        index = 0
         args = self.visit(node.args, self.addParam(self.addParam(childparams, "params_id", id), "role", "LambdaParams"))
-        for child in node.body:
-            returns.append(self.visit(child, self.addParam(childparams,'role', exprRoles[0])))
-            depth = max(depth, returns[index]["depth"])
-            if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
-            if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
-            if(index == 2): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
-            if(index == 3): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
-            index += 1
+        aux = self.visit(node.body, self.addParam(childparams,'role', exprRoles[0]))
         ########## ENTITIE PROPERTIES ############
         expr.sourceCode = ast.unparse(node)
         expr.height = params["depth"]
-        expr.first_child_category = first_child_category
-        expr.second_child_category = second_child_category
-        expr.third_child_category = third_child_category
-        expr.fourth_child_category = fourth_child_category
-        expr.first_child_id = first_child_id
-        expr.second_child_id = second_child_id
-        expr.third_child_id = third_child_id
-        expr.fourth_child_id = fourth_child_id
-        expr.depth = depth
+        expr.first_child_category = aux["category"]
+        expr.first_child_id = aux["id"]
+        expr.depth = aux["depth"]
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node' : expr, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : expr.depth + 1, 'category' : expr.category}
     
     
-    def visit_Ifexp(self : Self, node : ast.IfExp , params : Dict) -> Dict: 
+    def visit_IfExp(self : Self, node : ast.IfExp , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
         expr = dbentities.DBExpression()
         ############ IDS #########################
@@ -2230,7 +2233,7 @@ class Visitor_info(NodeVisitor):
         expr.fourth_child_id = fourth_child_id
         expr.depth = max(func["depth"], depth)
         #------------- CallArgs ------------------
-        callArgs.numberArgs = len(node.args)
+        callArgs.numberArgs = index
         callArgs.namedArgsPct = namedArgs/callArgs.numberArgs if callArgs.numberArgs > 0 else 0
         callArgs.doubleStarArgsPct = staredArgs/callArgs.numberArgs  if callArgs.numberArgs > 0 else 0
         ############## VISITOR DB ################
@@ -2468,6 +2471,7 @@ class Visitor_info(NodeVisitor):
         expr.depth = 0
         #------------- VARIABLE ------------------
         var.numberOfCharacters = len(node.id)
+        var.nameConvention = self.nameConvention(node.id)
         var.isPrivate = False
         var.isMagic = False
         if(node.id.startswith('_')):
@@ -2957,32 +2961,40 @@ class Visitor_info(NodeVisitor):
         ########## ENTITIE PROPERTIES ############
         numberOfAnnotations = 0
         numberOfParams = 0
+        nameConvention = ''
+        namingConventions = {'CamelUp' : 0, 'CamelLow' : 0, 'SnakeCase' : 0, 'Discard' : 0, 'Upper' : 0, 'Lower' : 0, 'NoNameConvention' : 0 }
         ############## PROPAGAR VISIT ############
         for child in node.posonlyargs:
             arg = self.visit(child, params)
             if(arg["typeAnnotation"]): numberOfAnnotations += 1
             numberOfParams += 1
+            namingConventions[self.nameConvention(child.arg)] += 1
         for child in node.args:
             arg =  self.visit(child, params)
             if(arg["typeAnnotation"]): numberOfAnnotations += 1
             numberOfParams += 1
+            namingConventions[self.nameConvention(child.arg)] += 1
         if(node.vararg): 
             arg =  self.visit(node.vararg, params)
             if(arg["typeAnnotation"]): numberOfAnnotations += 1
             numberOfParams += 1
+            namingConventions[self.nameConvention(child.arg)] += 1
         for child in node.kwonlyargs:
             arg =  self.visit(child, params)
             if(arg["typeAnnotation"]): numberOfAnnotations += 1
             numberOfParams += 1
+            namingConventions[self.nameConvention(child.arg)] += 1
         for child in node.kw_defaults:
             self.visit(child, self.addParam(params,'role', exprRoles[0]))
         if(node.kwarg):
             arg = self.visit(node.kwarg, params)
             if(arg["typeAnnotation"]): numberOfAnnotations += 1
             numberOfParams += 1
+            namingConventions[self.nameConvention(child.arg)] += 1
         for child in node.defaults:
             self.visit(child, self.addParam(params,'role', exprRoles[0]))
         ########## ENTITIE PROPERTIES ############
+        dbparams.nameConvention = self.getArgsNameConvention(namingConventions)
         dbparams.numberOfParams = numberOfParams
         dbparams.posOnlyParamPct = len(node.posonlyargs)
         dbparams.varParamPct = (1 if node.vararg else 0)/numberOfParams if numberOfParams > 0 else 0

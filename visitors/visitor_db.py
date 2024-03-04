@@ -358,7 +358,7 @@ class Visitor_db(NodeVisitor):
 
     ########################## visit extras #################################
 
-    def visit_Arguments(self, node: ast.arguments, params):
+    def visit_arguments(self, node: ast.arguments, params):
         self.insert_parameter(params["dbparams"])
         pass
 
@@ -378,7 +378,7 @@ class Visitor_db(NodeVisitor):
                             averageDefsPerModule, 
                             user_id,
                             experticeLevel) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.program_id,
                             node.name, 
                             node.hasSubDirsWithCode, 
@@ -547,7 +547,7 @@ class Visitor_db(NodeVisitor):
                             classMethodsPct, 
                             staticMethodsPct, 
                             abstractMethodsPct, 
-                            propertyMethodsPct
+                            propertyMethodsPct,
                             sourceCode, 
                             module_id,
                             user_id,
@@ -576,6 +576,7 @@ class Visitor_db(NodeVisitor):
                             node.classMethodsPct, 
                             node.staticMethodsPct, 
                             node.abstractMethodsPct, 
+                            node.propertyMethodsPct,
                             node.sourceCode, 
                             node.module_id,
                             node.user_id,
@@ -663,7 +664,7 @@ class Visitor_db(NodeVisitor):
                             averageMatchOr,
                             user_id,
                             experticeLevel) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.statement_id,
                             node.numberOfCases, 
                             node.guards, 

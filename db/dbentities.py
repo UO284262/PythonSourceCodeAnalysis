@@ -338,7 +338,7 @@ class DBCase:
         self.statement_id = statement_id
 
 class DBHandler:
-    def __init__(self,  numberOfHandlers: int = None, 
+    def __init__(self,  numberOfHandlers: int = None, category: str = None, 
                  hasFinally: bool = None,  hasCatchAll: bool = None, 
                  averageBodyCount: float = None,  hasStar: bool = None, 
                  statement_id = None,  node = None, user_id = None, experticeLevel = None):
@@ -346,6 +346,7 @@ class DBHandler:
         self.experticeLevel = experticeLevel
         self.node = node
         self.table = "Handler"
+        self.category = "TryHandler"
         self.numberOfHandlers = numberOfHandlers
         self.hasFinally = hasFinally
         self.hasCatchAll = hasCatchAll

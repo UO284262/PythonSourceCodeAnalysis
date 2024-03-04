@@ -29,6 +29,8 @@ def writeOnDB(sql_insert, datos_a_insertar):
     except Exception as e:
         # Manejar cualquier error
         print(f"Error: {e.with_traceback(None)}")
+        print(datos_a_insertar[size-i-1])
+        print(sql_insert[size-i-1])
         conexion.rollback()
 
     finally:
