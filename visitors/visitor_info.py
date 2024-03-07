@@ -1390,6 +1390,16 @@ class Visitor_info(NodeVisitor):
             if(index == 1): second_child_id = returns[index]["id"]
             if(index == 2): third_child_id = returns[index]["id"]
             index += 1
+        for child in node.handlers:
+            handlers.append(self.visit(child, self.addParam(self.addParam(childparams,"role", stmtRoles[3]),'handler', handler)))
+            depth = max(depth, handlers[hindex]["depth"])
+            hindex += 1
+            for id in handlers[hindex]['child_ids']:
+                returns.append(id)
+                if(index == 0): first_child_id = returns[index]["id"]
+                if(index == 1): second_child_id = returns[index]["id"]
+                if(index == 2): third_child_id = returns[index]["id"]
+                index += 1
         for child in node.orelse:
             if(isinstance(child,ast.Expr)):
                 returns.append(self.visit(child, self.addParam(childparams,"role", exprRoles[1])))
@@ -1411,11 +1421,6 @@ class Visitor_info(NodeVisitor):
             if(index == 1): second_child_id = returns[index]["id"]
             if(index == 2): third_child_id = returns[index]["id"]
             index += 1
-        for child in node.handlers:
-            handlers.append(self.visit(child, self.addParam(self.addParam(childparams,"role", stmtRoles[3]),'handler', handler)))
-            depth = max(depth, handlers[hindex]["depth"])
-            hindex += 1
-            handlersBodies += len(child.body)
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.hasOrElse = hasOrElse
@@ -1424,7 +1429,7 @@ class Visitor_info(NodeVisitor):
         stmt.second_child_id = second_child_id
         stmt.third_child_id = third_child_id
         stmt.sourceCode = ast.unparse(node)
-        stmt.bodySize = index + handlersBodies
+        stmt.bodySize = index
         stmt.expertise_level = params['expertise_level']
         stmt.user_id = params['user_id']
         #--------------- handler -----------------

@@ -83,6 +83,6 @@ if __name__ == '__main__':
     with open(ruta, "r",  encoding='utf-8') as f:
         file = f.read()
     ast_prueba = ast.parse(file)
-    visitor.visit(ast_prueba)
+    visitor.visit(ast_prueba, {})
 
     
