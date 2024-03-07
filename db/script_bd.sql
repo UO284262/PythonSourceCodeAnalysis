@@ -21,7 +21,7 @@ CREATE TABLE PROGRAMS (
     hasCodeRootPackage BOOLEAN,
     averageDefsPerModule REAL,
     user_id BIGINT,
-    experticeLevel BOOLEAN
+    expertise_level BOOLEAN
 );
 
 -- Creación de la tabla PARAMETERS
@@ -39,7 +39,7 @@ CREATE TABLE PARAMETERS (
     hasKWParam BOOLEAN,
     nameConvention VARCHAR(255),
     user_id BIGINT,
-    experticeLevel BOOLEAN,
+    expertise_level BOOLEAN,
     FOREIGN KEY (parent_id) REFERENCES NODES(node_id),
     FOREIGN KEY (parameters_id) REFERENCES NODES(node_id)
 );
@@ -67,7 +67,7 @@ CREATE TABLE MODULES (
     FOREIGN KEY (module_id) REFERENCES NODES(node_id),
     FOREIGN KEY (program_id) REFERENCES PROGRAMS(program_id),
     user_id BIGINT,
-    experticeLevel BOOLEAN
+    expertise_level BOOLEAN
 );
 
 -- Creación de la tabla IMPORTS
@@ -81,7 +81,7 @@ CREATE TABLE IMPORTS (
     averageAsInImportedModules REAL,
     localImportsPct REAL CHECK (localImportsPct >= 0 AND localImportsPct <= 1),
     user_id BIGINT,
-    experticeLevel BOOLEAN,
+    expertise_level BOOLEAN,
     FOREIGN KEY (import_id) REFERENCES NODES(node_id)
 );
 
@@ -116,7 +116,7 @@ CREATE TABLE CLASSDEFS (
     FOREIGN KEY (classdef_id) REFERENCES NODES(node_id),
     FOREIGN KEY (module_id) REFERENCES NODES(node_id),
     user_id BIGINT,
-    experticeLevel BOOLEAN
+    expertise_level BOOLEAN
 );
 
 -- Creación de la tabla FUNCTIONDEFS
@@ -140,7 +140,7 @@ CREATE TABLE FUNCTIONDEFS (
     FOREIGN KEY (functiondef_id) REFERENCES NODES(node_id),
     FOREIGN KEY (module_id) REFERENCES NODES(node_id),
     user_id BIGINT,
-    experticeLevel BOOLEAN
+    expertise_level BOOLEAN
 );
 
 -- Creación de la tabla METHODDEFS
@@ -157,7 +157,7 @@ CREATE TABLE METHODDEFS (
     FOREIGN KEY (methoddef_id) REFERENCES NODES(node_id),
     FOREIGN KEY (classdef_id) REFERENCES NODES(node_id),
     user_id BIGINT,
-    experticeLevel BOOLEAN
+    expertise_level BOOLEAN
 );
 
 -- Creación de la tabla STATEMENTS
@@ -181,7 +181,7 @@ CREATE TABLE STATEMENTS (
     --FOREIGN KEY (third_child_id) REFERENCES NODES(node_id),
     FOREIGN KEY (parent_id) REFERENCES NODES(node_id),
     user_id BIGINT,
-    experticeLevel BOOLEAN
+    expertise_level BOOLEAN
 );
 
 -- Creación de la tabla CASES
@@ -200,7 +200,7 @@ CREATE TABLE CASES (
     averageMatchOr REAL CHECK (averageMatchOr >= 0 AND averageMatchOr <= 1),
     FOREIGN KEY (statement_id) REFERENCES NODES(node_id),
     user_id BIGINT,
-    experticeLevel BOOLEAN
+    expertise_level BOOLEAN
 );
 
 -- Creación de la tabla HANDLERS
@@ -213,7 +213,7 @@ CREATE TABLE HANDLERS (
     hasStar BOOLEAN,
     FOREIGN KEY (statement_id) REFERENCES NODES(node_id),
     user_id BIGINT,
-    experticeLevel BOOLEAN
+    expertise_level BOOLEAN
 );
 
 -- Creación de la tabla EXPRESSIONS
@@ -241,7 +241,7 @@ CREATE TABLE EXPRESSIONS (
     --FOREIGN KEY (fourth_child_id) REFERENCES NODES(node_id),
     FOREIGN KEY (parent_id) REFERENCES NODES(node_id),
     user_id BIGINT,
-    experticeLevel BOOLEAN
+    expertise_level BOOLEAN
 );
 
 -- Creación de la tabla COMPREHENSIONS
@@ -253,7 +253,7 @@ CREATE TABLE COMPREHENSIONS (
     isAsync BOOLEAN,
     FOREIGN KEY (expression_id) REFERENCES NODES(node_id),
     user_id BIGINT,
-    experticeLevel BOOLEAN
+    expertise_level BOOLEAN
 );
 
 -- Creación de la tabla CALLARGS
@@ -264,7 +264,7 @@ CREATE TABLE CALLARGS (
     doubleStarArgsPct REAL CHECK (doubleStarArgsPct >= 0 AND doubleStarArgsPct <= 1),
     FOREIGN KEY (expression_id) REFERENCES NODES(node_id),
     user_id BIGINT,
-    experticeLevel BOOLEAN
+    expertise_level BOOLEAN
 );
 
 -- Creación de la tabla FSTRINGS
@@ -275,7 +275,7 @@ CREATE TABLE FSTRINGS (
     expressionsPct REAL CHECK (expressionsPct >= 0 AND expressionsPct <= 1),
     FOREIGN KEY (expression_id) REFERENCES NODES(node_id),
     user_id BIGINT,
-    experticeLevel BOOLEAN
+    expertise_level BOOLEAN
 );
 
 -- Creación de la tabla VARIABLES
@@ -287,7 +287,7 @@ CREATE TABLE VARIABLES (
     isMagic BOOLEAN,
     FOREIGN KEY (expression_id) REFERENCES NODES(node_id),
     user_id BIGINT,
-    experticeLevel BOOLEAN
+    expertise_level BOOLEAN
 );
 
 -- Creación de la tabla VECTORS
@@ -298,5 +298,5 @@ CREATE TABLE VECTORS (
     homogeneous BOOLEAN,
     FOREIGN KEY (expression_id) REFERENCES NODES(node_id),
     user_id BIGINT,
-    experticeLevel BOOLEAN
+    expertise_level BOOLEAN
 );

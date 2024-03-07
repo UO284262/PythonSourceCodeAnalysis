@@ -1,4 +1,5 @@
 import ast
+from visitors.visitor_print import Visitor_print
 from visitors.visitor_info import Visitor_info
 from db.db_utils import init_db
 import os
@@ -68,14 +69,20 @@ def visit(visitor):
 if __name__ == '__main__':
     #init_db()
     warnings.filterwarnings("error")
-    ast_1 = ast.parse(
-    """a = lambda: 1+1; print() """)
 
 
-    visitor = Visitor_info()
+    #PROBAR VISITOR DE RECOGIDA DE INFORMACIÓN
+    #visitor = Visitor_info()
+    #visit(visitor)
 
-    visit(visitor)
-
-    #visitor.visit(ast_1, {"filename" : "prueba", "path" : "/prueba"})
+     
+    #PROBAR VISITOR DE PRINTEO DE INFORMACIÓN
+    visitor = Visitor_print()
+    ruta = './python_tfg/test/test.py'
+    file = ''
+    with open(ruta, "r",  encoding='utf-8') as f:
+        file = f.read()
+    ast_prueba = ast.parse(file)
+    visitor.visit(ast_prueba)
 
     

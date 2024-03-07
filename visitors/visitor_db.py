@@ -377,7 +377,7 @@ class Visitor_db(NodeVisitor):
                             hasCodeRootPackage, 
                             averageDefsPerModule, 
                             user_id,
-                            experticeLevel) 
+                            expertise_level) 
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.program_id,
                             node.name, 
@@ -392,7 +392,7 @@ class Visitor_db(NodeVisitor):
                             node.hasCodeRootPackage, 
                             node.averageDefsPerModule, 
                             node.user_id,
-                            node.experticeLevel)
+                            node.expertise_level)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
 
@@ -415,7 +415,7 @@ class Visitor_db(NodeVisitor):
                             module_id,
                             parameters_id,
                             user_id,
-                            experticeLevel) 
+                            expertise_level) 
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.functiondef_id,
                             node.nameConvention, 
@@ -434,7 +434,7 @@ class Visitor_db(NodeVisitor):
                             node.module_id,
                             node.parameters_id,
                             node.user_id,
-                            node.experticeLevel)
+                            node.expertise_level)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
         
@@ -459,7 +459,7 @@ class Visitor_db(NodeVisitor):
                             path, 
                             import_id,
                             user_id,
-                            experticeLevel) 
+                            expertise_level) 
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.module_id, 
                             node.name, 
@@ -480,7 +480,7 @@ class Visitor_db(NodeVisitor):
                             node.path, 
                             node.import_id,
                             node.user_id,
-                            node.experticeLevel)
+                            node.expertise_level)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
         
@@ -507,7 +507,7 @@ class Visitor_db(NodeVisitor):
                             averageAsInImportedModules, 
                             localImportsPct,
                             user_id,
-                            experticeLevel) 
+                            expertise_level) 
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.import_id,
                             node.numberImports,
@@ -518,7 +518,7 @@ class Visitor_db(NodeVisitor):
                             node.averageAsInImportedModules, 
                             node.localImportsPct,
                             node.user_id,
-                            node.experticeLevel)
+                            node.expertise_level)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
         
@@ -551,7 +551,7 @@ class Visitor_db(NodeVisitor):
                             sourceCode, 
                             module_id,
                             user_id,
-                            experticeLevel) 
+                            expertise_level) 
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.classdef_id,
                             node.nameConvention, 
@@ -580,7 +580,7 @@ class Visitor_db(NodeVisitor):
                             node.sourceCode, 
                             node.module_id,
                             node.user_id,
-                            node.experticeLevel)
+                            node.expertise_level)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
         
@@ -596,7 +596,7 @@ class Visitor_db(NodeVisitor):
                             isWrapper, 
                             isCached,
                             user_id,
-                            experticeLevel) 
+                            expertise_level) 
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.methoddef_id,
                             node.classdef_id, 
@@ -608,7 +608,7 @@ class Visitor_db(NodeVisitor):
                             node.isWrapper, 
                             node.isCached,
                             node.user_id,
-                            node.experticeLevel)
+                            node.expertise_level)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
         
@@ -628,7 +628,7 @@ class Visitor_db(NodeVisitor):
                             third_child_id,
                             parent_id,
                             user_id,
-                            experticeLevel) 
+                            expertise_level) 
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.statement_id,
                             node.category, 
@@ -644,7 +644,7 @@ class Visitor_db(NodeVisitor):
                             node.third_child_id,
                             node.parent_id,
                             node.user_id,
-                            node.experticeLevel)
+                            node.expertise_level)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
     
@@ -663,7 +663,7 @@ class Visitor_db(NodeVisitor):
                             averageMatchAs, 
                             averageMatchOr,
                             user_id,
-                            experticeLevel) 
+                            expertise_level) 
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.statement_id,
                             node.numberOfCases, 
@@ -678,7 +678,7 @@ class Visitor_db(NodeVisitor):
                             node.averageMatchAs, 
                             node.averageMatchOr,
                             node.user_id,
-                            node.experticeLevel)
+                            node.expertise_level)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
         
@@ -691,7 +691,7 @@ class Visitor_db(NodeVisitor):
                             averageBodyCount, 
                             hasStar,
                             user_id,
-                            experticeLevel) 
+                            expertise_level) 
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.statement_id,
                             node.numberOfHandlers, 
@@ -700,7 +700,7 @@ class Visitor_db(NodeVisitor):
                             node.averageBodyCount, 
                             node.hasStar,
                             node.user_id,
-                            node.experticeLevel)
+                            node.expertise_level)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
         
@@ -723,7 +723,7 @@ class Visitor_db(NodeVisitor):
                             sourceCode, 
                             parent_id,
                             user_id,
-                            experticeLevel) 
+                            expertise_level) 
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.expression_id,
                             node.category, 
@@ -742,7 +742,7 @@ class Visitor_db(NodeVisitor):
                             node.sourceCode, 
                             node.parent_id,
                             node.user_id,
-                            node.experticeLevel)
+                            node.expertise_level)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
 
@@ -754,7 +754,7 @@ class Visitor_db(NodeVisitor):
                             numberOfGenerators, 
                             isAsync,
                             user_id,
-                            experticeLevel) 
+                            expertise_level) 
                         VALUES (%s, %s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.expression_id,
                             node.category, 
@@ -762,7 +762,7 @@ class Visitor_db(NodeVisitor):
                             node.numberOfGenerators, 
                             node.isAsync,
                             node.user_id,
-                            node.experticeLevel)
+                            node.expertise_level)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
         
@@ -773,14 +773,14 @@ class Visitor_db(NodeVisitor):
                             constantsPct, 
                             expressionsPct,
                             user_id,
-                            experticeLevel) 
+                            expertise_level) 
                         VALUES (%s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.expression_id,
                             node.numberOfElements, 
                             node.constantsPct, 
                             node.expressionsPct,
                             node.user_id,
-                            node.experticeLevel)
+                            node.expertise_level)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
         
@@ -791,14 +791,14 @@ class Visitor_db(NodeVisitor):
                             namedArgsPct, 
                             doubleStarArgsPct,
                             user_id,
-                            experticeLevel) 
+                            expertise_level) 
                         VALUES (%s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.expression_id,
                             node.numberArgs, 
                             node.namedArgsPct, 
                             node.doubleStarArgsPct,
                             node.user_id,
-                            node.experticeLevel)
+                            node.expertise_level)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
     
@@ -810,7 +810,7 @@ class Visitor_db(NodeVisitor):
                             isPrivate,
                             isMagic,
                             user_id,
-                            experticeLevel) 
+                            expertise_level) 
                         VALUES (%s, %s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.expression_id,
                             node.nameConvention, 
@@ -818,7 +818,7 @@ class Visitor_db(NodeVisitor):
                             node.isPrivate,
                             node.isMagic,
                             node.user_id,
-                            node.experticeLevel)
+                            node.expertise_level)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
         
@@ -829,14 +829,14 @@ class Visitor_db(NodeVisitor):
                             numberOfElements,
                             homogeneous,
                             user_id,
-                            experticeLevel) 
+                            expertise_level) 
                         VALUES (%s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.expression_id,
                             node.category,
                             node.numberOfElements,
                             node.homogeneous,
                             node.user_id,
-                            node.experticeLevel)
+                            node.expertise_level)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
         
@@ -855,7 +855,7 @@ class Visitor_db(NodeVisitor):
                             hasKWParam, 
                             nameConvention,
                             user_id,
-                            experticeLevel) 
+                            expertise_level) 
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.parameters_id,
                             node.parent_id,
@@ -870,7 +870,7 @@ class Visitor_db(NodeVisitor):
                             node.hasKWParam, 
                             node.nameConvention,
                             node.user_id,
-                            node.experticeLevel)
+                            node.expertise_level)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
     
