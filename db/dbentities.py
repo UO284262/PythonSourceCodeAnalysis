@@ -346,7 +346,7 @@ class DBHandler:
         self.expertise_level = expertise_level
         self.node = node
         self.table = "Handler"
-        self.category = "TryHandler"
+        self.category = "ExceptHandler"
         self.numberOfHandlers = numberOfHandlers
         self.hasFinally = hasFinally
         self.hasCatchAll = hasCatchAll

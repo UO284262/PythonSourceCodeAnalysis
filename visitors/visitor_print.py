@@ -592,7 +592,7 @@ class Visitor_print(NodeVisitor):
     
     def visit_MatchSingleton(self : Self, node : ast.MatchSingleton , params : Dict) -> Dict: 
         print(('  '*params['depth']) + '|->MatchSingleton')
-        print(('  '*(params['depth'] + 1)) + '|->' + node.value)
+        print(('  '*(params['depth'] + 1)) + '|->' + node.value if node.value is not None else 'None')
         return
 
     
@@ -630,7 +630,7 @@ class Visitor_print(NodeVisitor):
     
     def visit_MatchStar(self : Self, node : ast.MatchStar , params : Dict) -> Dict:
         print(('  '*params['depth']) + '|->MatchStar')
-        print(('  '*(params['depth'] + 1)) + '|->' + node.name)
+        print(('  '*(params['depth'] + 1)) + '|->' + node.name if node.name is not None else 'None')
         return
 
     

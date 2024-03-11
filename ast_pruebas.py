@@ -1,5 +1,6 @@
 import ast
 from visitors.visitor_print import Visitor_print
+from visitors.visitor_print_2 import Visitor_print_2
 from visitors.visitor_info import Visitor_info
 from db.db_utils import init_db
 import os
@@ -78,7 +79,7 @@ if __name__ == '__main__':
      
     #PROBAR VISITOR DE PRINTEO DE INFORMACIÓN
     visitor = Visitor_print()
-    ruta = './python_tfg/test/test.py'
+    ruta = './python_tfg/test/test_entities.py'
     file = ''
     with open(ruta, "r",  encoding='utf-8') as f:
         file = f.read()
