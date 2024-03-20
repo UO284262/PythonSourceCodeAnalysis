@@ -1,3 +1,8 @@
+#
+    
+a = { None : 'A' }
+print(a[None])
+
 # CONSTANT
 123
 
@@ -227,4 +232,5 @@ async def a():
 async def a():
     async with a as b:
         pass
+
 

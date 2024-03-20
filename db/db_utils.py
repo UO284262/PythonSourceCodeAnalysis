@@ -1,4 +1,5 @@
 import psycopg2
+import math
 
 # Parámetros de conexión a la base de datos
 conexion_params = {
@@ -9,28 +10,38 @@ conexion_params = {
     'port': '5432',
 }
 
-def writeOnDB(sql_insert, datos_a_insertar):
+def writeOnDB(sql_nodes_insert, datos_nodes_a_insertar, sql_insert, datos_a_insertar):
     # Establecer la conexión a la base de datos
-    conexion = psycopg2.connect(**conexion_params)
-
-    # Crear un objeto cursor
-    cursor = conexion.cursor()
+    
     # Ejemplo de inserción de datos
-    try:
 
-        size = len(sql_insert)
+    insertedPerConnexion = 50
+    final_sql_insert = sql_insert + sql_nodes_insert
+    final_datos_a_insertar = datos_a_insertar + datos_nodes_a_insertar
+    for node in final_datos_a_insertar:
+        if(node[0] == 161): 
+            print('a')
+    currentInserted = 0
+    try:
+        conexion = psycopg2.connect(**conexion_params)
+        cursor = conexion.cursor()
+        size = len(final_sql_insert)
         # Ejecutar la consulta
         for i in range(size):
-            cursor.execute(sql_insert[size - i - 1], datos_a_insertar[size - i - 1])
+            cursor.execute(final_sql_insert[size - i - 1], final_datos_a_insertar[size - i - 1])
+            currentInserted += 1
+            if(currentInserted == insertedPerConnexion):
+                conexion.commit()
+                currentInserted = 0
 
-            # Confirmar la transacción
-            conexion.commit()
+        # Confirmar la transacción
+        conexion.commit()
 
     except Exception as e:
         # Manejar cualquier error
         print(f"Error: {e.with_traceback(None)}")
-        print(datos_a_insertar[size-i-1])
-        print(sql_insert[size-i-1])
+        print(final_datos_a_insertar[size - i - 1])
+        print(final_sql_insert[size - i - 1])
         conexion.rollback()
 
     finally:

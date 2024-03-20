@@ -1,6 +1,5 @@
 import ast
-from visitors.visitor_print import Visitor_print
-from visitors.visitor_print_2 import Visitor_print_2
+from visitors.visitor_print import Visitor_print                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
 from visitors.visitor_info import Visitor_info
 from db.db_utils import init_db
 import os
@@ -12,6 +11,7 @@ directorio_principal = '.\\python_tfg\\20-21'
 
 users = {}
 desconocido = {}
+user_id = [1]
 
 def controlUsers(directorio: str):
     patron = re.compile(r"[0-9]{8}[A-Z]")
@@ -19,18 +19,18 @@ def controlUsers(directorio: str):
     if coincidencia:
         user = coincidencia.group()
         if user in users:
-            id = users[user]
+            user_id[0] = users[user]
         else:
-            id = uuid.uuid4().int
-            users[user] = id
+            user_id[0] += 1
+            users[user] = user_id[0]
     else:
         proyecto = directorio.split('\\')[-1].replace(' ','')
         if proyecto in desconocido:
             id = desconocido[proyecto]
         else:
-            id = uuid.uuid4().int
-            desconocido[proyecto] = id
-    return id
+            user_id[0] += 1
+            desconocido[proyecto] = user_id[0]
+    return user_id[0]
 
 def getSourcePackage(ruta):
     for directorio_actual, subdirectorios, archivos in os.walk(ruta):
@@ -54,7 +54,7 @@ def visit(visitor):
             user_id = controlUsers(project)
             if(project not in projects):
                     projects.append(project)
-                    visitor.visit_Program({ "path" : project, "user_id" : user_id, "experticeLevel" : "BEGGINER" })
+                    visitor.visit_Program({ "path" : project, "user_id" : user_id, "expertise_level" : "BEGGINER" })
     """
     for directorio_actual, subdirectorios, archivos in os.walk(directorio_principal):
         id = controlUsers(directorio_actual)
@@ -68,22 +68,22 @@ def visit(visitor):
 
 #Visitor_info.visit(ast_1)
 if __name__ == '__main__':
-    #init_db()
+    init_db()
     warnings.filterwarnings("error")
 
 
     #PROBAR VISITOR DE RECOGIDA DE INFORMACIÓN
-    #visitor = Visitor_info()
-    #visit(visitor)
+    visitor = Visitor_info()
+    visit(visitor)
 
      
     #PROBAR VISITOR DE PRINTEO DE INFORMACIÓN
-    visitor = Visitor_print()
-    ruta = './python_tfg/test/test_entities.py'
-    file = ''
-    with open(ruta, "r",  encoding='utf-8') as f:
-        file = f.read()
-    ast_prueba = ast.parse(file)
-    visitor.visit(ast_prueba, {})
+    #visitor = Visitor_print()
+    #ruta = './python_tfg/test/test_entities.py'
+    #file = ''
+    #with open(ruta, "r",  encoding='utf-8') as f:
+    #    file = f.read()
+    #ast_prueba = ast.parse(file)
+    #visitor.visit(ast_prueba, {})
 
     

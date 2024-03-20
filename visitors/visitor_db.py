@@ -9,26 +9,32 @@ class Visitor_db(NodeVisitor):
     def __init__(self):
         self.sql_insert = []
         self.datos_a_insertar = []
+        self.sql_nodes_insert = []
+        self.datos_nodes_a_insertar = []
 
     def visit_Program(self, node: dbentities.DBProgram, params):
         self.insert_program(node)
-        #writeOnDB(self.sql_insert, self.datos_a_insertar)
+        writeOnDB(self.sql_nodes_insert, self.datos_nodes_a_insertar, self.sql_insert, self.datos_a_insertar)
         self.sql_insert = []
         self.datos_a_insertar = []
+        self.datos_nodes_a_insertar = []
+        self.sql_nodes_insert = []
         pass
     
     def visit_Module(self, node: dbentities.DBModule, params):
-        self.insert_module(params["node"])
         self.insert_import(params["dbimport"])
+        self.insert_module(params["node"])
         self.insert_node(params["dbnode"])
         pass
     
     def visit_FunctionDef(self, node: ast.FunctionDef, params):
+        if(params['isMethod']): self.insert_methoddef(params['method']) 
         self.insert_functiondef(params["node"])
         self.insert_node(params["dbnode"])
         pass
     
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef, params):
+        if(params['isMethod']): self.insert_methoddef(params['method']) 
         self.insert_functiondef(params["node"])
         self.insert_node(params["dbnode"])
         pass
@@ -101,8 +107,8 @@ class Visitor_db(NodeVisitor):
         pass
     
     def visit_Match(self, node: ast.Match, params):
-        self.insert_statement(params["node"])
         self.insert_case(params["case"])
+        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
         pass
     
@@ -112,14 +118,14 @@ class Visitor_db(NodeVisitor):
         pass
     
     def visit_Try(self, node: ast.Try, params):
-        self.insert_statement(params["node"])
         self.insert_handler(params["handler"])
+        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
         pass
     
     def visit_TryStar(self, node: ast.Try, params):
-        self.insert_statement(params["node"])
         self.insert_handler(params["handler"])
+        self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
         pass
     
@@ -485,16 +491,16 @@ class Visitor_db(NodeVisitor):
         self.datos_a_insertar.append(datos_a_insertar)
         
     def insert_node(self : Self, node: dbentities.DBNode):
-        sql_insert = '''INSERT INTO Nodes (
+        sql_nodes_insert = '''INSERT INTO Nodes (
                             node_id,
                             parent_table, 
                             parent_id) 
                         VALUES (%s, %s, %s);'''
-        datos_a_insertar = (node.node_id,
+        datos_nodes_a_insertar = (node.node_id,
                             node.parent_table, 
                             node.parent_id)
-        self.sql_insert.append(sql_insert)
-        self.datos_a_insertar.append(datos_a_insertar)
+        self.sql_nodes_insert.append(sql_nodes_insert)
+        self.datos_nodes_a_insertar.append(datos_nodes_a_insertar)
         
     def insert_import(self : Self, node: dbentities.DBImport):
         sql_insert = '''INSERT INTO Imports (
