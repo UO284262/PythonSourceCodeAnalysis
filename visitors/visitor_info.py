@@ -3,7 +3,6 @@ import re
 import os
 from typing import Dict, Self
 from util.util import opCategory, constCategory
-from util.util import IDGetter
 import db.dbentities as dbentities
 from visitors.visitor_db import Visitor_db
 from visitors.My_NodeVisitor import NodeVisitor
@@ -71,8 +70,8 @@ class Visitor_info(NodeVisitor):
             'depth' : max(dict_1["depth"],dict_2["depth"])
         }
 
-    def __init__(self):
-        self.idGetter = IDGetter()
+    def __init__(self, idGetter):
+        self.idGetter = idGetter
         self.visitor_db = Visitor_db()
 
     def visit_Program(self: Self, params : Dict):
