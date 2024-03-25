@@ -1,5 +1,4 @@
 import psycopg2
-import math
 
 # Parámetros de conexión a la base de datos
 conexion_params = {
@@ -18,9 +17,6 @@ def writeOnDB(sql_nodes_insert, datos_nodes_a_insertar, sql_insert, datos_a_inse
     insertedPerConnexion = 50
     final_sql_insert = sql_insert + sql_nodes_insert
     final_datos_a_insertar = datos_a_insertar + datos_nodes_a_insertar
-    for node in final_datos_a_insertar:
-        if(node[0] == 161): 
-            print('a')
     currentInserted = 0
     try:
         conexion = psycopg2.connect(**conexion_params)

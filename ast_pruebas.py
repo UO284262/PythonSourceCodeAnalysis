@@ -1,5 +1,5 @@
 import ast
-from python_tfg.util.util import IDGetter
+from util.util import IDGetter
 from visitors.visitor_print import Visitor_print                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
 from visitors.visitor_info import Visitor_info
 from db.db_utils import init_db
@@ -12,7 +12,7 @@ directorio_principal = '.\\python_tfg\\20-21'
 
 users = {}
 desconocido = {}
-idGetter = IDGetter()
+idGetter = None
 
 def controlUsers(directorio: str):
     user_id = None
@@ -23,14 +23,14 @@ def controlUsers(directorio: str):
         if user in users:
             user_id = users[user]
         else:
-            user_id = idGetter.getID
+            user_id = idGetter.getID()
             users[user] = user_id
     else:
         proyecto = directorio.split('\\')[-1].replace(' ','')
         if proyecto in desconocido:
             user_id = desconocido[proyecto]
         else:
-            user_id = idGetter.getID
+            user_id = idGetter.getID()
             desconocido[proyecto] = user_id
     return user_id
 
@@ -70,7 +70,8 @@ def visit(visitor):
 
 #Visitor_info.visit(ast_1)
 if __name__ == '__main__':
-    init_db()
+    #init_db()
+    idGetter = IDGetter()
     warnings.filterwarnings("error")
 
     #PROBAR VISITOR DE RECOGIDA DE INFORMACIÓN

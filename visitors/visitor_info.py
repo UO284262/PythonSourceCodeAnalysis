@@ -115,7 +115,7 @@ class Visitor_info(NodeVisitor):
                         hasCodeRoot = True
                 ruta_completa = os.path.join(directorio_actual, archivo)
                 if(archivo.endswith('.py') and not 'MACOSX' in ruta_completa):
-                    with open(ruta_completa, "r",  encoding='utf-8') as f:
+                    with open(r''+ruta_completa+'', "r",  encoding='utf-8') as f:
                         module_ast = None
                         try:
                             contenido = f.read()
@@ -260,7 +260,7 @@ class Visitor_info(NodeVisitor):
         dbimport.expertise_level = params["expertise_level"]
         dbimport.user_id = params["user_id"]
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node' : module, 'dbnode' : dbnode, 'dbimport' : dbimport})
+        self.visitor_db.viit(node, {'node' : module, 'dbnode' : dbnode, 'dbimport' : dbimport})
         return {"classdefs" : count["classes"], "functionDefs" : count["function"], "enumDefs" : count["enum"]}
     
     def visit_FunctionDef(self : Self, node : ast.FunctionDef , params : Dict) -> Dict: 
@@ -457,7 +457,7 @@ class Visitor_info(NodeVisitor):
         for child in node.keywords:
             if(child.arg == 'metaclass'): metaclassNumber += 1
             else : keywordNumber += 1
-            self.visit(child, childparams,"role", exprRoles[0])
+            self.visit(child, self.addParam(childparams,"role", exprRoles[0]))
         for child in node.body:
             if(isinstance(child,ast.Expr)):
                 expressionNumber += 1

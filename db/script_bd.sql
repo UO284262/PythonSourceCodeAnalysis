@@ -61,7 +61,7 @@ CREATE TABLE MODULES (
     averageStmtsMethodBody REAL,
     typeAnnotationsPct REAL CHECK (typeAnnotationsPct >= 0 AND typeAnnotationsPct <= 1),
     hasEntryPoint BOOLEAN,
-    path VARCHAR(255),
+    path VARCHAR(1000),
     program_id BIGINT,
     import_id BIGINT UNIQUE,
     FOREIGN KEY (module_id) REFERENCES NODES(node_id),
