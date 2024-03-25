@@ -88,7 +88,7 @@ class DBClassDef:
                  privateMethodsPct: float = None,  magicMethodsPct: float = None, 
                  asyncMethodsPct: float = None,  classMethodsPct: float = None, 
                  staticMethodsPct: float = None,  abstractMethodsPct: float = None, 
-                 propertyMethodsPct: float = None, sourceCode: str = None,  module_id = None,  node = None, user_id = None, expertise_level = None):
+                 propertyMethodsPct: float = None, sourceCode: str = None, module_id = None, parent_id = None , node = None, user_id = None, expertise_level = None):
         self.user_id = user_id
         self.expertise_level = expertise_level
         self.node = node
@@ -120,6 +120,7 @@ class DBClassDef:
         self.propertyMethodsPct = propertyMethodsPct
         self.sourceCode = sourceCode
         self.module_id = module_id
+        self.parent_id = parent_id
 
 class DBFunctionDef:
     def __init__(self, category = None, functiondef_id = None,  nameConvention: str = None, 
@@ -128,10 +129,11 @@ class DBFunctionDef:
                  isAsync: bool = None,  numberOfDecorators: int = None, 
                  hasReturnTypeAnnotation: bool = None,  hasDocString: bool = None, 
                  height: int = None,  typeAnnotationsPct: float = None, 
-                 sourceCode: str = None,  module_id = None,  parameters_id = None,  node = None, user_id = None, expertise_level = None):
+                 sourceCode: str = None,  module_id = None, parent_id = None,  parameters_id = None,  node = None, user_id = None, expertise_level = None):
         self.user_id = user_id
         self.expertise_level = expertise_level
         self.node = node
+        self.parent_id = parent_id
         self.table = "FunctionDefs"
         self.category = "FunctionDef"
         self.functiondef_id = functiondef_id

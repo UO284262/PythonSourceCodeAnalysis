@@ -183,6 +183,7 @@ class Visitor_info(NodeVisitor):
         simpleImportModulesNum = 0
         fromImportModulesNum = 0
         asnames = 0
+        paramsRets = 0
         hasEntryPoint = False
         count = {'stmt' : 0, 'expr' : 0, 'classes' : 0, 'function' : 0, 'enum' : 0}
         ########## ENTITIE PROPERTIES ############
@@ -205,6 +206,7 @@ class Visitor_info(NodeVisitor):
                 else: count['classes'] += 1
                 numberOfMethodStmt += returns[index]["numberOfMethodStmt"]
                 methodCount += returns[index]["methodCount"]
+                paramsRets += returns[index]["numberOfParamsRet"]
                 typeAnnotations += returns[index]["typeAnnotations"]
                 cindex += 1
             elif(isinstance(child,ast.FunctionDef) or isinstance(child,ast.AsyncFunctionDef)): 
@@ -212,6 +214,7 @@ class Visitor_info(NodeVisitor):
                 functions.append(returns[index])
                 functionsBodySize += returns[index]["function"].bodyCount
                 typeAnnotations += returns[index]["typeAnnotations"]
+                paramsRets += returns[index]["numberOfParamsRet"]
                 findex += 1
             elif(isinstance(child,ast.Import)): 
                 simpleImportNum += 1
@@ -244,7 +247,7 @@ class Visitor_info(NodeVisitor):
         module.enumDefsPct = count["enum"]/enumClassFunctSum if(enumClassFunctSum > 0) else 0
         module.averageStmtsFunctionBody = functionsBodySize/findex if(findex > 0) else 0
         module.averageStmtsMethodBody = numberOfMethodStmt/methodCount if(methodCount > 0) else 0
-        module.typeAnnotationsPct = typeAnnotations/(methodCount + findex) if(findex + methodCount > 0) else 0
+        module.typeAnnotationsPct = typeAnnotations/paramsRets if paramsRets > 0 else 0
         module.path = params["path"]
         module.hasEntryPoint = hasEntryPoint
         module.expertise_level = params["expertise_level"]
@@ -260,7 +263,7 @@ class Visitor_info(NodeVisitor):
         dbimport.expertise_level = params["expertise_level"]
         dbimport.user_id = params["user_id"]
         ############## VISITOR DB ################
-        self.visitor_db.viit(node, {'node' : module, 'dbnode' : dbnode, 'dbimport' : dbimport})
+        self.visitor_db.visit(node, {'node' : module, 'dbnode' : dbnode, 'dbimport' : dbimport})
         return {"classdefs" : count["classes"], "functionDefs" : count["function"], "enumDefs" : count["enum"]}
     
     def visit_FunctionDef(self : Self, node : ast.FunctionDef , params : Dict) -> Dict: 
@@ -271,7 +274,12 @@ class Visitor_info(NodeVisitor):
         ############ IDS #########################
         id = self.idGetter.getID()
         dbnode.node_id = function.functiondef_id = function.parameters_id = id
-        dbnode.parent_id = function.module_id = params["parent_id"]
+        function.module_id = function.parent_id = None
+        dbnode.parent_id = params["parent_id"]
+        if(isinstance(params['parent'], dbentities.DBModule)):
+            function.module_id = params["parent_id"]
+        else:
+            function.parent_id = params["parent_id"]
         if(isMethod):
             method.classdef_id = params["parent_id"]
             method.methoddef_id = id
@@ -315,7 +323,7 @@ class Visitor_info(NodeVisitor):
         function.expressionsPct = numberOfBodyExpr/len(node.body) if len(node.body) > 0 else 0
         function.isAsync = False
         function.numberOfDecorators = len(node.decorator_list)
-        function.hasReturnTypeAnnotation = node.returns
+        function.hasReturnTypeAnnotation = True if node.returns else False
         if(node.returns): args["typeAnnotations"] += 1
         function.hasDocString = (isinstance(node.body[0],ast.Constant)) and isinstance(node.body[0].value, str)
         function.height = params["depth"]
@@ -339,7 +347,7 @@ class Visitor_info(NodeVisitor):
             return {'method': method, 'function': function, 'args': args, 'typeAnnotations' : args["typeAnnotations"], 'depth' : depth + 1, 'id' : function.functiondef_id, 'haveReturn' : haveReturn}
         else:
             self.visitor_db.visit(node, {'node' : function, 'dbnode' : dbnode, 'isMethod' : isMethod})
-            return{'function': function, 'typeAnnotations' : args["typeAnnotations"], 'depth' : depth + 1, 'id' : function.functiondef_id}
+            return{'numberOfParamsRet' : argsRet, 'function': function, 'typeAnnotations' : args["typeAnnotations"], 'depth' : depth + 1, 'id' : function.functiondef_id}
     
     def visit_AsyncFunctionDef(self : Self, node : ast.AsyncFunctionDef , params : Dict) -> Dict: 
         isMethod = params["parent"].table == 'ClassDefs'
@@ -393,7 +401,7 @@ class Visitor_info(NodeVisitor):
         function.expressionsPct = numberOfBodyExpr/len(node.body) if len(node.body) > 0 else 0
         function.isAsync = True
         function.numberOfDecorators = len(node.decorator_list)
-        function.hasReturnTypeAnnotation = node.returns
+        function.hasReturnTypeAnnotation = True if node.returns else False
         if(node.returns): args["typeAnnotations"] += 1
         function.hasDocString = (isinstance(node.body[0],ast.Constant)) and isinstance(node.body[0].value, str)
         function.height = params["depth"]
@@ -417,7 +425,7 @@ class Visitor_info(NodeVisitor):
             return {'method': method, 'function': function, 'args': args, 'typeAnnotations' : args["typeAnnotations"], 'depth' : depth + 1, 'id' : function.functiondef_id, 'haveReturn' : haveReturn}
         else:
             self.visitor_db.visit(node, {'node' : function, 'dbnode' : dbnode, 'isMethod' : isMethod})
-            return{'function': function, 'typeAnnotations' : args["typeAnnotations"], 'depth' : depth + 1, 'id' : function.functiondef_id}
+            return{'numberOfParamsRet' : argsRet, 'function': function, 'typeAnnotations' : args["typeAnnotations"], 'depth' : depth + 1, 'id' : function.functiondef_id}
         
     def visit_ClassDef(self : Self, node : ast.ClassDef , params : Dict) -> Dict: 
         dbnode = dbentities.DBNode()
@@ -425,7 +433,12 @@ class Visitor_info(NodeVisitor):
         ############ IDS #########################
         id = self.idGetter.getID()
         dbnode.node_id = classdef.classdef_id = id
-        dbnode.parent_id = classdef.module_id = params["parent_id"]
+        classdef.module_id = classdef.parent_id = None
+        dbnode.parent_id = params["parent_id"]
+        if(isinstance(params['parent'], dbentities.DBModule)):
+            classdef.module_id = params["parent_id"]
+        else:
+            classdef.parent_id = params["parent_id"]
         ############# PARAMS #####################
         childparams = {'expertise_level' : params["expertise_level"], 'user_id' : params['user_id'], "parent" : classdef, "depth" : params["depth"] + 1, "parent_id" : id}
         stmtRoles = ["ClassDef"]
@@ -512,7 +525,7 @@ class Visitor_info(NodeVisitor):
         classdef.user_id = params['user_id']
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node' : classdef, 'dbnode' : dbnode})
-        return {'methodCount' : numberOfMethods, 'typeAnnotations' : numberOfMethodTypeAnnotations, 'numberOfMethodStmt' : numberOfMethodStmt, 'id' : classdef.classdef_id, 'depth' : depth + 1, 'isEnum' : isEnum}
+        return {'numberOfParamsRet' : numberOfMethodParamsRet, 'methodCount' : numberOfMethods, 'typeAnnotations' : numberOfMethodTypeAnnotations, 'numberOfMethodStmt' : numberOfMethodStmt, 'id' : classdef.classdef_id, 'depth' : depth + 1, 'isEnum' : isEnum}
 
     ############################### STATEMENTS #############################
 
@@ -1622,10 +1635,14 @@ class Visitor_info(NodeVisitor):
 
     
     def visit_Import(self : Self, node : ast.Import , params : Dict) -> Dict: 
+        dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
         id = self.idGetter.getID()
-        stmt.statement_id = id
+        stmt.statement_id = dbnode.node_id = id
+        dbnode.parent_id = params["parent_id"]
+        ############ CATEGORIES ##################
+        dbnode.parent_table = params["parent"].table
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.hasOrElse = None
@@ -1638,15 +1655,19 @@ class Visitor_info(NodeVisitor):
         for alias in node.names:
             if(alias.asname): asnames += 1
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node' : stmt})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1, 'importedModules' : len(node.names), 'asnames' : asnames}
 
     
     def visit_ImportFrom(self : Self, node : ast.ImportFrom , params : Dict) -> Dict: 
+        dbnode = dbentities.DBNode()
         stmt = dbentities.DBStatement()
         ############ IDS #########################
         id = self.idGetter.getID()
-        stmt.statement_id = id
+        stmt.statement_id = dbnode.node_id = id
+        dbnode.parent_id = params["parent_id"]
+        ############ CATEGORIES ##################
+        dbnode.parent_table = params["parent"].table
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.hasOrElse = None
@@ -1659,7 +1680,7 @@ class Visitor_info(NodeVisitor):
         for alias in node.names:
             if(alias.asname): asnames += 1
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node' : stmt})
+        self.visitor_db.visit(node, {'node' : stmt, 'dbnode' : dbnode})
         return {'id' : id, 'depth' : stmt.depth + 1, 'importedModules' : len(node.names), 'asnames' : asnames}
 
     ############################ EXPRESSIONS ##################################

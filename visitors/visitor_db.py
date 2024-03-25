@@ -162,9 +162,13 @@ class Visitor_db(NodeVisitor):
     ############################ IMPORTS ##################################
     
     def visit_Import(self, node: ast.Import, params):
+        self.insert_statement(params["node"])
+        self.insert_node(params["dbnode"])
         pass
     
     def visit_ImportFrom(self, node: ast.ImportFrom, params):
+        self.insert_statement(params["node"])
+        self.insert_node(params["dbnode"])
         pass
 
     ############################ EXPRESSIONS ##################################
@@ -419,10 +423,11 @@ class Visitor_db(NodeVisitor):
                             typeAnnotationsPct, 
                             sourceCode, 
                             module_id,
+                            parent_id,
                             parameters_id,
                             user_id,
                             expertise_level) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.functiondef_id,
                             node.nameConvention, 
                             node.numberOfCharacters, 
@@ -433,11 +438,12 @@ class Visitor_db(NodeVisitor):
                             node.isAsync, 
                             node.numberOfDecorators, 
                             node.hasReturnTypeAnnotation, 
-                            node.hasDocString, 
+                            node.hasDocString,
                             node.height, 
-                            node.typeAnnotationsPct, 
+                            node.typeAnnotationsPct,
                             node.sourceCode, 
                             node.module_id,
+                            node.parent_id,
                             node.parameters_id,
                             node.user_id,
                             node.expertise_level)
@@ -556,9 +562,10 @@ class Visitor_db(NodeVisitor):
                             propertyMethodsPct,
                             sourceCode, 
                             module_id,
+                            parent_id,
                             user_id,
                             expertise_level) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
         datos_a_insertar = (node.classdef_id,
                             node.nameConvention, 
                             node.isEnumClass, 
@@ -585,6 +592,7 @@ class Visitor_db(NodeVisitor):
                             node.propertyMethodsPct,
                             node.sourceCode, 
                             node.module_id,
+                            node.parent_id,
                             node.user_id,
                             node.expertise_level)
         self.sql_insert.append(sql_insert)

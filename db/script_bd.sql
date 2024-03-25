@@ -9,7 +9,7 @@ CREATE TABLE NODES (
 -- Creación de la tabla PROGRAMS
 CREATE TABLE PROGRAMS (
     program_id BIGINT PRIMARY KEY,
-    name VARCHAR(255),
+    name VARCHAR(1000),
     hasSubDirsWithCode BOOLEAN,
     hasPackages BOOLEAN,
     numberOfModules INTEGER,
@@ -113,8 +113,10 @@ CREATE TABLE CLASSDEFS (
     propertyMethodsPct REAL CHECK (abstractMethodsPct >= 0 AND abstractMethodsPct <= 1),
     sourceCode VARCHAR(100000),
     module_id BIGINT,
+    parent_id BIGINT,
     FOREIGN KEY (classdef_id) REFERENCES NODES(node_id),
     FOREIGN KEY (module_id) REFERENCES MODULES(module_id),
+    FOREIGN KEY (parent_id) REFERENCES NODES(node_id),
     user_id BIGINT,
     expertise_level VARCHAR(20)
 );
@@ -136,9 +138,11 @@ CREATE TABLE FUNCTIONDEFS (
     typeAnnotationsPct REAL CHECK (typeAnnotationsPct >= 0 AND typeAnnotationsPct <= 1),
     sourceCode VARCHAR(100000),
     module_id BIGINT,
+    parent_id BIGINT,
     parameters_id BIGINT,
     FOREIGN KEY (functiondef_id) REFERENCES NODES(node_id),
     FOREIGN KEY (module_id) REFERENCES MODULES(module_id),
+    FOREIGN KEY (parent_id) REFERENCES NODES(node_id),
     user_id BIGINT,
     expertise_level VARCHAR(20)
 );
