@@ -75,17 +75,17 @@ if __name__ == '__main__':
     warnings.filterwarnings("error")
 
     #PROBAR VISITOR DE RECOGIDA DE INFORMACIÓN
-    visitor = Visitor_info(idGetter)
-    visit(visitor)
+    #visitor = Visitor_info(idGetter)
+    #visit(visitor)
 
      
     #PROBAR VISITOR DE PRINTEO DE INFORMACIÓN
-    #visitor = Visitor_print()
-    #ruta = './python_tfg/test/test_entities.py'
-    #file = ''
-    #with open(ruta, "r",  encoding='utf-8') as f:
-    #    file = f.read()
-    #ast_prueba = ast.parse(file)
-    #visitor.visit(ast_prueba, {})
+    visitor = Visitor_print()
+    ruta = './python_tfg/test/test.py'
+    file = ''
+    with open(ruta, "r",  encoding='utf-8') as f:
+        file = f.read()
+    ast_prueba = ast.parse(file)
+    visitor.visit(ast_prueba, {})
 
     

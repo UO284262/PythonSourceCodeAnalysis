@@ -295,6 +295,7 @@ class Visitor_info(NodeVisitor):
         numberOfBodyExpr = 0
         depth = 0
         haveReturn = False
+        haveRetAnnotation = False
         ############## PROPAGAR VISIT ############
         args = self.visit(node.args, self.addParam(self.addParam(childparams, "params_id", id), "role" , "FunctionParams"))
         for child in node.body:
@@ -310,11 +311,13 @@ class Visitor_info(NodeVisitor):
         if(node.returns):
             aux = self.visit(node.returns, self.addParam(childparams,"role", exprRoles[1]))
             depth = max(depth, aux["depth"])
+            haveRetAnnotation = True
         for child in node.type_params:
             self.visit(child, childparams)
         ########## ENTITIE PROPERTIES ############
         whatitis = self.whatItIs(node)
-        argsRet = args['numberOfArgs'] + 1 if haveReturn else args['numberOfArgs']
+        argsRet = args['numberOfArgs'] + 1 if haveReturn or haveRetAnnotation else args['numberOfArgs']
+        numberOfAnnotations = args['typeAnnotations'] + 1 if haveRetAnnotation else args['typeAnnotations']
         function.nameConvention = self.nameConvention(node.name)
         function.numberOfCharacters = len(node.name)
         function.isPrivate = whatitis["private"]
@@ -324,10 +327,9 @@ class Visitor_info(NodeVisitor):
         function.isAsync = False
         function.numberOfDecorators = len(node.decorator_list)
         function.hasReturnTypeAnnotation = True if node.returns else False
-        if(node.returns): args["typeAnnotations"] += 1
         function.hasDocString = (isinstance(node.body[0],ast.Constant)) and isinstance(node.body[0].value, str)
         function.height = params["depth"]
-        function.typeAnnotationsPct = args["typeAnnotations"]/argsRet if argsRet > 0 else 0
+        function.typeAnnotationsPct = numberOfAnnotations/argsRet if argsRet > 0 else 0
         function.sourceCode = ast.unparse(node)
         function.expertise_level = params["expertise_level"]
         function.user_id = params["user_id"]
@@ -357,7 +359,12 @@ class Visitor_info(NodeVisitor):
         ############ IDS #########################
         id = self.idGetter.getID()
         dbnode.node_id = function.functiondef_id = function.parameters_id = id
-        dbnode.parent_id = function.module_id = params["parent_id"]
+        function.module_id = function.parent_id = None
+        dbnode.parent_id = params["parent_id"]
+        if(isinstance(params['parent'], dbentities.DBModule)):
+            function.module_id = params["parent_id"]
+        else:
+            function.parent_id = params["parent_id"]
         if(isMethod):
             method.classdef_id = params["parent_id"]
             method.methoddef_id = id
@@ -373,6 +380,7 @@ class Visitor_info(NodeVisitor):
         numberOfBodyExpr = 0
         depth = 0
         haveReturn = False
+        haveRetAnnotation = False
         ############## PROPAGAR VISIT ############
         args = self.visit(node.args, self.addParam(self.addParam(childparams, "params_id", id), "role" , "FunctionParams"))
         for child in node.body:
@@ -388,11 +396,13 @@ class Visitor_info(NodeVisitor):
         if(node.returns):
             aux = self.visit(node.returns, self.addParam(childparams,"role", exprRoles[1]))
             depth = max(depth, aux["depth"])
+            haveRetAnnotation = True
         for child in node.type_params:
             self.visit(child, childparams)
         ########## ENTITIE PROPERTIES ############
         whatitis = self.whatItIs(node)
-        argsRet = args['numberOfArgs'] + 1 if haveReturn else args['numberOfArgs']
+        argsRet = args['numberOfArgs'] + 1 if haveReturn or haveRetAnnotation else args['numberOfArgs']
+        numberOfAnnotations = args['typeAnnotations'] + 1 if haveRetAnnotation else args['typeAnnotations']
         function.numberOfCharacters = len(node.name)
         function.nameConvention = self.nameConvention(node.name)
         function.isPrivate = whatitis["private"]
@@ -402,10 +412,9 @@ class Visitor_info(NodeVisitor):
         function.isAsync = True
         function.numberOfDecorators = len(node.decorator_list)
         function.hasReturnTypeAnnotation = True if node.returns else False
-        if(node.returns): args["typeAnnotations"] += 1
         function.hasDocString = (isinstance(node.body[0],ast.Constant)) and isinstance(node.body[0].value, str)
         function.height = params["depth"]
-        function.typeAnnotationsPct = args["typeAnnotations"]/argsRet if argsRet > 0 else 0
+        function.typeAnnotationsPct = numberOfAnnotations/argsRet if argsRet > 0 else 0
         function.sourceCode = ast.unparse(node)
         function.expertise_level = params["expertise_level"]
         function.user_id = params["user_id"]
