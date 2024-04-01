@@ -48,13 +48,19 @@ def getSourcePackage(ruta):
         elif hasPyFiles:
             yield directorio_actual
 
+def notRead(project, projects):
+    for p in projects:
+        if((p in project) or (project in p)):
+            return False
+    return True
+
 # Recorrer directorios y archivos usando os.walk
 def visit(visitor):
     projects = []
     for project in getSourcePackage(directorio_principal):
         if project != ' ':
             user_id = controlUsers(project)
-            if(project not in projects):
+            if(notRead(project, projects)):
                     projects.append(project)
                     visitor.visit_Program({ "path" : project, "user_id" : user_id, "expertise_level" : "BEGGINER" })
     """
@@ -80,12 +86,14 @@ if __name__ == '__main__':
 
      
     #PROBAR VISITOR DE PRINTEO DE INFORMACIÓN
-    visitor = Visitor_print()
-    ruta = './python_tfg/test/test.py'
+    #visitor = Visitor_print()
+    visitor = Visitor_info(idGetter)
+    ruta = './python_tfg/test/test2.py'
     file = ''
     with open(ruta, "r",  encoding='utf-8') as f:
         file = f.read()
     ast_prueba = ast.parse(file)
-    visitor.visit(ast_prueba, {})
+    visitor.visit(ast_prueba, {"program_id" : "1", "user_id" : "1", "expertise_level" : "1", "filename" : "1", "path" : "1"})
+
 
     

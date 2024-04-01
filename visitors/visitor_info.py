@@ -9,6 +9,10 @@ from visitors.My_NodeVisitor import NodeVisitor
 
 class Visitor_info(NodeVisitor):
 
+    def __init__(self, idGetter):
+        self.idGetter = idGetter
+        self.visitor_db = Visitor_db()
+
     def getArgsNameConvention(self, namingConventions : Dict):
         nameConvention = ''
         max = 0
@@ -70,10 +74,6 @@ class Visitor_info(NodeVisitor):
             'depth' : max(dict_1["depth"],dict_2["depth"])
         }
 
-    def __init__(self, idGetter):
-        self.idGetter = idGetter
-        self.visitor_db = Visitor_db()
-
     def visit_Program(self: Self, params : Dict):
         dbprogram = dbentities.DBProgram()
         ################## IDS ###################
@@ -87,6 +87,7 @@ class Visitor_info(NodeVisitor):
         totalEnumDefs = 0
         ############## PROPAGAR VISIT ############
         modules = []
+        rutes = []
         index = 0
         for directorio_actual, subdirectorios, archivos in os.walk(params["path"]):
             """
@@ -276,6 +277,7 @@ class Visitor_info(NodeVisitor):
         dbnode.node_id = function.functiondef_id = function.parameters_id = id
         function.module_id = function.parent_id = None
         dbnode.parent_id = params["parent_id"]
+        dbnode.parent_table = params["parent"].table
         if(isinstance(params['parent'], dbentities.DBModule)):
             function.module_id = params["parent_id"]
         else:
@@ -361,6 +363,7 @@ class Visitor_info(NodeVisitor):
         dbnode.node_id = function.functiondef_id = function.parameters_id = id
         function.module_id = function.parent_id = None
         dbnode.parent_id = params["parent_id"]
+        dbnode.parent_table = params["parent"].table
         if(isinstance(params['parent'], dbentities.DBModule)):
             function.module_id = params["parent_id"]
         else:
@@ -444,6 +447,7 @@ class Visitor_info(NodeVisitor):
         dbnode.node_id = classdef.classdef_id = id
         classdef.module_id = classdef.parent_id = None
         dbnode.parent_id = params["parent_id"]
+        dbnode.parent_table = params["parent"].table
         if(isinstance(params['parent'], dbentities.DBModule)):
             classdef.module_id = params["parent_id"]
         else:
@@ -1651,7 +1655,11 @@ class Visitor_info(NodeVisitor):
         stmt.statement_id = dbnode.node_id = id
         dbnode.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
+        stmt.category = node.__doc__.split('(')[0]
         dbnode.parent_table = params["parent"].table
+        stmt.parent = params["parent"].category
+        ############# ROLES ######################
+        stmt.statementRole = params["role"]
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.hasOrElse = None
@@ -1676,7 +1684,9 @@ class Visitor_info(NodeVisitor):
         stmt.statement_id = dbnode.node_id = id
         dbnode.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
+        stmt.category = node.__doc__.split('(')[0]
         dbnode.parent_table = params["parent"].table
+        stmt.parent = params["parent"].category
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.hasOrElse = None

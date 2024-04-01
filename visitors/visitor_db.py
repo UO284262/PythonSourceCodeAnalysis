@@ -7,6 +7,7 @@ from db.db_utils import writeOnDB
 class Visitor_db(NodeVisitor):
 
     def __init__(self):
+        self.modules = []
         self.sql_insert = []
         self.datos_a_insertar = []
         self.sql_nodes_insert = []
@@ -14,7 +15,7 @@ class Visitor_db(NodeVisitor):
 
     def visit_Program(self, node: dbentities.DBProgram, params):
         self.insert_program(node)
-        writeOnDB(self.sql_nodes_insert, self.datos_nodes_a_insertar, self.sql_insert, self.datos_a_insertar)
+        #writeOnDB(self.sql_nodes_insert, self.datos_nodes_a_insertar, self.sql_insert, self.datos_a_insertar, self.modules)
         self.sql_insert = []
         self.datos_a_insertar = []
         self.datos_nodes_a_insertar = []
@@ -25,23 +26,27 @@ class Visitor_db(NodeVisitor):
         self.insert_import(params["dbimport"])
         self.insert_module(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append(params["node"].path)
         pass
     
     def visit_FunctionDef(self, node: ast.FunctionDef, params):
         if(params['isMethod']): self.insert_methoddef(params['method']) 
         self.insert_functiondef(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef, params):
         if(params['isMethod']): self.insert_methoddef(params['method']) 
         self.insert_functiondef(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_ClassDef(self, node: ast.ClassDef, params):
         self.insert_classdef(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
 
     ############################### STATEMENTS #############################
@@ -49,114 +54,136 @@ class Visitor_db(NodeVisitor):
     def visit_Return(self, node: ast.Return, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_Delete(self, node: ast.Delete, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_Assign(self, node: ast.Assign, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_TypeAlias(self, node: ast.TypeAlias, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_AugAssign(self, node: ast.AugAssign, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_AnnAssign(self, node: ast.AnnAssign, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_For(self, node: ast.For, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_AsyncFor(self, node: ast.AsyncFor, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_While(self, node: ast.While, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_If(self, node: ast.If, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_With(self, node: ast.With, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_AsyncWith(self, node: ast.AsyncWith, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_Match(self, node: ast.Match, params):
         self.insert_case(params["case"])
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_Raise(self, node: ast.Raise, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_Try(self, node: ast.Try, params):
         self.insert_handler(params["handler"])
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_TryStar(self, node: ast.Try, params):
         self.insert_handler(params["handler"])
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_Assert(self, node: ast.Assert, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_Global(self, node: ast.Global, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_NonLocal(self, node: ast.Nonlocal, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_Pass(self, node: ast.Pass, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_Break(self, node: ast.Break, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_Continue(self, node: ast.Continue, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
 
     ############################ IMPORTS ##################################
@@ -164,11 +191,13 @@ class Visitor_db(NodeVisitor):
     def visit_Import(self, node: ast.Import, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_ImportFrom(self, node: ast.ImportFrom, params):
         self.insert_statement(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
 
     ############################ EXPRESSIONS ##################################
@@ -176,31 +205,37 @@ class Visitor_db(NodeVisitor):
     def visit_BoolOp(self, node: ast.BoolOp, params):
         self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_NamedExpr(self, node: ast.NamedExpr, params):
         self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_BinOp(self, node: ast.BinOp, params):
         self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_UnaryOp(self, node: ast.UnaryOp, params):
         self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_Lambda(self, node: ast.Lambda, params):
         self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_IfExp(self, node: ast.IfExp, params):
         self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
 
     ######################### COMPREHENSIONS #############################
@@ -209,24 +244,28 @@ class Visitor_db(NodeVisitor):
         self.insert_comprehension(params["node"])
         self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_SetComp(self, node: ast.SetComp, params):
         self.insert_comprehension(params["node"])
         self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_DictComp(self, node: ast.DictComp, params):
         self.insert_comprehension(params["node"])
         self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_GeneratorExp(self, node: ast.GeneratorExp, params):
         self.insert_comprehension(params["node"])
         self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
 
     ######################################################################
@@ -234,21 +273,25 @@ class Visitor_db(NodeVisitor):
     def visit_Await(self, node: ast.Await, params):
         self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_Yield(self, node: ast.Yield, params):
         self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_YieldFrom(self, node: ast.YieldFrom, params):
         self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_Compare(self, node: ast.Compare, params):
         self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
 
     ########################## call_args ###########################
@@ -257,6 +300,7 @@ class Visitor_db(NodeVisitor):
         self.insert_callarg(params["node"])        
         self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
 
     ################################################################
@@ -264,6 +308,7 @@ class Visitor_db(NodeVisitor):
     def visit_FormattedValue(self, node: ast.FormattedValue, params):
         self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
 
     ########################### F-strings #####################################
@@ -272,6 +317,7 @@ class Visitor_db(NodeVisitor):
         self.insert_fstring(params["node"])
         self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
 
     ###########################################################################
@@ -279,21 +325,25 @@ class Visitor_db(NodeVisitor):
     def visit_Constant(self, node: ast.Constant, params):
         self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_Attribute(self, node: ast.Attribute, params):
         self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_Subscript(self, node: ast.Subscript, params):
         self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_Starred(self, node: ast.Starred, params):
         self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
 
     ############################# Variable ##################################
@@ -301,7 +351,8 @@ class Visitor_db(NodeVisitor):
     def visit_Name(self, node: ast.Name, params):
         self.insert_variable(params["node"])        
         self.insert_expression(params["expr"])
-        self.insert_node(params["dbnode"])        
+        self.insert_node(params["dbnode"])
+        self.modules.append("No module")        
         pass
 
     ############################### Vectors #################################
@@ -310,24 +361,28 @@ class Visitor_db(NodeVisitor):
         self.insert_vector(params["node"])
         self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_Tuple(self, node: ast.Tuple, params):
         self.insert_vector(params["node"])
         self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_Dict(self, node: ast.Dict, params):
         self.insert_vector(params["node"])
         self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_Set(self, node: ast.Set, params):
         self.insert_vector(params["node"])
         self.insert_expression(params["expr"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
 
     ########################################################################
@@ -335,6 +390,7 @@ class Visitor_db(NodeVisitor):
     def visit_Slice(self, node: ast.Slice, params):
         self.insert_expression(params["node"])
         self.insert_node(params["dbnode"])
+        self.modules.append("No module")
         pass
     
     def visit_ExceptHandler(self, node: ast.ExceptHandler, params):

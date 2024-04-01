@@ -9,7 +9,7 @@ conexion_params = {
     'port': '5432',
 }
 
-def writeOnDB(sql_nodes_insert, datos_nodes_a_insertar, sql_insert, datos_a_insertar):
+def writeOnDB(sql_nodes_insert, datos_nodes_a_insertar, sql_insert, datos_a_insertar, modules):
     # Establecer la conexión a la base de datos
     
     # Ejemplo de inserción de datos
@@ -38,6 +38,7 @@ def writeOnDB(sql_nodes_insert, datos_nodes_a_insertar, sql_insert, datos_a_inse
         print(f"Error: {e.with_traceback(None)}")
         print(final_datos_a_insertar[size - i - 1])
         print(final_sql_insert[size - i - 1])
+        print(modules[size - i - 1])
         conexion.rollback()
 
     finally:

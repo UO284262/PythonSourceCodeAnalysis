@@ -67,6 +67,7 @@ class DBImport:
         self.user_id = user_id
         self.expertise_level = expertise_level
         self.node = node
+        self.category = "Import"
         self.table = "Imports"
         self.numberImports = numberImports
         self.moduleImportsPct = moduleImportsPct
@@ -184,6 +185,7 @@ class DBParameter:
         self.expertise_level = expertise_level
         self.node = node
         self.table = "Parameters"
+        self.category = "Parameter"
         self.numberOfParams = numberOfParams
         self.posOnlyParamPct = posOnlyParamPct
         self.varParamPct = varParamPct
@@ -271,6 +273,7 @@ class DBFString:
         self.expertise_level = expertise_level
         self.node = node
         self.table = "FStrings"
+        self.category = "FString"
         self.numberOfElements = numberOfElements
         self.constantsPct = constantsPct
         self.expressionsPct = expressionsPct
