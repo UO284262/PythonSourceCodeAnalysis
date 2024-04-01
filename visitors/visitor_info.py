@@ -1687,6 +1687,8 @@ class Visitor_info(NodeVisitor):
         stmt.category = node.__doc__.split('(')[0]
         dbnode.parent_table = params["parent"].table
         stmt.parent = params["parent"].category
+        ############# ROLES ######################
+        stmt.statementRole = params["role"]
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.hasOrElse = None
