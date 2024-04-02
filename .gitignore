@@ -1,2 +1,30 @@
-/20-21
-**/__pycache__/++
+# Directorios y archivos generados automáticamente
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ambiente virtual de Python (por ejemplo, virtualenv, pipenv, etc.)
+venv/
+env/
+pipenv/
+
+# Archivos de caché del editor
+.vscode/
+*.swp
+*.swo
+
+# Archivos de configuración del IDE PyCharm
+.idea/
+
+# Archivos de caché de PyCharm
+*.iml
+*.ipr
+*.iws
+
+# Archivos de configuración de Visual Studio Code
+.vscode/
+
+# Otros
+.DS_Store
+Thumbs.db

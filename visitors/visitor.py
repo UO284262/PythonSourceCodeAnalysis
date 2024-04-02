@@ -1,286 +1,272 @@
 from abc import ABC, abstractmethod
 import ast
+from typing import Dict
+
 
 class Visitor(ABC):
-
     @abstractmethod
-    def visit_module(self, node: ast.Module, params):
+    def visit_Module(self, node: ast.Module, params: Dict):
         pass
 
     @abstractmethod
-    def visit_functiondef(self, node: ast.FunctionDef, params):
+    def visit_FunctionDef(self, node: ast.FunctionDef, params: Dict):
         pass
 
     @abstractmethod
-    def visit_asyncfunctiondef(self, node: ast.AsyncFunctionDef, params):
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef, params: Dict):
         pass
 
     @abstractmethod
-    def visit_classdef(self, node: ast.ClassDef, params):
+    def visit_ClassDef(self, node: ast.ClassDef, params: Dict):
         pass
 
     ############################### STATEMENTS #############################
-
     @abstractmethod
-    def visit_return(self, node: ast.Return, params):
+    def visit_Return(self, node: ast.Return, params: Dict):
         pass
 
     @abstractmethod
-    def visit_delete(self, node: ast.Delete, params):
+    def visit_Delete(self, node: ast.Delete, params: Dict):
         pass
 
     @abstractmethod
-    def visit_assign(self, node: ast.Assign, params):
+    def visit_Assign(self, node: ast.Assign, params: Dict):
         pass
 
     @abstractmethod
-    def visit_typealias(self, node: ast.TypeAlias, params):
+    def visit_TypeAlias(self, node: ast.TypeAlias, params: Dict):
         pass
 
     @abstractmethod
-    def visit_augassign(self, node: ast.AugAssign, params):
+    def visit_AugAssign(self, node: ast.AugAssign, params: Dict):
         pass
 
     @abstractmethod
-    def visit_annassign(self, node: ast.AnnAssign, params):
+    def visit_AnnAssign(self, node: ast.AnnAssign, params: Dict):
         pass
 
     @abstractmethod
-    def visit_for(self, node: ast.For, params):
+    def visit_For(self, node: ast.For, params: Dict):
         pass
 
     @abstractmethod
-    def visit_asyncfor(self, node: ast.AsyncFor, params):
+    def visit_AsyncFor(self, node: ast.AsyncFor, params: Dict):
         pass
 
     @abstractmethod
-    def visit_while(self, node: ast.While, params):
+    def visit_While(self, node: ast.While, params: Dict):
         pass
 
     @abstractmethod
-    def visit_if(self, node: ast.If, params):
+    def visit_If(self, node: ast.If, params: Dict):
         pass
 
     @abstractmethod
-    def visit_with(self, node: ast.With, params):
+    def visit_With(self, node: ast.With, params: Dict):
         pass
 
     @abstractmethod
-    def visit_asyncwith(self, node: ast.AsyncWith, params):
+    def visit_AsyncWith(self, node: ast.AsyncWith, params: Dict):
         pass
 
     @abstractmethod
-    def visit_match(self, node: ast.Match, params):
+    def visit_Match(self, node: ast.Match, params: Dict):
         pass
 
     @abstractmethod
-    def visit_raise(self, node: ast.Raise, params):
+    def visit_Raise(self, node: ast.Raise, params: Dict):
         pass
 
     @abstractmethod
-    def visit_try(self, node: ast.Try, params):
+    def visit_Try(self, node: ast.Try, params: Dict):
         pass
 
     @abstractmethod
-    def visit_trystar(self, node: ast.Try, params):
+    def visit_TryStar(self, node: ast.TryStar, params: Dict):
         pass
 
     @abstractmethod
-    def visit_assert(self, node: ast.Assert, params):
+    def visit_Assert(self, node: ast.Assert, params: Dict):
         pass
 
     @abstractmethod
-    def visit_global(self, node: ast.Global, params):
+    def visit_Global(self, node: ast.Global, params: Dict):
         pass
 
     @abstractmethod
-    def visit_nonlocal(self, node: ast.Nonlocal, params):
+    def visit_NonLocal(self, node: ast.Nonlocal, params: Dict):
         pass
 
     @abstractmethod
-    def visit_pass(self, node: ast.Pass, params):
+    def visit_Pass(self, node: ast.Pass, params: Dict):
         pass
 
     @abstractmethod
-    def visit_break(self, node: ast.Break, params):
+    def visit_Break(self, node: ast.Break, params: Dict):
         pass
 
     @abstractmethod
-    def visit_continue(self, node: ast.Continue, params):
+    def visit_Continue(self, node: ast.Continue, params: Dict):
         pass
 
     ############################ IMPORTS ##################################
-
     @abstractmethod
-    def visit_import(self, node: ast.Import, params):
+    def visit_Import(self, node: ast.Import, params: Dict):
         pass
 
     @abstractmethod
-    def visit_importfrom(self, node: ast.ImportFrom, params):
+    def visit_ImportFrom(self, node: ast.ImportFrom, params: Dict):
         pass
 
     ############################ EXPRESSIONS ##################################
-
     @abstractmethod
-    def visit_boolop(self, node: ast.BoolOp, params):
+    def visit_BoolOp(self, node: ast.BoolOp, params: Dict):
         pass
 
     @abstractmethod
-    def visit_namedexpr(self, node: ast.NamedExpr, params):
+    def visit_NamedExpr(self, node: ast.NamedExpr, params: Dict):
         pass
 
     @abstractmethod
-    def visit_binop(self, node: ast.BinOp, params):
+    def visit_BinOp(self, node: ast.BinOp, params: Dict):
         pass
 
     @abstractmethod
-    def visit_unaryop(self, node: ast.UnaryOp, params):
+    def visit_UnaryOp(self, node: ast.UnaryOp, params: Dict):
         pass
 
     @abstractmethod
-    def visit_lambda(self, node: ast.Lambda, params):
+    def visit_Lambda(self, node: ast.Lambda, params: Dict):
         pass
 
     @abstractmethod
-    def visit_ifexp(self, node: ast.IfExp, params):
+    def visit_IfExp(self, node: ast.IfExp, params: Dict):
         pass
 
     ######################### COMPREHENSIONS #############################
-
     @abstractmethod
-    def visit_listcomp(self, node: ast.ListComp, params):
+    def visit_ListComp(self, node: ast.ListComp, params: Dict):
         pass
 
     @abstractmethod
-    def visit_setcomp(self, node: ast.SetComp, params):
+    def visit_SetComp(self, node: ast.SetComp, params: Dict):
         pass
 
     @abstractmethod
-    def visit_dictcomp(self, node: ast.DictComp, params):
+    def visit_DictComp(self, node: ast.DictComp, params: Dict):
         pass
 
     @abstractmethod
-    def visit_generatorexp(self, node: ast.GeneratorExp, params):
-        pass
-
-    ######################################################################
-
-    @abstractmethod
-    def visit_await(self, node: ast.Await, params):
+    def visit_GeneratorExp(self, node: ast.GeneratorExp, params: Dict):
         pass
 
     @abstractmethod
-    def visit_yield(self, node: ast.Yield, params):
+    def visit_Await(self, node: ast.Await, params: Dict):
         pass
 
     @abstractmethod
-    def visit_yieldfrom(self, node: ast.YieldFrom, params):
+    def visit_Yield(self, node: ast.Yield, params: Dict):
         pass
 
     @abstractmethod
-    def visit_compare(self, node: ast.Compare, params):
+    def visit_YieldFrom(self, node: ast.YieldFrom, params: Dict):
         pass
 
-    ########################## call_args ###########################
-
     @abstractmethod
-    def visit_call(self, node: ast.Call, params):
+    def visit_Compare(self, node: ast.Compare, params: Dict):
         pass
 
-    ################################################################
+    ########################## call ###########################
+    @abstractmethod
+    def visit_Call(self, node: ast.Call, params: Dict):
+        pass
 
     @abstractmethod
-    def visit_formattedvalue(self, node: ast.FormattedValue, params):
+    def visit_FormattedValue(self, node: ast.FormattedValue, params: Dict):
         pass
 
     ########################### F-strings #####################################
-
     @abstractmethod
-    def visit_joinedstr(self, node: ast.JoinedStr, params):
+    def visit_JoinedStr(self, node: ast.JoinedStr, params: Dict):
         pass
 
     ###########################################################################
 
     @abstractmethod
-    def visit_constant(self, node: ast.Constant, params):
+    def visit_Constant(self, node: ast.Constant, params: Dict):
         pass
 
     @abstractmethod
-    def visit_attribute(self, node: ast.Attribute, params):
+    def visit_Attribute(self, node: ast.Attribute, params: Dict):
         pass
 
     @abstractmethod
-    def visit_subscript(self, node: ast.Subscript, params):
+    def visit_Subscript(self, node: ast.Subscript, params: Dict):
         pass
 
     @abstractmethod
-    def visit_starred(self, node: ast.Starred, params):
+    def visit_Starred(self, node: ast.Starred, params: Dict):
         pass
 
     ############################# Variable ##################################
-
     @abstractmethod
-    def visit_name(self, node: ast.Name, params):
+    def visit_Name(self, node: ast.Name, params: Dict):
         pass
 
     ############################### Vectors #################################
-
     @abstractmethod
-    def visit_list(self, node: ast.List, params):
+    def visit_List(self, node: ast.List, params: Dict):
         pass
 
     @abstractmethod
-    def visit_tuple(self, node: ast.Tuple, params):
+    def visit_Tuple(self, node: ast.Tuple, params: Dict):
         pass
 
     @abstractmethod
-    def visit_dict(self, node: ast.Dict, params):
+    def visit_Dict(self, node: ast.Dict, params: Dict):
         pass
 
     @abstractmethod
-    def visit_set(self, node: ast.Set, params):
-        pass
-
-    ########################################################################
-
-    @abstractmethod
-    def visit_slice(self, node: ast.Slice, params):
+    def visit_Set(self, node: ast.Set, params: Dict):
         pass
 
     @abstractmethod
-    def visit_excepthandler(self, node: ast.ExceptHandler, params):
+    def visit_Slice(self, node: ast.Slice, params: Dict):
+        pass
+
+    @abstractmethod
+    def visit_ExceptHandler(self, node: ast.ExceptHandler, params: Dict):
         pass
 
     ############################### Cases ###################################
-
     @abstractmethod
-    def visit_matchvalue(self, node: ast.MatchValue, params):
+    def visit_MatchValue(self, node: ast.MatchValue, params: Dict):
         pass
 
     @abstractmethod
-    def visit_matchsingleton(self, node: ast.MatchSingleton, params):
+    def visit_MatchSingleton(self, node: ast.MatchSingleton, params: Dict):
         pass
 
     @abstractmethod
-    def visit_matchsequence(self, node: ast.MatchSequence, params):
+    def visit_MatchSequence(self, node: ast.MatchSequence, params: Dict):
         pass
 
     @abstractmethod
-    def visit_matchmapping(self, node: ast.MatchMapping, params):
+    def visit_MatchMapping(self, node: ast.MatchMapping, params: Dict):
         pass
 
     @abstractmethod
-    def visit_matchclass(self, node: ast.MatchClass, params):
+    def visit_MatchClass(self, node: ast.MatchClass, params: Dict):
         pass
 
     @abstractmethod
-    def visit_matchstar(self, node: ast.MatchStar, params):
+    def visit_MatchStar(self, node: ast.MatchStar, params: Dict):
         pass
 
     @abstractmethod
-    def visit_matchas(self, node: ast.MatchAs, params):
+    def visit_MatchAs(self, node: ast.MatchAs, params: Dict):
         pass
 
     @abstractmethod
-    def visit_matchor(self, node: ast.MatchOr, params):
+    def visit_MatchOr(self, node: ast.MatchOr, params: Dict):
         pass

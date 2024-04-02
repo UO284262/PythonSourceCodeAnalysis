@@ -8,6 +8,7 @@ class DBNode:
         self.parent_id = parent_id
         self.node_id = 0
 
+
 class DBProgram:
     def __init__(self, category = None, name: str = None,  hasSubDirsWithCode: bool = None,  hasPackages: bool = None,  numberOfModules: int = None, 
                  numberOfSubDirsWithCode: int = None,  numberOfPackages: int = None,  classDefsPct: int = None,  functionDefsPct: int = None, 
@@ -28,6 +29,7 @@ class DBProgram:
         self.hasCodeRootPackage = hasCodeRootPackage
         self.averageDefsPerModule = averageDefsPerModule
         self.program_id = 0
+
 
 class DBModule:
     def __init__(self, category = None, module_id = None,  name: str = None,  nameConvention: str = None,  hasDocString: bool = None, 
@@ -60,6 +62,7 @@ class DBModule:
         self.program_id = program_id
         self.import_id = import_id
 
+
 class DBImport:
     def __init__(self, numberImports: int = None,  moduleImportsPct: float = None, 
                  averageImportedModules: float = None,  fromImportsPct: float = None, averageFromImportedModules: float = None,
@@ -77,6 +80,7 @@ class DBImport:
         self.averageAsInImportedModules = averageAsInImportedModules
         self.localImportsPct = localImportsPct
         self.import_id = 0
+
 
 class DBClassDef:
     def __init__(self, category = None, classdef_id = None,  nameConvention: str = None,  isEnumClass: bool = None, 
@@ -123,6 +127,7 @@ class DBClassDef:
         self.module_id = module_id
         self.parent_id = parent_id
 
+
 class DBFunctionDef:
     def __init__(self, category = None, functiondef_id = None,  nameConvention: str = None, 
                  numberOfCharacters: int = None,  isPrivate: bool = None,  isMagic: bool = None, 
@@ -154,6 +159,7 @@ class DBFunctionDef:
         self.module_id = module_id
         self.parameters_id = parameters_id
 
+
 class DBMethodDef:
     def __init__(self, category = None, methoddef_id = None,  classdef_id = None, 
                  isClassMethod: bool = None,  isStaticMethod: bool = None, 
@@ -173,6 +179,7 @@ class DBMethodDef:
         self.isProperty = isProperty
         self.isWrapper = isWrapper
         self.isCached = isCached
+
 
 class DBParameter:
     def __init__(self,  numberOfParams: int = None, parent_id: int = None,
@@ -199,6 +206,7 @@ class DBParameter:
         self.parent_id = parent_id
         self.parametersRole = parametersRole
 
+
 class DBStatement:
     def __init__(self,  statement_id = None,  category: str = None,  parent: str = None,  statementRole: str = None, 
                  height: int = None,  depth: int = None,  sourceCode: str = None,  parent_id = None,  node = None, 
@@ -222,6 +230,7 @@ class DBStatement:
         self.second_child_id = second_child_id
         self.third_child_id = third_child_id
         self.parent_id = parent_id
+
 
 class DBExpression:
     def __init__(self,  expression_id = None,  category: str = None, 
@@ -252,6 +261,7 @@ class DBExpression:
         self.sourceCode = sourceCode
         self.parent_id = parent_id
 
+
 class DBComprehension:
     def __init__(self,  category: str = None,  numberOfIfs: int = None, 
                  numberOfGenerators: int = None,  isAsync: bool = None, 
@@ -266,6 +276,7 @@ class DBComprehension:
         self.isAsync = isAsync
         self.expression_id = expression_id
 
+
 class DBFString:
     def __init__(self,  numberOfElements: int = None,  constantsPct: float = None, 
                  expressionsPct: float = None,  expression_id = None,  node = None, user_id = None, expertise_level = None):
@@ -278,6 +289,7 @@ class DBFString:
         self.constantsPct = constantsPct
         self.expressionsPct = expressionsPct
         self.expression_id = expression_id
+
 
 class DBVariable:
     def __init__(self,  nameConvention: str = None,  numberOfCharacters: int = None, 
@@ -303,6 +315,7 @@ class DBVector:
         self.numberOfElements = numberOfElements
         self.homogeneous = homogeneous
         self.expression_id = expression_id
+
 
 class DBCallArg:
     def __init__(self,  numberArgs: int = None, 
@@ -341,6 +354,7 @@ class DBCase:
         self.averageMatchAs = averageMatchAs
         self.averageMatchOr = averageMatchOr
         self.statement_id = statement_id
+
 
 class DBHandler:
     def __init__(self,  numberOfHandlers: int = None, category: str = None, 

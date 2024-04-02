@@ -1,5 +1,6 @@
 from ast import AST, iter_fields
 
+
 class NodeVisitor(object):
     def __init__(self):
         self._const_node_type_names = {
@@ -39,16 +40,16 @@ class NodeVisitor(object):
 
     def generic_visit(self, node, params):
         """Called if no explicit visitor function exists for a node."""
-        if(node is not None):
+        if node is not None:
             for field, value in iter_fields(node):
                 if isinstance(value, list):
                     for item in value:
                         if isinstance(item, AST):
-                            self.visit(item, params)
+                            return self.visit(item, params)
                 elif isinstance(value, AST):
-                    self.visit(value, params)
+                    return self.visit(value, params)
 
-    def visit_Constant(self, node, params):
+    def visit_constant(self, node, params):
         value = node.value
         type_name = self._const_node_type_names.get(type(value))
         if type_name is None:

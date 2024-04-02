@@ -1,7 +1,6 @@
 import psycopg2
 
-# Parámetros de conexión a la base de datos
-conexion_params = {
+connection_string = {
     'dbname': 'python_tfg',
     'user': 'postgres',
     'password': 'ayneastq2219',
@@ -9,87 +8,78 @@ conexion_params = {
     'port': '5432',
 }
 
-def writeOnDB(sql_nodes_insert, datos_nodes_a_insertar, sql_insert, datos_a_insertar, modules):
-    # Establecer la conexión a la base de datos
-    
-    # Ejemplo de inserción de datos
 
-    insertedPerConnexion = 50
-    final_sql_insert = sql_insert + sql_nodes_insert
-    final_datos_a_insertar = datos_a_insertar + datos_nodes_a_insertar
-    currentInserted = 0
+def write_on_db(sql_nodes_to_insert, nodes_data_to_insert, sql_insert, data_to_insert, modules):
+    inserts_size = 50
+    final_sql_insert = sql_insert + sql_nodes_to_insert
+    final_data_to_insert = data_to_insert + nodes_data_to_insert
+    current_inserted = 0
     try:
-        conexion = psycopg2.connect(**conexion_params)
-        cursor = conexion.cursor()
+        connection = psycopg2.connect(**connection_string)
+        cursor = connection.cursor()
         size = len(final_sql_insert)
-        # Ejecutar la consulta
+        # Execute query
         for i in range(size):
-            cursor.execute(final_sql_insert[size - i - 1], final_datos_a_insertar[size - i - 1])
-            currentInserted += 1
-            if(currentInserted == insertedPerConnexion):
-                conexion.commit()
-                currentInserted = 0
-
-        # Confirmar la transacción
-        conexion.commit()
+            cursor.execute(final_sql_insert[size - i - 1], final_data_to_insert[size - i - 1])
+            current_inserted += 1
+            if current_inserted == inserts_size:
+                connection.commit()
+                current_inserted = 0
+        # Close cursor and connection
+        connection.commit()
 
     except Exception as e:
-        # Manejar cualquier error
+        # Error handler
         print(f"Error: {e.with_traceback(None)}")
-        print(final_datos_a_insertar[size - i - 1])
+        print(final_data_to_insert[size - i - 1])
         print(final_sql_insert[size - i - 1])
         print(modules[size - i - 1])
-        conexion.rollback()
+        connection.rollback()
 
     finally:
-        # Cerrar el cursor y la conexión
+        # Close cursor and connection
         cursor.close()
-        conexion.close()
+        connection.close()
+
 
 def init_db():
-    # Establecer la conexión a la base de datos
-    conexion = psycopg2.connect(**conexion_params)
-
-    # Crear un objeto cursor
-    cursor = conexion.cursor()
+    connection = psycopg2.connect(**connection_string)
+    cursor = connection.cursor()
     try:
         with open("./python_tfg/db/script_bd.sql", "r") as script_file:
             script = script_file.read()
         cursor.execute(script)
-
-        # Confirmar la transacción
-        conexion.commit()
+        # Commit transaction
+        connection.commit()
 
     except Exception as e:
-        # Manejar cualquier error
+        # Error handler
         print(f"Error: {e}")
-        conexion.rollback()
+        connection.rollback()
 
     finally:
-        # Cerrar el cursor y la conexión
+        # Close cursor and connection
         cursor.close()
-        conexion.close()
+        connection.close()
 
-def getCurrentID():
-    # Establecer la conexión a la base de datos
-    conexion = psycopg2.connect(**conexion_params)
 
-    # Crear un objeto cursor
-    cursor = conexion.cursor()
-    currentID = -1
+def get_db_current_id() -> int:
+    connection = psycopg2.connect(**connection_string)
+    cursor = connection.cursor()
+    current_id = -1
     try:
-        # Ejecutar la consulta
+        # Execute query
         cursor.execute("SELECT MAX(node_id) FROM NODES;")
         aux = cursor.fetchone()[0]
-        currentID = aux if aux else 0
-        # Confirmar la transacción
-        conexion.commit()
+        current_id = aux if aux else 0
+        # Commit transaction
+        connection.commit()
     except Exception as e:
-        # Manejar cualquier error
+        # Error handler
         print(f"Error: {e.with_traceback(None)}")
-        conexion.rollback()
+        connection.rollback()
     finally:
-        # Cerrar el cursor y la conexión
+        # Close cursor and connection
         cursor.close()
-        conexion.close()
-        return currentID
+        connection.close()
+        return current_id

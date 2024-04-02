@@ -8,7 +8,7 @@ POSTGRES_PORT = 5432
 POSTGRES_DBNAME = "python_tfg"
 
 
-def getPrograms(session):
+def get_programs(session):
     result = session.execute(
         text('Select * from module')
     )
@@ -25,7 +25,7 @@ def main():
     engine = create_engine(postgres_str)
     session_maker.configure(bind=engine)
     session = session_maker()
-    programs = getPrograms(session)
+    programs = get_programs(session)
 
     for program in programs:
         name = program[0]

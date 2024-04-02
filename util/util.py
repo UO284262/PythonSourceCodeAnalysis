@@ -1,7 +1,8 @@
 import ast
-from db.db_utils import getCurrentID
+from db.db_utils import get_db_current_id
 
-def opCategory(node):
+
+def op_category(node):
     op = node.op.__doc__
     match op:
         case 'Add' | 'Sub' | 'Mult' | 'Div' | 'FloorDiv' | 'Mod': return 'Arithmetic'
@@ -13,7 +14,8 @@ def opCategory(node):
         case 'Not': return 'UnaryNot'
         case 'Invert': return 'UnaryBWNot' 
 
-def constCategory(node: ast.Constant):
+
+def const_category(node: ast.Constant):
     const_type = str(type(node.value)).split('\'')[1]
     match const_type:
         case 'int': return 'IntLiteral'
@@ -24,17 +26,19 @@ def constCategory(node: ast.Constant):
         case 'ellipsis': return 'EllipsisLiteral'
         case _: return 'ComplexLiteral'
 
-class IDGetter():
 
+class IDManager:
     def __init__(self):
-        self.currentID = self.getCurrentID()
+        self.current_id = self.get_current_id
 
-    def getCurrentID(self):
-        currentID = getCurrentID()
-        if currentID == -1: raise RuntimeError("ID getter not working")
-        return currentID
+    @staticmethod
+    def get_current_id() -> int:
+        current_id = get_db_current_id()
+        if current_id == -1:
+            raise RuntimeError("ID getter not working")
+        return current_id
 
-    def getID(self):
-        aux = self.currentID + 1
-        self.currentID += 1
-        return aux
+    def get_id(self) -> int:
+        next_id = self.current_id
+        self.current_id += 1
+        return next_id
