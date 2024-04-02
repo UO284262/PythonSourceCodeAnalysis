@@ -53,8 +53,8 @@ class VisitorInfo(NodeVisitor):
         camel_low_pattern = re.compile(r'^[a-z][a-zA-Z]*$')
         camel_up_pattern = re.compile(r'^[A-Z][a-zA-Z]*$')
         snake_case_pattern = re.compile(r'^[a-z_]+$')
-        discard_patron = re.compile(r'^_+$')
-        if discard_patron.match(name):
+        discard_pattern = re.compile(r'^_+$')
+        if discard_pattern.match(name):
             return 'Discard'
         elif snake_case_pattern.match(name):
             return 'SnakeCase'

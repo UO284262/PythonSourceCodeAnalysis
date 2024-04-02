@@ -35,7 +35,7 @@ def control_users(folder: str) -> int:
     return user_id
 
 
-def get_source_package(path: str):
+def get_source_package(path: str) -> str:
     for current_folder, folders, files in os.walk(path):
         has_py_files = False
         for file in files:
@@ -50,7 +50,7 @@ def get_source_package(path: str):
             yield current_folder
 
 
-def not_read(project: str, projects: List[str]):
+def not_read(project: str, projects: List[str]) -> bool:
     for p in projects:
         if (p in project) or (project in p):
             return False
