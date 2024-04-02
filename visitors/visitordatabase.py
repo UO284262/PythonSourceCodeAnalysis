@@ -15,7 +15,7 @@ class VisitorDataBase(NodeVisitor):
 
     def visit_Program(self, node: db_entities.DBProgram, params: Dict):
         self.insert_Program(node)
-        write_on_db(self.sql_nodes_to_insert, self.nodes_data_to_insert, self.sql_insert, self.data_to_insert, self.modules)
+        # write_on_db(self.sql_nodes_to_insert, self.nodes_data_to_insert, self.sql_insert, self.data_to_insert, self.modules)
         self.sql_insert = []
         self.data_to_insert = []
         self.nodes_data_to_insert = []
