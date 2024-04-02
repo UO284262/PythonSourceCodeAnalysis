@@ -943,6 +943,3 @@ class Visitor_db(NodeVisitor):
                             node.expertise_level)
         self.sql_insert.append(sql_insert)
         self.datos_a_insertar.append(datos_a_insertar)
-    
-class A:
-    pass

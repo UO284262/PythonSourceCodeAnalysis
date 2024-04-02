@@ -62,7 +62,7 @@ class Visitor_info(NodeVisitor):
         return new_dict
 
     def sumMatch(self, dict_1 : Dict, dict_2):
-        {
+        return {
             'matchValue' : dict_1["matchValue"] + dict_2["matchValue"], 
             'matchSingleton' : dict_1["matchSingleton"] + dict_2["matchSingleton"], 
             'matchSequence' : dict_1["matchSequence"] + dict_2["matchSequence"], 
@@ -1170,21 +1170,18 @@ class Visitor_info(NodeVisitor):
         exprRoles = ["MatchCondition"]
         ############## PROPAGAR VISIT ############
         returns = []
+        depth = 0
         index = 0
         subject = self.visit(node.subject, self.addParam(childparams,'role', exprRoles[0]))
         for child in node.cases:
             returns.append(self.visit(child, childparams))
             depth = max(depth, returns[index]["depth"])
-            if(index == 1): second_child_id = returns[index]["id"]
-            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         ########## ENTITIE PROPERTIES ############
         stmt.height = params["depth"]
         stmt.first_child_id = subject["id"]
         stmt.hasOrElse = None
         stmt.depth = max(depth,subject["depth"])
-        stmt.second_child_id = second_child_id
-        stmt.third_child_id = third_child_id
         stmt.sourceCode = ast.unparse(node)
         stmt.bodySize = None
         stmt.expertise_level = params["expertise_level"]
@@ -3070,8 +3067,8 @@ class Visitor_info(NodeVisitor):
         index = 0
         for child in node.patterns:
             childs.append(self.visit(child, childparams))
-            index += 1
             returns = self.sumMatch(returns,childs[index])
+            index += 1
         returns["depth"] += 1
         return returns
 
@@ -3088,8 +3085,8 @@ class Visitor_info(NodeVisitor):
         index = 0
         for child in node.patterns:
             childs.append(self.visit(child, childparams))
-            index += 1
             returns = self.sumMatch(returns,childs[index])
+            index += 1
         index = 0
         for child in node.keys:
             exprs.append(self.visit(child, self.addParam(childparams,'role', exprRoles[0])))
@@ -3111,12 +3108,12 @@ class Visitor_info(NodeVisitor):
         index = 0
         for child in node.patterns:
             childs.append(self.visit(child, childparams))
-            index += 1
             returns = self.sumMatch(returns,childs[index])
+            index += 1
         for child in node.kwd_patterns:
             childs.append(self.visit(child, childparams))
-            index += 1
             returns = self.sumMatch(returns,childs[index])
+            index += 1
         returns["depth"] = max(returns["depth"], cls["depth"])
         returns["depth"] += 1
         return returns
@@ -3149,8 +3146,8 @@ class Visitor_info(NodeVisitor):
         index = 0
         for child in node.patterns:
             childs.append(self.visit(child, childparams))
-            index += 1
             returns = self.sumMatch(returns,childs[index])
+            index += 1
         returns["depth"] += 1
         return returns
     
@@ -3284,6 +3281,7 @@ class Visitor_info(NodeVisitor):
         depth = 0
         ############## PROPAGAR VISIT ############
         childs = []
+        ids = []
         index = 0
         returns = self.visit(node.pattern, params)
         guards = 0
@@ -3296,11 +3294,13 @@ class Visitor_info(NodeVisitor):
             else:
                 childs.append(self.visit(child, self.addParam(params,"role", stmtRoles[0])))
             depth = max(depth, childs[index]["depth"])
+            ids.append(childs[index]["id"])
             index += 1
         ########## ENTITIE PROPERTIES ############
         returns = self.addParam(returns,'guards',guards)
         returns = self.addParam(returns,'bodyCount',index)
         returns["depth"] = max(returns["depth"], depth)
+        returns["ids"] = ids
         return returns
     
     def visit_TypeVar(self : Self, node : ast.TypeVar , params : Dict) -> Dict: 
