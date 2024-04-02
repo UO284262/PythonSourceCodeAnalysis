@@ -1,7 +1,7 @@
 import ast
 import re
 import os
-from typing import Dict, Self
+from typing import Dict
 from util.util import op_category, const_category
 import db.db_entities as db_entities
 from visitors.visitordatabase import VisitorDataBase
@@ -169,7 +169,7 @@ class VisitorInfo(NodeVisitor):
         return self.visit(node.value, params)
 
     def visit_Module(self, node: ast.Module, params: Dict) -> Dict: 
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_module = db_entities.DBModule()
         db_import = db_entities.DBImport()
         ############ IDS #########################
@@ -281,7 +281,7 @@ class VisitorInfo(NodeVisitor):
     
     def visit_FunctionDef(self, node: ast.FunctionDef, params: Dict) -> Dict: 
         is_method = params["parent"].table == 'ClassDefs'
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_functiondef = db_entities.DBFunctionDef()
         if is_method:
             db_method = db_entities.DBMethodDef()
@@ -369,7 +369,7 @@ class VisitorInfo(NodeVisitor):
     
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef, params: Dict) -> Dict: 
         is_method = params["parent"].table == 'ClassDefs'
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_function = db_entities.DBFunctionDef()
         if is_method:
             db_method = db_entities.DBMethodDef()
@@ -456,7 +456,7 @@ class VisitorInfo(NodeVisitor):
             return {'numberOfParamsRet': args_ret, 'db_function': db_function, 'typeAnnotations': args["typeAnnotations"], 'depth': depth + 1, 'node_id': db_function.functiondef_id}
         
     def visit_ClassDef(self, node: ast.ClassDef, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_classdef = db_entities.DBClassDef()
         ############ IDS #########################
         node_id = self.id_manager.get_id()
@@ -571,7 +571,7 @@ class VisitorInfo(NodeVisitor):
 
     ############################### STATEMENTS #############################
     def visit_Return(self, node: ast.Return, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
         node_id = self.id_manager.get_id()
@@ -607,7 +607,7 @@ class VisitorInfo(NodeVisitor):
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
     def visit_Delete(self, node: ast.Delete, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
         node_id = self.id_manager.get_id()
@@ -655,7 +655,7 @@ class VisitorInfo(NodeVisitor):
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
     def visit_Assign(self, node: ast.Assign, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
         node_id = self.id_manager.get_id()
@@ -706,7 +706,7 @@ class VisitorInfo(NodeVisitor):
         return {'id': node_id, 'depth': db_stmt.depth + 1}
     
     def visit_TypeAlias(self, node: ast.TypeAlias, params: Dict) -> Dict: 
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
         node_id = self.id_manager.get_id()
@@ -742,7 +742,7 @@ class VisitorInfo(NodeVisitor):
         return {'id': node_id, 'depth': db_stmt.depth + 1}
     
     def visit_AugAssign(self, node: ast.AugAssign, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
         node_id = self.id_manager.get_id()
@@ -776,7 +776,7 @@ class VisitorInfo(NodeVisitor):
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
     def visit_AnnAssign(self, node: ast.AnnAssign, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
         node_id = self.id_manager.get_id()
@@ -815,7 +815,7 @@ class VisitorInfo(NodeVisitor):
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
     def visit_For(self, node: ast.For, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
         node_id = self.id_manager.get_id()
@@ -887,7 +887,7 @@ class VisitorInfo(NodeVisitor):
         return {'id': node_id, 'depth': db_stmt.depth + 1}
     
     def visit_AsyncFor(self, node: ast.AsyncFor, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
         node_id = self.id_manager.get_id()
@@ -959,7 +959,7 @@ class VisitorInfo(NodeVisitor):
         return {'id': node_id, 'depth': db_stmt.depth + 1}
     
     def visit_While(self, node: ast.While, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
         node_id = self.id_manager.get_id()
@@ -1029,7 +1029,7 @@ class VisitorInfo(NodeVisitor):
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
     def visit_If(self, node: ast.If, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
         node_id = self.id_manager.get_id()
@@ -1101,7 +1101,7 @@ class VisitorInfo(NodeVisitor):
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
     def visit_With(self, node: ast.With, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
         node_id = self.id_manager.get_id()
@@ -1158,7 +1158,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_AsyncWith(self, node: ast.AsyncWith, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
         node_id = self.id_manager.get_id()
@@ -1210,7 +1210,7 @@ class VisitorInfo(NodeVisitor):
         return {'id': node_id, 'depth': db_stmt.depth + 1}
     
     def visit_Match(self, node: ast.Match, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         case = db_entities.DBCase()
         ############ IDS #########################
@@ -1286,7 +1286,7 @@ class VisitorInfo(NodeVisitor):
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
     def visit_Raise(self, node: ast.Raise, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
         node_id = self.id_manager.get_id()
@@ -1334,7 +1334,7 @@ class VisitorInfo(NodeVisitor):
         return {'id': node_id, 'depth': db_stmt.depth + 1}
     
     def visit_Try(self, node: ast.Try, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         db_handler = db_entities.DBHandler()
         ############ IDS #########################
@@ -1446,7 +1446,7 @@ class VisitorInfo(NodeVisitor):
         return {'id': node_id, 'depth': db_stmt.depth + 1}
     
     def visit_TryStar(self, node: ast.TryStar, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         stmt = db_entities.DBStatement()
         handler = db_entities.DBHandler()
         ############ IDS #########################
@@ -1546,7 +1546,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_Assert(self, node: ast.Assert, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         stmt = db_entities.DBStatement()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -1584,7 +1584,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_Global(self, node: ast.Global, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         stmt = db_entities.DBStatement()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -1610,7 +1610,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_Nonlocal(self, node: ast.Nonlocal, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         stmt = db_entities.DBStatement()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -1636,7 +1636,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_Pass(self, node: ast.Pass, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         stmt = db_entities.DBStatement()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -1662,7 +1662,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_Break(self, node: ast.Break, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         stmt = db_entities.DBStatement()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -1688,7 +1688,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_Continue(self, node: ast.Continue, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         stmt = db_entities.DBStatement()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -1716,7 +1716,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_Import(self, node: ast.Import, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         stmt = db_entities.DBStatement()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -1745,7 +1745,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_ImportFrom(self, node: ast.ImportFrom, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         stmt = db_entities.DBStatement()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -1775,7 +1775,7 @@ class VisitorInfo(NodeVisitor):
     ############################ EXPRESSIONS ##################################
 
     def visit_BoolOp(self, node: ast.BoolOp, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -1832,7 +1832,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_NamedExpr(self, node: ast.NamedExpr, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -1866,7 +1866,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_BinOp(self, node: ast.BinOp, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -1907,7 +1907,7 @@ class VisitorInfo(NodeVisitor):
     
     
     def visit_UnaryOp(self, node: ast.UnaryOp, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -1939,7 +1939,7 @@ class VisitorInfo(NodeVisitor):
     
     
     def visit_Lambda(self, node: ast.Lambda, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -1971,7 +1971,7 @@ class VisitorInfo(NodeVisitor):
     
     
     def visit_IfExp(self, node: ast.IfExp, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -2010,7 +2010,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_ListComp(self, node: ast.ListComp, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         comp = db_entities.DBComprehension()
         ############ IDS #########################
@@ -2075,7 +2075,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_SetComp(self, node: ast.SetComp, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         comp = db_entities.DBComprehension()
         ############ IDS #########################
@@ -2140,7 +2140,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_DictComp(self, node: ast.DictComp, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         comp = db_entities.DBComprehension()
         ############ IDS #########################
@@ -2203,7 +2203,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_GeneratorExp(self, node: ast.GeneratorExp, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         comp = db_entities.DBComprehension()
         ############ IDS #########################
@@ -2270,7 +2270,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_Await(self, node: ast.Await, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -2301,7 +2301,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_Yield(self, node: ast.Yield, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -2336,7 +2336,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_YieldFrom(self, node: ast.YieldFrom, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -2367,7 +2367,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_Compare(self, node: ast.Compare, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -2429,7 +2429,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_Call(self, node: ast.Call, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         callArgs = db_entities.DBCallArg()
         ############ IDS #########################
@@ -2506,7 +2506,7 @@ class VisitorInfo(NodeVisitor):
     ################################################################
 
     def visit_FormattedValue(self, node: ast.FormattedValue, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -2546,7 +2546,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_JoinedStr(self, node: ast.JoinedStr, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         fstr = db_entities.DBFString()
         ############ IDS #########################
@@ -2615,7 +2615,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_constant(self, node: ast.Constant, params: Dict) -> Dict: 
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -2639,7 +2639,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_Attribute(self, node: ast.Attribute, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -2670,7 +2670,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_Subscript(self, node: ast.Subscript, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -2704,7 +2704,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_Starred(self, node: ast.Starred, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
         id = self.id_manager.get_id()
@@ -2737,7 +2737,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_Name(self, node: ast.Name, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         var = db_entities.DBVariable()
         ############ IDS #########################
@@ -2776,7 +2776,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_List(self, node: ast.List, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         vct = db_entities.DBVector()
         ############ IDS #########################
@@ -2842,7 +2842,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_Tuple(self, node: ast.Tuple, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         vct = db_entities.DBVector()
         ############ IDS #########################
@@ -2908,7 +2908,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_Dict(self, node: ast.Dict, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         vct = db_entities.DBVector()
         ############ IDS #########################
@@ -2978,7 +2978,7 @@ class VisitorInfo(NodeVisitor):
 
     
     def visit_Set(self, node: ast.Set, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         vct = db_entities.DBVector()
         ############ IDS #########################
@@ -3043,7 +3043,7 @@ class VisitorInfo(NodeVisitor):
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     def visit_Slice(self, node: ast.Slice, params: Dict) -> Dict:  
-        db_node = db_entities.db_node()
+        db_node = db_entities.DBNode()
         db_expr = db_entities.DBExpression()
         ############ IDS #########################
         node_id = self.id_manager.get_id()

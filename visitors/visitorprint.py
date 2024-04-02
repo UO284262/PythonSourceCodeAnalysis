@@ -1,6 +1,6 @@
 import ast
 from visitors.nodevisitor import NodeVisitor
-from typing import Dict, Self
+from typing import Dict
 
 
 class VisitorPrint(NodeVisitor):

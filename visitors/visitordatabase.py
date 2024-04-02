@@ -1,5 +1,5 @@
 import ast
-from typing import Dict, Self
+from typing import Dict
 from visitors.nodevisitor import NodeVisitor
 import db.db_entities as db_entities
 from db.db_utils import write_on_db
@@ -880,7 +880,7 @@ class VisitorDataBase(NodeVisitor):
         self.sql_insert.append(sql_insert)
         self.data_to_insert.append(data_to_insert)
         
-    def insert_Vector(self: Self, node: db_entities.DBVector):
+    def insert_Vector(self, node: db_entities.DBVector):
         sql_insert = '''INSERT INTO Vectors (
                             expression_id,
                             category,
@@ -898,7 +898,7 @@ class VisitorDataBase(NodeVisitor):
         self.sql_insert.append(sql_insert)
         self.data_to_insert.append(data_to_insert)
         
-    def insert_Parameter(self: Self, node: db_entities.DBParameter):
+    def insert_Parameter(self, node: db_entities.DBParameter):
         sql_insert = '''INSERT INTO Parameters (
                             parameters_id,
                             parent_id,
