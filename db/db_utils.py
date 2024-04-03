@@ -16,7 +16,7 @@ local_connection_string = {
     'host': '192.168.137.100',
     'port': '5432',
 }
-connection_string = local_connection_string
+connection_string = remote_connection_string
 
 
 def write_on_db(sql_nodes_to_insert, nodes_data_to_insert, sql_insert, data_to_insert, modules):
