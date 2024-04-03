@@ -29,7 +29,7 @@ def const_category(node: ast.Constant):
 
 class IDManager:
     def __init__(self):
-        self.current_id = self.get_current_id
+        self.current_id = self.get_current_id()
 
     @staticmethod
     def get_current_id() -> int:

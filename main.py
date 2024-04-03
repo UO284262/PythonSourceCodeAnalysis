@@ -9,7 +9,7 @@ import re
 import uuid
 import warnings
 
-source_folder = '.\\python_tfg\\20-21'
+source_folder = './test/test_program'
 users = {}
 unknown = {}
 id_manager = None
@@ -74,16 +74,16 @@ if __name__ == '__main__':
     warnings.filterwarnings("error")
 
     # Testing VisitorInfo
-    # visitor = VisitorInfo(id_getter)
-    # visit(visitor)
+    visitor = VisitorInfo(id_manager)
+    visit(visitor)
 
     # Testing VisitorPrint
-    visitor = VisitorPrint()
-    test_path = './test/test2.py'
-    test_file = ''
-    with open(test_path, "r", encoding='utf-8') as f:
-        test_file = f.read()
-    visitor.visit(ast.parse(test_file), {})
+    # visitor = VisitorPrint()
+    # test_path = './test/test2.py'
+    # test_file = ''
+    # with open(test_path, "r", encoding='utf-8') as f:
+    #     test_file = f.read()
+    # visitor.visit(ast.parse(test_file), {})
 
 
 
