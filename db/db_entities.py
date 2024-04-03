@@ -332,7 +332,7 @@ class DBCallArg:
         self.callArgs_id = 0
 
 class DBCase:
-    def __init__(self,  numberOfCases: int = None,  guards: float = None, 
+    def __init__(self,  number_of_cases: int = None,  guards: float = None, 
                  average_body_count: float = None,  average_match_value: float = None, 
                  average_match_singleton: float = None,  average_match_sequence: float = None, 
                  average_match_mapping: float = None,  average_match_class: float = None, 
@@ -342,7 +342,7 @@ class DBCase:
         self.expertise_level = expertise_level
         self.node = node
         self.table = "Cases"
-        self.numberOfCases = numberOfCases
+        self.number_of_cases = number_of_cases
         self.guards = guards
         self.average_body_count = average_body_count
         self.average_match_value = average_match_value

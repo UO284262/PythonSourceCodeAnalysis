@@ -25,7 +25,7 @@ class VisitorInfo(NodeVisitor):
 
     @staticmethod
     def what_is_it(method):
-        what_is_it = {'magic': False, 'private': False, 'abstract': False, 'wrapper': False, 'cached': False, 'static': False, 'classmethod': False, 'property': False}
+        what_is_it = {'magic': False, 'private': False, 'abstract': False, 'wrapper': False, 'cached': False, 'static': False, 'class_method': False, 'property': False}
         magic_pattern = re.compile(r'^__\w+__$')
         private_pattern = re.compile(r'^_\w+$')
         what_is_it["magic"] = True if magic_pattern.match(method.name) else False
@@ -40,8 +40,8 @@ class VisitorInfo(NodeVisitor):
                     what_is_it["cached"] = True
                 if decorator.id == "staticmethod":
                     what_is_it["static"] = True
-                if decorator.id == "classmethod":
-                    what_is_it["classmethod"] = True
+                if decorator.id == "class_method":
+                    what_is_it["class_method"] = True
                 if decorator.id == "property":
                     what_is_it["property"] = True
         return what_is_it
@@ -78,14 +78,14 @@ class VisitorInfo(NodeVisitor):
     @staticmethod
     def sum_match(dict_1: Dict, dict_2: Dict) -> Dict:
         return {
-            'matchValue': dict_1["matchValue"] + dict_2["matchValue"],
-            'matchSingleton': dict_1["matchSingleton"] + dict_2["matchSingleton"],
-            'matchSequence': dict_1["matchSequence"] + dict_2["matchSequence"],
-            'matchMapping': dict_1["matchMapping"] + dict_2["matchMapping"],
-            'matchClass': dict_1["matchClass"] + dict_2["matchClass"],
-            'matchStar': dict_1["matchStar"] + dict_2["matchStar"],
-            'matchAs': dict_1["matchAs"] + dict_2["matchAs"],
-            'matchOr': dict_1["matchOr"] + dict_2["matchOr"],
+            'match_value': dict_1["match_value"] + dict_2["match_value"],
+            'match_singleton': dict_1["match_singleton"] + dict_2["match_singleton"],
+            'match_sequence': dict_1["match_sequence"] + dict_2["match_sequence"],
+            'match_mapping': dict_1["match_mapping"] + dict_2["match_mapping"],
+            'match_class': dict_1["match_class"] + dict_2["match_class"],
+            'match_star': dict_1["match_star"] + dict_2["match_star"],
+            'match_as': dict_1["match_as"] + dict_2["match_as"],
+            'match_or': dict_1["match_or"] + dict_2["match_or"],
             'depth': max(dict_1["depth"], dict_2["depth"])
         }
 
@@ -130,9 +130,9 @@ class VisitorInfo(NodeVisitor):
                             try:
                                 if len(module_ast.body) > 0:
                                     modules.append(self.visit(module_ast, {"program_id": node_id, "user_id": params["user_id"], "expertise_level": params["expertise_level"], "filename": file.split('.')[0], "path": full_path}))
-                                    total_class_defs += modules[index]["classdefs"]
-                                    total_enum_defs += modules[index]["enumDefs"]
-                                    total_function_defs += modules[index]["functionDefs"]
+                                    total_class_defs += modules[index]["class_defs"]
+                                    total_enum_defs += modules[index]["enum_defs"]
+                                    total_function_defs += modules[index]["function_defs"]
                                     index += 1
                             except Exception as e:
                                 raise e
@@ -208,35 +208,35 @@ class VisitorInfo(NodeVisitor):
                 count["expr"] += 1
             elif isinstance(child, ast.ClassDef):
                 classes.append(returns[index])
-                if returns[index]['isEnum']:
+                if returns[index]['is_enum']:
                     count['enum'] += 1
                 else:
                     count['classes'] += 1
-                number_of_method_stmt += returns[index]["numberOfMethodStmt"]
-                method_count += returns[index]["methodCount"]
-                params_rets += returns[index]["numberOfParamsRet"]
-                type_annotations += returns[index]["typeAnnotations"]
+                number_of_method_stmt += returns[index]["number_of_method_stmt"]
+                method_count += returns[index]["method_count"]
+                params_rets += returns[index]["number_of_params_ret"]
+                type_annotations += returns[index]["type_annotations"]
                 c_index += 1
             elif isinstance(child, ast.FunctionDef) or isinstance(child, ast.AsyncFunctionDef):
                 count["function"] += 1
                 functions.append(returns[index])
                 functions_body_size += returns[index]["function"].body_count
-                type_annotations += returns[index]["typeAnnotations"]
-                params_rets += returns[index]["numberOfParamsRet"]
+                type_annotations += returns[index]["type_annotations"]
+                params_rets += returns[index]["number_of_params_ret"]
                 f_index += 1
             elif isinstance(child, ast.Import):
                 simple_import_num += 1
                 simple_imports.append(returns[index])
                 si_index += 1
-                simple_import_modules_num += returns[index]["importedModules"]
+                simple_import_modules_num += returns[index]["imported_modules"]
                 if si_index + fi_index != index:
                     local_imports += 1
             elif isinstance(child, ast.ImportFrom):
                 from_import_num += 1
                 from_imports.append(returns[index])
                 fi_index += 1
-                as_names += returns[index]["asnames"]
-                from_import_modules_num += returns[index]["importedModules"]
+                as_names += returns[index]["as_names"]
+                from_import_modules_num += returns[index]["imported_modules"]
                 if si_index + fi_index != index:
                     local_imports += 1
             elif isinstance(child, ast.stmt):
@@ -275,8 +275,8 @@ class VisitorInfo(NodeVisitor):
         db_import.expertise_level = params["expertise_level"]
         db_import.user_id = params["user_id"]
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': db_module, 'dbnode': db_node, 'dbimport': db_import})
-        return {"classdefs": count["classes"], "functionDefs": count["function"], "enumDefs": count["enum"]}
+        self.visitor_db.visit(node, {'node': db_module, 'db_node': db_node, 'db_import': db_import})
+        return {"class_defs": count["classes"], "function_defs": count["function"], "enum_defs": count["enum"]}
     
     def visit_FunctionDef(self, node: ast.FunctionDef, params: Dict) -> Dict: 
         is_method = params["parent"].table == 'ClassDefs'
@@ -331,8 +331,8 @@ class VisitorInfo(NodeVisitor):
             self.visit(child, child_params)
         ########## ENTITY PROPERTIES ############
         what_is_it = self.what_is_it(node)
-        args_ret = args['numberOfArgs'] + 1 if have_return or have_ret_annotation else args['numberOfArgs']
-        number_of_annotations = args['typeAnnotations'] + 1 if have_ret_annotation else args['typeAnnotations']
+        args_ret = args['number_of_args'] + 1 if have_return or have_ret_annotation else args['number_of_args']
+        number_of_annotations = args['type_annotations'] + 1 if have_ret_annotation else args['type_annotations']
         db_functiondef.name_convention = self.name_convention(node.name)
         db_functiondef.number_of_characters = len(node.name)
         db_functiondef.is_private = what_is_it["private"]
@@ -349,7 +349,7 @@ class VisitorInfo(NodeVisitor):
         db_functiondef.expertise_level = params["expertise_level"]
         db_functiondef.user_id = params["user_id"]
         if is_method:
-            db_method.is_class_method = what_is_it["classmethod"]
+            db_method.is_class_method = what_is_it["class_method"]
             db_method.is_static_method = what_is_it["static"]
             db_method.is_constructor_method = node.name == '__init__'
             db_method.is_abstract_method = what_is_it["abstract"]
@@ -360,11 +360,11 @@ class VisitorInfo(NodeVisitor):
             db_method.user_id = params["user_id"]
         ############## VISITOR DB ################
         if is_method:
-            self.visitor_db.visit(node, {'node': db_functiondef, 'dbnode': db_node, 'isMethod': is_method, 'method': db_method})
-            return {'method': db_method, 'function': db_functiondef, 'args': args, 'typeAnnotations': args["typeAnnotations"], 'depth': depth + 1, 'node_id': db_functiondef.functiondef_id, 'haveReturn': have_return}
+            self.visitor_db.visit(node, {'node': db_functiondef, 'db_node': db_node, 'is_method': is_method, 'method': db_method})
+            return {'method': db_method, 'function': db_functiondef, 'args': args, 'type_annotations': args["type_annotations"], 'depth': depth + 1, 'id': db_functiondef.functiondef_id, 'have_return': have_return}
         else:
-            self.visitor_db.visit(node, {'node': db_functiondef, 'dbnode': db_node, 'isMethod': is_method})
-            return {'numberOfParamsRet': args_ret, 'function': db_functiondef, 'typeAnnotations': args["typeAnnotations"], 'depth': depth + 1, 'node_id': db_functiondef.functiondef_id}
+            self.visitor_db.visit(node, {'node': db_functiondef, 'db_node': db_node, 'is_method': is_method})
+            return {'number_of_params_ret': args_ret, 'function': db_functiondef, 'type_annotations': args["type_annotations"], 'depth': depth + 1, 'id': db_functiondef.functiondef_id}
     
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef, params: Dict) -> Dict: 
         is_method = params["parent"].table == 'ClassDefs'
@@ -419,8 +419,8 @@ class VisitorInfo(NodeVisitor):
             self.visit(child, child_params)
         ########## ENTITY PROPERTIES ############
         what_is_it = self.what_is_it(node)
-        args_ret = args['numberOfArgs'] + 1 if have_return or have_ret_annotation else args['numberOfArgs']
-        number_of_annotations = args['typeAnnotations'] + 1 if have_ret_annotation else args['typeAnnotations']
+        args_ret = args['number_of_args'] + 1 if have_return or have_ret_annotation else args['number_of_args']
+        number_of_annotations = args['type_annotations'] + 1 if have_ret_annotation else args['type_annotations']
         db_functiondef.number_of_characters = len(node.name)
         db_functiondef.name_convention = self.name_convention(node.name)
         db_functiondef.is_private = what_is_it["private"]
@@ -437,7 +437,7 @@ class VisitorInfo(NodeVisitor):
         db_functiondef.expertise_level = params["expertise_level"]
         db_functiondef.user_id = params["user_id"]
         if is_method:
-            db_method.is_class_method = what_is_it["classmethod"]
+            db_method.is_class_method = what_is_it["class_method"]
             db_method.is_static_method = what_is_it["static"]
             db_method.is_constructor_method = node.name == '__init__'
             db_method.is_abstract_method = what_is_it["abstract"]
@@ -448,11 +448,11 @@ class VisitorInfo(NodeVisitor):
             db_method.user_id = params["user_id"]
         ############## VISITOR DB ################
         if is_method:
-            self.visitor_db.visit(node, {'node': db_functiondef, 'dbnode': db_node, 'isMethod': is_method, 'method': db_method})
-            return {'method': db_method, 'function': db_functiondef, 'args': args, 'typeAnnotations': args["typeAnnotations"], 'depth': depth + 1, 'node_id': db_functiondef.functiondef_id, 'haveReturn': have_return}
+            self.visitor_db.visit(node, {'node': db_functiondef, 'db_node': db_node, 'is_method': is_method, 'method': db_method})
+            return {'method': db_method, 'function': db_functiondef, 'args': args, 'type_annotations': args["type_annotations"], 'depth': depth + 1, 'id': db_functiondef.functiondef_id, 'have_return': have_return}
         else:
-            self.visitor_db.visit(node, {'node': db_functiondef, 'dbnode': db_node, 'isMethod': is_method})
-            return {'numberOfParamsRet': args_ret, 'function': db_functiondef, 'typeAnnotations': args["typeAnnotations"], 'depth': depth + 1, 'node_id': db_functiondef.functiondef_id}
+            self.visitor_db.visit(node, {'node': db_functiondef, 'db_node': db_node, 'is_method': is_method})
+            return {'number_of_params_ret': args_ret, 'function': db_functiondef, 'type_annotations': args["type_annotations"], 'depth': depth + 1, 'id': db_functiondef.functiondef_id}
         
     def visit_ClassDef(self, node: ast.ClassDef, params: Dict) -> Dict:  
         db_node = db_entities.DBNode()
@@ -514,10 +514,10 @@ class VisitorInfo(NodeVisitor):
                 if isinstance(child,ast.FunctionDef) or isinstance(child,ast.AsyncFunctionDef):
                     number_of_methods += 1
                     number_of_method_stmt += returns["function"].body_count
-                    number_of_method_params_ret += (returns["args"]["numberOfArgs"])
-                    if returns["haveReturn"]:
+                    number_of_method_params_ret += (returns["args"]["number_of_args"])
+                    if returns["have_return"]:
                         number_of_method_params_ret += 1
-                    number_of_method_type_annotations += returns["args"]["typeAnnotations"]
+                    number_of_method_type_annotations += returns["args"]["type_annotations"]
                     if returns["function"].is_magic:
                         number_of_magic_methods += 1
                     if returns["function"].is_private:
@@ -565,8 +565,8 @@ class VisitorInfo(NodeVisitor):
         db_classdef.expertise_level = params['expertise_level']
         db_classdef.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': db_classdef, 'dbnode': db_node})
-        return {'numberOfParamsRet': number_of_method_params_ret, 'methodCount': number_of_methods, 'typeAnnotations': number_of_method_type_annotations, 'numberOfMethodStmt': number_of_method_stmt, 'node_id': db_classdef.classdef_id, 'depth': depth + 1, 'isEnum': is_enum}
+        self.visitor_db.visit(node, {'node': db_classdef, 'db_node': db_node})
+        return {'number_of_params_ret': number_of_method_params_ret, 'method_count': number_of_methods, 'type_annotations': number_of_method_type_annotations, 'number_of_method_stmt': number_of_method_stmt, 'id': db_classdef.classdef_id, 'depth': depth + 1, 'is_enum': is_enum}
 
     ############################### STATEMENTS #############################
     def visit_Return(self, node: ast.Return, params: Dict) -> Dict:  
@@ -602,7 +602,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': db_stmt, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
     def visit_Delete(self, node: ast.Delete, params: Dict) -> Dict:  
@@ -650,7 +650,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': db_stmt, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
     def visit_Assign(self, node: ast.Assign, params: Dict) -> Dict:  
@@ -701,7 +701,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': db_stmt, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
     
     def visit_TypeAlias(self, node: ast.TypeAlias, params: Dict) -> Dict: 
@@ -737,7 +737,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': db_stmt, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
     
     def visit_AugAssign(self, node: ast.AugAssign, params: Dict) -> Dict:  
@@ -771,7 +771,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': db_stmt, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
     def visit_AnnAssign(self, node: ast.AnnAssign, params: Dict) -> Dict:  
@@ -810,7 +810,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': db_stmt, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
     def visit_For(self, node: ast.For, params: Dict) -> Dict:  
@@ -882,7 +882,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': db_stmt, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
     
     def visit_AsyncFor(self, node: ast.AsyncFor, params: Dict) -> Dict:  
@@ -954,7 +954,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': db_stmt, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
     
     def visit_While(self, node: ast.While, params: Dict) -> Dict:  
@@ -1024,7 +1024,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': db_stmt, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
     def visit_If(self, node: ast.If, params: Dict) -> Dict:  
@@ -1096,7 +1096,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': db_stmt, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
     def visit_With(self, node: ast.With, params: Dict) -> Dict:  
@@ -1152,7 +1152,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': db_stmt, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
     
@@ -1205,7 +1205,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': db_stmt, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
     
     def visit_Match(self, node: ast.Match, params: Dict) -> Dict:  
@@ -1255,14 +1255,14 @@ class VisitorInfo(NodeVisitor):
         number_of_guards = 0
         body_total_count = 0
         for i in range(index):
-            number_of_cases_as += returns[i]["matchAs"]
-            number_of_cases_or += returns[i]["matchOr"]
-            number_of_cases_value += returns[i]["matchValue"]
-            number_of_cases_mapping += returns[i]["matchMapping"]
-            number_of_cases_class += returns[i]["matchClass"]
-            number_of_cases_singleton += returns[i]["matchSingleton"]
-            number_of_cases_sequence += returns[i]["matchSequence"]
-            number_of_cases_star += returns[i]["matchStar"]
+            number_of_cases_as += returns[i]["match_as"]
+            number_of_cases_or += returns[i]["match_or"]
+            number_of_cases_value += returns[i]["match_value"]
+            number_of_cases_mapping += returns[i]["match_mapping"]
+            number_of_cases_class += returns[i]["match_class"]
+            number_of_cases_singleton += returns[i]["match_singleton"]
+            number_of_cases_sequence += returns[i]["match_sequence"]
+            number_of_cases_star += returns[i]["match_star"]
             number_of_guards += returns[i]["guards"]
             body_total_count += returns[i]["body_count"]
         total_cases = number_of_cases_as + number_of_cases_or + number_of_cases_mapping + number_of_cases_sequence + number_of_cases_singleton + number_of_cases_star + number_of_cases_class + number_of_cases_value
@@ -1281,7 +1281,7 @@ class VisitorInfo(NodeVisitor):
         case.expertise_level = params["expertise_level"]
         case.user_id = params["user_id"]
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': db_stmt, 'dbnode': db_node, 'case': case})
+        self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node, 'case': case})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
     def visit_Raise(self, node: ast.Raise, params: Dict) -> Dict:  
@@ -1329,7 +1329,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': db_stmt, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
     
     def visit_Try(self, node: ast.Try, params: Dict) -> Dict:  
@@ -1441,7 +1441,7 @@ class VisitorInfo(NodeVisitor):
         db_handler.expertise_level = params["expertise_level"]
         db_handler.user_id = params["user_id"]
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': db_stmt, 'dbnode': db_node, 'handler': db_handler})
+        self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node, 'handler': db_handler})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
     
     def visit_TryStar(self, node: ast.TryStar, params: Dict) -> Dict:  
@@ -1540,7 +1540,7 @@ class VisitorInfo(NodeVisitor):
         db_handler.expertise_level = params['expertise_level']
         db_handler.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': stmt, 'dbnode': db_node, 'handler': db_handler})
+        self.visitor_db.visit(node, {'node': stmt, 'db_node': db_node, 'handler': db_handler})
         return {'id': id, 'depth': stmt.depth + 1}
 
     
@@ -1578,7 +1578,7 @@ class VisitorInfo(NodeVisitor):
         stmt.expertise_level = params['expertise_level']
         stmt.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': stmt, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': stmt, 'db_node': db_node})
         return {'id': id, 'depth': stmt.depth + 1}
 
     
@@ -1604,7 +1604,7 @@ class VisitorInfo(NodeVisitor):
         stmt.expertise_level = params['expertise_level']
         stmt.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': stmt, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': stmt, 'db_node': db_node})
         return {'id': id, 'depth': stmt.depth + 1}
 
     
@@ -1630,7 +1630,7 @@ class VisitorInfo(NodeVisitor):
         stmt.expertise_level = params['expertise_level']
         stmt.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': stmt, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': stmt, 'db_node': db_node})
         return {'id': id, 'depth': stmt.depth + 1}
 
     
@@ -1656,7 +1656,7 @@ class VisitorInfo(NodeVisitor):
         stmt.expertise_level = params['expertise_level']
         stmt.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': stmt, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': stmt, 'db_node': db_node})
         return {'id': id, 'depth': stmt.depth + 1}
 
     
@@ -1682,7 +1682,7 @@ class VisitorInfo(NodeVisitor):
         stmt.expertise_level = params['expertise_level']
         stmt.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': stmt, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': stmt, 'db_node': db_node})
         return {'id': id, 'depth': stmt.depth + 1}
 
     
@@ -1708,7 +1708,7 @@ class VisitorInfo(NodeVisitor):
         stmt.expertise_level = params['expertise_level']
         stmt.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': stmt, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': stmt, 'db_node': db_node})
         return {'id': id, 'depth': stmt.depth + 1}
 
     ############################ IMPORTS ##################################
@@ -1735,12 +1735,12 @@ class VisitorInfo(NodeVisitor):
         stmt.body_size = None
         stmt.expertise_level = params['expertise_level']
         stmt.user_id = params['user_id']
-        asnames = 0
+        as_names = 0
         for alias in node.names:
-            if(alias.asname): asnames += 1
+            if(alias.asname): as_names += 1
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': stmt, 'dbnode': db_node})
-        return {'id': id, 'depth': stmt.depth + 1, 'importedModules': len(node.names), 'asnames': asnames}
+        self.visitor_db.visit(node, {'node': stmt, 'db_node': db_node})
+        return {'id': id, 'depth': stmt.depth + 1, 'imported_modules': len(node.names), 'as_names': as_names}
 
     
     def visit_ImportFrom(self, node: ast.ImportFrom, params: Dict) -> Dict:  
@@ -1764,12 +1764,12 @@ class VisitorInfo(NodeVisitor):
         stmt.body_size = None
         stmt.expertise_level = params['expertise_level']
         stmt.user_id = params['user_id']
-        asnames = 0
+        as_names = 0
         for alias in node.names:
-            if(alias.asname): asnames += 1
+            if(alias.asname): as_names += 1
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': stmt, 'dbnode': db_node})
-        return {'id': id, 'depth': stmt.depth + 1, 'importedModules': len(node.names), 'asnames': asnames}
+        self.visitor_db.visit(node, {'node': stmt, 'db_node': db_node})
+        return {'id': id, 'depth': stmt.depth + 1, 'imported_modules': len(node.names), 'as_names': as_names}
 
     ############################ EXPRESSIONS ##################################
 
@@ -1826,7 +1826,7 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': expr, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     
@@ -1860,7 +1860,7 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': expr, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     
@@ -1901,7 +1901,7 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': expr, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
     
     
@@ -1933,7 +1933,7 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': expr, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
     
     
@@ -1965,7 +1965,7 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': expr, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
     
     
@@ -2002,7 +2002,7 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': expr, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     ######################### COMPREHENSIONS #############################
@@ -2069,7 +2069,7 @@ class VisitorInfo(NodeVisitor):
         comp.expertise_level = params['expertise_level']
         comp.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': comp, 'dbnode': db_node, 'expr': expr})
+        self.visitor_db.visit(node, {'node': comp, 'db_node': db_node, 'expr': expr})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     
@@ -2134,7 +2134,7 @@ class VisitorInfo(NodeVisitor):
         comp.expertise_level = params['expertise_level']
         comp.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': comp, 'dbnode': db_node, 'expr': expr})
+        self.visitor_db.visit(node, {'node': comp, 'db_node': db_node, 'expr': expr})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     
@@ -2197,7 +2197,7 @@ class VisitorInfo(NodeVisitor):
         comp.expertise_level = params['expertise_level']
         comp.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': comp, 'dbnode': db_node, 'expr': expr})
+        self.visitor_db.visit(node, {'node': comp, 'db_node': db_node, 'expr': expr})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     
@@ -2262,7 +2262,7 @@ class VisitorInfo(NodeVisitor):
         comp.expertise_level = params['expertise_level']
         comp.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': comp, 'dbnode': db_node, 'expr': expr})
+        self.visitor_db.visit(node, {'node': comp, 'db_node': db_node, 'expr': expr})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     ######################################################################
@@ -2295,7 +2295,7 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': expr, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     
@@ -2330,7 +2330,7 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': expr, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     
@@ -2361,7 +2361,7 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': expr, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     
@@ -2421,7 +2421,7 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': expr, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     ########################## call_args ###########################
@@ -2499,7 +2499,7 @@ class VisitorInfo(NodeVisitor):
         callArgs.expertise_level = params['expertise_level']
         callArgs.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': callArgs, 'dbnode': db_node, 'expr': expr})
+        self.visitor_db.visit(node, {'node': callArgs, 'db_node': db_node, 'expr': expr})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     ################################################################
@@ -2538,7 +2538,7 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': expr, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     ########################### F-strings #####################################
@@ -2571,8 +2571,8 @@ class VisitorInfo(NodeVisitor):
         second_child_id = None
         third_child_id = None
         fourth_child_id = None
-        numFVal = 0
-        numConst = 0
+        num_fval = 0
+        num_const = 0
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
@@ -2582,8 +2582,8 @@ class VisitorInfo(NodeVisitor):
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
             if(index == 2): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
             if(index == 3): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
-            if(isinstance(child, ast.Constant)): numConst += 1
-            if(isinstance(child, ast.FormattedValue)): numFVal += 1
+            if(isinstance(child, ast.Constant)): num_const += 1
+            if(isinstance(child, ast.FormattedValue)): num_fval += 1
             depth = max(depth, returns[index]["depth"])
             index += 1
         ########## ENTITY PROPERTIES ############
@@ -2601,13 +2601,13 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         #-----------------------------------------
-        fstr.number_of_elements = numConst + numFVal
-        fstr.constants_pct = numConst / len(node.values) if len(node.values) > 0 else 0
-        fstr.expressions_pct = numFVal / len(node.values) if len(node.values) > 0 else 0
+        fstr.number_of_elements = num_const + num_fval
+        fstr.constants_pct = num_const / len(node.values) if len(node.values) > 0 else 0
+        fstr.expressions_pct = num_fval / len(node.values) if len(node.values) > 0 else 0
         fstr.expertise_level = params['expertise_level']
         fstr.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': fstr, 'dbnode': db_node, 'expr': expr})
+        self.visitor_db.visit(node, {'node': fstr, 'db_node': db_node, 'expr': expr})
         return  {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     ###########################################################################
@@ -2631,7 +2631,7 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': expr, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
     
     def visit_Attribute(self, node: ast.Attribute, params: Dict) -> Dict:  
@@ -2661,7 +2661,7 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': expr, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     def visit_Subscript(self, node: ast.Subscript, params: Dict) -> Dict:  
@@ -2694,7 +2694,7 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': expr, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     
@@ -2725,7 +2725,7 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': expr, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     ############################# Variable ##################################
@@ -2764,7 +2764,7 @@ class VisitorInfo(NodeVisitor):
         var.expertise_level = params['expertise_level']
         var.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': var, 'dbnode': db_node, 'expr': expr})
+        self.visitor_db.visit(node, {'node': var, 'db_node': db_node, 'expr': expr})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     ############################### Vectors #################################
@@ -2832,7 +2832,7 @@ class VisitorInfo(NodeVisitor):
         vct.expertise_level = params['expertise_level']
         vct.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': vct, 'dbnode': db_node, 'expr': expr})
+        self.visitor_db.visit(node, {'node': vct, 'db_node': db_node, 'expr': expr})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     
@@ -2898,7 +2898,7 @@ class VisitorInfo(NodeVisitor):
         vct.expertise_level = params['expertise_level']
         vct.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': vct, 'dbnode': db_node, 'expr': expr})
+        self.visitor_db.visit(node, {'node': vct, 'db_node': db_node, 'expr': expr})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     
@@ -2968,7 +2968,7 @@ class VisitorInfo(NodeVisitor):
         vct.expertise_level = params['expertise_level']
         vct.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': vct, 'dbnode': db_node, 'expr': expr})
+        self.visitor_db.visit(node, {'node': vct, 'db_node': db_node, 'expr': expr})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     
@@ -3034,7 +3034,7 @@ class VisitorInfo(NodeVisitor):
         vct.expertise_level = params['expertise_level']
         vct.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': vct, 'dbnode': db_node, 'expr': expr})
+        self.visitor_db.visit(node, {'node': vct, 'db_node': db_node, 'expr': expr})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
     def visit_Slice(self, node: ast.Slice, params: Dict) -> Dict:  
@@ -3099,7 +3099,7 @@ class VisitorInfo(NodeVisitor):
         db_expr.expertise_level = params['expertise_level']
         db_expr.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': db_expr, 'dbnode': db_node})
+        self.visitor_db.visit(node, {'node': db_expr, 'db_node': db_node})
         return {'id': node_id, 'depth': db_expr.depth + 1, 'category': db_expr.category}
 
     ############################### Cases ###################################
@@ -3111,16 +3111,16 @@ class VisitorInfo(NodeVisitor):
         ############## PROPAGAR VISIT ############
         aux = self.visit(node.value, self.add_param(child_params, 'role', expr_roles[0]))
         depth = max(aux["depth"], depth)
-        return {'matchValue': 1, 'matchSingleton': 0, 'matchSequence': 0, 'matchMapping': 0, 'matchClass': 0, 'matchStar': 0, 'matchAs': 0, 'matchOr': 0, 'depth': depth + 1}
+        return {'match_value': 1, 'match_singleton': 0, 'match_sequence': 0, 'match_mapping': 0, 'match_class': 0, 'match_star': 0, 'match_as': 0, 'match_or': 0, 'depth': depth + 1}
     
     def visit_MatchSingleton(self, node: ast.MatchSingleton, params: Dict) -> Dict:  
-        return {'matchValue': 0, 'matchSingleton': 1, 'matchSequence': 0, 'matchMapping': 0, 'matchClass': 0, 'matchStar': 0, 'matchAs': 0, 'matchOr': 0, 'depth': 1}
+        return {'match_value': 0, 'match_singleton': 1, 'match_sequence': 0, 'match_mapping': 0, 'match_class': 0, 'match_star': 0, 'match_as': 0, 'match_or': 0, 'depth': 1}
 
     def visit_MatchSequence(self, node: ast.MatchSequence, params: Dict) -> Dict:  
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": params["parent"], "depth": params["depth"] + 1, "parent_id": params["parent_id"]}
         ################ RETURNS #################
-        returns = {'matchValue': 0, 'matchSingleton': 0, 'matchSequence': 1, 'matchMapping': 0, 'matchClass': 0, 'matchStar': 0, 'matchAs': 0, 'matchOr': 0, 'depth': 0}
+        returns = {'match_value': 0, 'match_singleton': 0, 'match_sequence': 1, 'match_mapping': 0, 'match_class': 0, 'match_star': 0, 'match_as': 0, 'match_or': 0, 'depth': 0}
         ############## PROPAGAR VISIT ############
         childs = []
         index = 0
@@ -3136,7 +3136,7 @@ class VisitorInfo(NodeVisitor):
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": params["parent"], "depth": params["depth"] + 1, "parent_id": params["parent_id"]}
         expr_roles = ["MatchCondition"]
         ################ RETURNS #################
-        returns = {'matchValue': 0, 'matchSingleton': 0, 'matchSequence': 0, 'matchMapping': 1, 'matchClass': 0, 'matchStar': 0, 'matchAs': 0, 'matchOr': 0, 'depth': 0}
+        returns = {'match_value': 0, 'match_singleton': 0, 'match_sequence': 0, 'match_mapping': 1, 'match_class': 0, 'match_star': 0, 'match_as': 0, 'match_or': 0, 'depth': 0}
         ############## PROPAGAR VISIT ############
         childs = []
         exprs = []
@@ -3158,7 +3158,7 @@ class VisitorInfo(NodeVisitor):
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": params["parent"], "depth": params["depth"] + 1, "parent_id": params["parent_id"]}
         expr_roles = ["MatchCondition"]
         ################ RETURNS #################
-        returns = {'matchValue': 0, 'matchSingleton': 0, 'matchSequence': 0, 'matchMapping': 0, 'matchClass': 1, 'matchStar': 0, 'matchAs': 0, 'matchOr': 0, 'depth': 0}
+        returns = {'match_value': 0, 'match_singleton': 0, 'match_sequence': 0, 'match_mapping': 0, 'match_class': 1, 'match_star': 0, 'match_as': 0, 'match_or': 0, 'depth': 0}
         ############## PROPAGAR VISIT ############
         cls = self.visit(node.cls, self.add_param(child_params, 'role', expr_roles[0]))
         childs = []
@@ -3176,13 +3176,13 @@ class VisitorInfo(NodeVisitor):
         return returns
 
     def visit_MatchStar(self, node: ast.MatchStar, params: Dict) -> Dict:  
-        return {'matchValue': 0, 'matchSingleton': 0, 'matchSequence': 0, 'matchMapping': 0, 'matchClass': 0, 'matchStar': 1, 'matchAs': 0, 'matchOr': 0, 'depth': 1}
+        return {'match_value': 0, 'match_singleton': 0, 'match_sequence': 0, 'match_mapping': 0, 'match_class': 0, 'match_star': 1, 'match_as': 0, 'match_or': 0, 'depth': 1}
     
     def visit_MatchAs(self, node: ast.MatchAs, params: Dict) -> Dict:  
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": params["parent"], "depth": params["depth"] + 1, "parent_id": params["parent_id"]}
         ################ RETURNS #################
-        returns = {'matchValue': 0, 'matchSingleton': 0, 'matchSequence': 0, 'matchMapping': 0, 'matchClass': 0, 'matchStar': 0, 'matchAs': 1, 'matchOr': 0, 'depth': 0}
+        returns = {'match_value': 0, 'match_singleton': 0, 'match_sequence': 0, 'match_mapping': 0, 'match_class': 0, 'match_star': 0, 'match_as': 1, 'match_or': 0, 'depth': 0}
         ############## PROPAGAR VISIT ############
         if(node.pattern): 
             child = self.visit(node.pattern, child_params)
@@ -3194,7 +3194,7 @@ class VisitorInfo(NodeVisitor):
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": params["parent"], "depth": params["depth"] + 1, "parent_id": params["parent_id"]}
         ################ RETURNS #################
-        returns = {'matchValue': 0, 'matchSingleton': 0, 'matchSequence': 0, 'matchMapping': 0, 'matchClass': 0, 'matchStar': 0, 'matchAs': 0, 'matchOr': 1, 'depth': 0}
+        returns = {'match_value': 0, 'match_singleton': 0, 'match_sequence': 0, 'match_mapping': 0, 'match_class': 0, 'match_star': 0, 'match_as': 0, 'match_or': 1, 'depth': 0}
         ############## PROPAGAR VISIT ############
         childs = []
         index = 0
@@ -3224,7 +3224,7 @@ class VisitorInfo(NodeVisitor):
             child_ids.append(returns[index]['id'])
             depth = max(depth,returns[index]["depth"])
             index += 1
-        return {'id': params["parent_id"], 'depth': depth, 'isCatchAll': is_catch_all, 'child_ids': child_ids}
+        return {'id': params["parent_id"], 'depth': depth, 'is_catch_all': is_catch_all, 'child_ids': child_ids}
 
     ####################### Extra Visits ######################
     def visit_comprehension(self, node: ast.comprehension, params: Dict) -> Dict:  
@@ -3261,31 +3261,31 @@ class VisitorInfo(NodeVisitor):
         ############## PROPAGAR VISIT ############
         for child in node.posonlyargs:
             arg = self.visit(child, params)
-            if arg["typeAnnotation"]:
+            if arg["type_annotation"]:
                 number_of_annotations += 1
             number_of_params += 1
             naming_conventions[self.name_convention(child.arg)] += 1
         for child in node.args:
             arg = self.visit(child, params)
-            if arg["typeAnnotation"]:
+            if arg["type_annotation"]:
                 number_of_annotations += 1
             number_of_params += 1
             naming_conventions[self.name_convention(child.arg)] += 1
         if node.vararg:
             arg = self.visit(node.vararg, params)
-            if(arg["typeAnnotation"]): number_of_annotations += 1
+            if(arg["type_annotation"]): number_of_annotations += 1
             number_of_params += 1
             naming_conventions[self.name_convention(node.vararg.arg)] += 1
         for child in node.kwonlyargs:
             arg = self.visit(child, params)
-            if(arg["typeAnnotation"]): number_of_annotations += 1
+            if(arg["type_annotation"]): number_of_annotations += 1
             number_of_params += 1
             naming_conventions[self.name_convention(child.arg)] += 1
         for child in node.kw_defaults:
             self.visit(child, self.add_param(params, 'role', expr_roles[0]))
         if node.kwarg:
             arg = self.visit(node.kwarg, params)
-            if(arg["typeAnnotation"]): number_of_annotations += 1
+            if(arg["type_annotation"]): number_of_annotations += 1
             number_of_params += 1
             naming_conventions[self.name_convention(node.kwarg.arg)] += 1
         for child in node.defaults:
@@ -3296,7 +3296,7 @@ class VisitorInfo(NodeVisitor):
         db_params.posOnlyParamPct = len(node.posonlyargs)/number_of_params if number_of_params > 0 else 0
         db_params.varParamPct = (1 if node.vararg else 0)/number_of_params if number_of_params > 0 else 0
         db_params.hasVarParam = True if node.vararg else False
-        db_params.typeAnnotationPct = number_of_annotations/number_of_params if number_of_params > 0 else 0
+        db_params.type_annotationPct = number_of_annotations/number_of_params if number_of_params > 0 else 0
         db_params.kwOnlyParamPct = len(node.kwonlyargs)/number_of_params if number_of_params > 0 else 0
         db_params.defaultValuePct = (len(node.kw_defaults) + len(node.defaults))/number_of_params if number_of_params > 0 else 0
         db_params.hasKWParam = True if node.kwarg else False
@@ -3304,7 +3304,7 @@ class VisitorInfo(NodeVisitor):
         db_params.user_id = params['user_id']
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {"dbparams": db_params})
-        return {"typeAnnotations": number_of_annotations, "numberOfArgs": number_of_params}
+        return {"type_annotations": number_of_annotations, "number_of_args": number_of_params}
     
     def visit_arg(self, node: ast.arg, params: Dict) -> Dict: 
         ############# PARAMS ##################### 
@@ -3312,8 +3312,8 @@ class VisitorInfo(NodeVisitor):
         ############## PROPAGAR VISIT ############
         if node.annotation:
             self.visit(node.annotation, self.add_param(params, 'role', expr_roles[0]))
-            return {'typeAnnotation': True}
-        return {'typeAnnotation': False}
+            return {'type_annotation': True}
+        return {'type_annotation': False}
     
     def visit_keyword(self, node: ast.keyword, params: Dict) -> Dict:  
         ############## PROPAGAR VISIT ############
