@@ -67,7 +67,7 @@ class VisitorInfo(NodeVisitor):
         elif camel_up_pattern.match(name):
             return 'CamelUp'
         else: 
-            return 'NoNameConvention'
+            return 'Noname_convention'
 
     @staticmethod
     def add_param(dict_1: Dict, param, value) -> Dict:
@@ -102,7 +102,6 @@ class VisitorInfo(NodeVisitor):
         name = params["path"].split("\\")[-1]
         ############## PROPAGAR VISIT ############
         modules = []
-        routes = []
         index = 0
         for current_folder, folders, files in os.walk(params["path"]):
             has_init_py = False
@@ -148,16 +147,16 @@ class VisitorInfo(NodeVisitor):
             total_defs = total_class_defs + total_enum_defs+ total_function_defs
             db_program.program_id = node_id
             db_program.name = name
-            db_program.numberOfPackages = num_of_packages
-            db_program.numberOfSubDirsWithCode = num_of_dirs
-            db_program.hasCodeRootPackage = has_code_root
-            db_program.hasPackages = num_of_packages > 0
-            db_program.hasSubDirsWithCode = num_of_dirs > 0
-            db_program.numberOfModules = index
-            db_program.averageDefsPerModule = total_defs/index
-            db_program.classDefsPct = total_class_defs/total_defs if total_defs > 0 else 0
-            db_program.functionDefsPct = total_function_defs/total_defs if total_defs > 0 else 0
-            db_program.enumDefsPct = total_enum_defs/total_defs if total_defs > 0 else 0
+            db_program.number_of_packages = num_of_packages
+            db_program.number_of_sub_dirs_with_code = num_of_dirs
+            db_program.has_code_root_package = has_code_root
+            db_program.has_packages = num_of_packages > 0
+            db_program.has_sub_dirs_with_code = num_of_dirs > 0
+            db_program.number_of_modules = index
+            db_program.average_defs_per_module = total_defs/index
+            db_program.class_defs_pct = total_class_defs/total_defs if total_defs > 0 else 0
+            db_program.function_defs_pct = total_function_defs/total_defs if total_defs > 0 else 0
+            db_program.enum_defs_pct = total_enum_defs/total_defs if total_defs > 0 else 0
             db_program.expertise_level = params["expertise_level"]
             db_program.user_id = params["user_id"]
         ############## VISITOR DB ################  
@@ -221,7 +220,7 @@ class VisitorInfo(NodeVisitor):
             elif isinstance(child, ast.FunctionDef) or isinstance(child, ast.AsyncFunctionDef):
                 count["function"] += 1
                 functions.append(returns[index])
-                functions_body_size += returns[index]["function"].bodyCount
+                functions_body_size += returns[index]["function"].body_count
                 type_annotations += returns[index]["type_annotations"]
                 params_rets += returns[index]["numberOfParamsRet"]
                 f_index += 1
@@ -248,31 +247,31 @@ class VisitorInfo(NodeVisitor):
             index += 1
         ########## ENTITY PROPERTIES ############
         db_module.name = params["filename"]
-        db_module.nameConvention = self.name_convention(db_module.name)
-        db_module.hasDocString = (isinstance(node.body[0],ast.Constant)) and isinstance(node.body[0].value, str)
-        db_module.globalStmtsPct = count["stmt"]/index if(index > 0) else 0
-        db_module.globalExpressions = count["expr"]/index if(index > 0) else 0
-        db_module.numberOfClasses = count["classes"]
-        db_module.numberOfFunctions = count["function"]
+        db_module.name_convention = self.name_convention(db_module.name)
+        db_module.has_doc_string = (isinstance(node.body[0],ast.Constant)) and isinstance(node.body[0].value, str)
+        db_module.global_stmts_pct = count["stmt"]/index if(index > 0) else 0
+        db_module.global_expressions = count["expr"]/index if(index > 0) else 0
+        db_module.number_of_classes = count["classes"]
+        db_module.number_of_functions = count["function"]
         enum_class_funct_sum = (count["function"] + count["enum"] + count["classes"])
-        db_module.classDefsPct = count["classes"]/enum_class_funct_sum if(enum_class_funct_sum > 0) else 0
-        db_module.functionDefsPct = count["function"]/enum_class_funct_sum if(enum_class_funct_sum > 0) else 0
-        db_module.enumDefsPct = count["enum"]/enum_class_funct_sum if(enum_class_funct_sum > 0) else 0
-        db_module.averageStmtsFunctionBody = functions_body_size/f_index if(f_index > 0) else 0
-        db_module.averageStmtsMethodBody = number_of_method_stmt/method_count if(method_count > 0) else 0
-        db_module.typeAnnotationsPct = type_annotations/params_rets if params_rets > 0 else 0
+        db_module.class_defs_pct = count["classes"]/enum_class_funct_sum if(enum_class_funct_sum > 0) else 0
+        db_module.function_defs_pct = count["function"]/enum_class_funct_sum if(enum_class_funct_sum > 0) else 0
+        db_module.enum_defs_pct = count["enum"]/enum_class_funct_sum if(enum_class_funct_sum > 0) else 0
+        db_module.average_stmts_function_body = functions_body_size/f_index if(f_index > 0) else 0
+        db_module.average_stmts_method_body = number_of_method_stmt/method_count if(method_count > 0) else 0
+        db_module.type_annotations_pct = type_annotations/params_rets if params_rets > 0 else 0
         db_module.path = params["path"]
-        db_module.hasEntryPoint = has_entry_point
+        db_module.has_entry_point = has_entry_point
         db_module.expertise_level = params["expertise_level"]
         db_module.user_id = params["user_id"]
         #------------ imports --------------------
-        db_import.numberImports = (si_index + fi_index)
-        db_import.moduleImportsPct = simple_import_num/(si_index + fi_index) if si_index + fi_index > 0 else 0
-        db_import.fromImportsPct = from_import_num/(si_index + fi_index) if si_index + fi_index > 0 else 0
-        db_import.localImportsPct = local_imports/(si_index + fi_index) if si_index + fi_index > 0 else 0
-        db_import.averageAsInImportedModules = as_names/from_import_modules_num if from_import_modules_num > 0 else 0
-        db_import.averageImportedModules = simple_import_modules_num/si_index if si_index > 0 else 0
-        db_import.averageFromImportedModules = from_import_modules_num/fi_index if fi_index > 0 else 0
+        db_import.number_imports = (si_index + fi_index)
+        db_import.module_imports_pct = simple_import_num/(si_index + fi_index) if si_index + fi_index > 0 else 0
+        db_import.from_imports_pct = from_import_num/(si_index + fi_index) if si_index + fi_index > 0 else 0
+        db_import.local_imports_pct = local_imports/(si_index + fi_index) if si_index + fi_index > 0 else 0
+        db_import.average_as_in_imported_modules = as_names/from_import_modules_num if from_import_modules_num > 0 else 0
+        db_import.average_imported_modules = simple_import_modules_num/si_index if si_index > 0 else 0
+        db_import.average_from_imported_modules = from_import_modules_num/fi_index if fi_index > 0 else 0
         db_import.expertise_level = params["expertise_level"]
         db_import.user_id = params["user_id"]
         ############## VISITOR DB ################
@@ -334,29 +333,29 @@ class VisitorInfo(NodeVisitor):
         what_is_it = self.what_is_it(node)
         args_ret = args['numberOfArgs'] + 1 if have_return or have_ret_annotation else args['numberOfArgs']
         number_of_annotations = args['typeAnnotations'] + 1 if have_ret_annotation else args['typeAnnotations']
-        db_functiondef.nameConvention = self.name_convention(node.name)
-        db_functiondef.numberOfCharacters = len(node.name)
-        db_functiondef.isPrivate = what_is_it["private"]
-        db_functiondef.isMagic = what_is_it["magic"]
-        db_functiondef.bodyCount = len(node.body)
-        db_functiondef.expressionsPct = number_of_body_expr/len(node.body) if len(node.body) > 0 else 0
-        db_functiondef.isAsync = False
-        db_functiondef.numberOfDecorators = len(node.decorator_list)
-        db_functiondef.hasReturnTypeAnnotation = True if node.returns else False
-        db_functiondef.hasDocString = (isinstance(node.body[0],ast.Constant)) and isinstance(node.body[0].value, str)
+        db_functiondef.name_convention = self.name_convention(node.name)
+        db_functiondef.number_of_characters = len(node.name)
+        db_functiondef.is_private = what_is_it["private"]
+        db_functiondef.is_magic = what_is_it["magic"]
+        db_functiondef.body_count = len(node.body)
+        db_functiondef.expressions_pct = number_of_body_expr/len(node.body) if len(node.body) > 0 else 0
+        db_functiondef.is_async = False
+        db_functiondef.number_of_decorators = len(node.decorator_list)
+        db_functiondef.has_return_type_annotation = True if node.returns else False
+        db_functiondef.has_doc_string = (isinstance(node.body[0],ast.Constant)) and isinstance(node.body[0].value, str)
         db_functiondef.height = params["depth"]
-        db_functiondef.typeAnnotationsPct = number_of_annotations/args_ret if args_ret > 0 else 0
-        db_functiondef.sourceCode = ast.unparse(node)
+        db_functiondef.type_annotations_pct = number_of_annotations/args_ret if args_ret > 0 else 0
+        db_functiondef.source_code = ast.unparse(node)
         db_functiondef.expertise_level = params["expertise_level"]
         db_functiondef.user_id = params["user_id"]
         if is_method:
-            db_method.isClassMethod = what_is_it["classmethod"]
-            db_method.isStaticMethod = what_is_it["static"]
-            db_method.isConstructorMethod = node.name == '__init__'
-            db_method.isAbstractMethod = what_is_it["abstract"]
-            db_method.isProperty = what_is_it["property"]
-            db_method.isWrapper = what_is_it["wrapper"]
-            db_method.isCached = what_is_it["cached"]
+            db_method.is_class_method = what_is_it["classmethod"]
+            db_method.is_static_method = what_is_it["static"]
+            db_method.is_constructor_method = node.name == '__init__'
+            db_method.is_abstract_method = what_is_it["abstract"]
+            db_method.is_property = what_is_it["property"]
+            db_method.is_wrapper = what_is_it["wrapper"]
+            db_method.is_cached = what_is_it["cached"]
             db_method.expertise_level = params["expertise_level"]
             db_method.user_id = params["user_id"]
         ############## VISITOR DB ################
@@ -370,24 +369,24 @@ class VisitorInfo(NodeVisitor):
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef, params: Dict) -> Dict: 
         is_method = params["parent"].table == 'ClassDefs'
         db_node = db_entities.DBNode()
-        db_function = db_entities.DBFunctionDef()
+        db_functiondef = db_entities.DBFunctionDef()
         if is_method:
             db_method = db_entities.DBMethodDef()
         ############ IDS #########################
         node_id = self.id_manager.get_id()
-        db_node.node_id = db_function.functiondef_id = db_function.parameters_id = node_id
-        db_function.module_id = db_function.parent_id = None
+        db_node.node_id = db_functiondef.functiondef_id = db_functiondef.parameters_id = node_id
+        db_functiondef.module_id = db_functiondef.parent_id = None
         db_node.parent_id = params["parent_id"]
         db_node.parent_table = params["parent"].table
         if isinstance(params['parent'], db_entities.DBModule):
-            db_function.module_id = params["parent_id"]
+            db_functiondef.module_id = params["parent_id"]
         else:
-            db_function.parent_id = params["parent_id"]
+            db_functiondef.parent_id = params["parent_id"]
         if is_method:
             db_method.classdef_id = params["parent_id"]
             db_method.methoddef_id = node_id
         ############# PARAMS #####################
-        child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_function, "depth": params["depth"] + 1, "parent_id": node_id}
+        child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_functiondef, "depth": params["depth"] + 1, "parent_id": node_id}
         if is_method:
             stmt_roles = ["AsyncMethodDef"]
             expr_roles = ["FuncDecorator", "ReturnType", "MethodBody"]
@@ -422,38 +421,38 @@ class VisitorInfo(NodeVisitor):
         what_is_it = self.what_is_it(node)
         args_ret = args['numberOfArgs'] + 1 if have_return or have_ret_annotation else args['numberOfArgs']
         number_of_annotations = args['typeAnnotations'] + 1 if have_ret_annotation else args['typeAnnotations']
-        db_function.numberOfCharacters = len(node.name)
-        db_function.nameConvention = self.name_convention(node.name)
-        db_function.isPrivate = what_is_it["private"]
-        db_function.isMagic = what_is_it["magic"]
-        db_function.bodyCount = len(node.body)
-        db_function.expressionsPct = number_of_body_expr/len(node.body) if len(node.body) > 0 else 0
-        db_function.isAsync = True
-        db_function.numberOfDecorators = len(node.decorator_list)
-        db_function.hasReturnTypeAnnotation = True if node.returns else False
-        db_function.hasDocString = (isinstance(node.body[0],ast.Constant)) and isinstance(node.body[0].value, str)
-        db_function.height = params["depth"]
-        db_function.typeAnnotationsPct = number_of_annotations/args_ret if args_ret > 0 else 0
-        db_function.sourceCode = ast.unparse(node)
-        db_function.expertise_level = params["expertise_level"]
-        db_function.user_id = params["user_id"]
+        db_functiondef.number_of_characters = len(node.name)
+        db_functiondef.name_convention = self.name_convention(node.name)
+        db_functiondef.is_private = what_is_it["private"]
+        db_functiondef.is_magic = what_is_it["magic"]
+        db_functiondef.body_count = len(node.body)
+        db_functiondef.expressions_pct = number_of_body_expr/len(node.body) if len(node.body) > 0 else 0
+        db_functiondef.is_async = True
+        db_functiondef.number_of_decorators = len(node.decorator_list)
+        db_functiondef.has_return_type_annotation = True if node.returns else False
+        db_functiondef.has_doc_string = (isinstance(node.body[0],ast.Constant)) and isinstance(node.body[0].value, str)
+        db_functiondef.height = params["depth"]
+        db_functiondef.type_annotations_pct = number_of_annotations/args_ret if args_ret > 0 else 0
+        db_functiondef.source_code = ast.unparse(node)
+        db_functiondef.expertise_level = params["expertise_level"]
+        db_functiondef.user_id = params["user_id"]
         if is_method:
-            db_method.isClassMethod = what_is_it["classmethod"]
-            db_method.isStaticMethod = what_is_it["static"]
-            db_method.isConstructorMethod = node.name == '__init__'
-            db_method.isAbstractMethod = what_is_it["abstract"]
-            db_method.isProperty = what_is_it["property"]
-            db_method.isWrapper = what_is_it["wrapper"]
-            db_method.isCached = what_is_it["cached"]
+            db_method.is_class_method = what_is_it["classmethod"]
+            db_method.is_static_method = what_is_it["static"]
+            db_method.is_constructor_method = node.name == '__init__'
+            db_method.is_abstract_method = what_is_it["abstract"]
+            db_method.is_property = what_is_it["property"]
+            db_method.is_wrapper = what_is_it["wrapper"]
+            db_method.is_cached = what_is_it["cached"]
             db_method.expertise_level = params["expertise_level"]
             db_method.user_id = params["user_id"]
         ############## VISITOR DB ################
         if is_method:
-            self.visitor_db.visit(node, {'node': db_function, 'db_node': db_node, 'is_method': is_method, 'db_method': db_method})
-            return {'db_method': db_method, 'db_function': db_function, 'args': args, 'typeAnnotations': args["typeAnnotations"], 'depth': depth + 1, 'node_id': db_function.functiondef_id, 'have_return': have_return}
+            self.visitor_db.visit(node, {'node': db_functiondef, 'db_node': db_node, 'is_method': is_method, 'db_method': db_method})
+            return {'db_method': db_method, 'db_function': db_functiondef, 'args': args, 'typeAnnotations': args["typeAnnotations"], 'depth': depth + 1, 'node_id': db_functiondef.functiondef_id, 'have_return': have_return}
         else:
-            self.visitor_db.visit(node, {'node': db_function, 'db_node': db_node, 'is_method': is_method})
-            return {'numberOfParamsRet': args_ret, 'db_function': db_function, 'typeAnnotations': args["typeAnnotations"], 'depth': depth + 1, 'node_id': db_function.functiondef_id}
+            self.visitor_db.visit(node, {'node': db_functiondef, 'db_node': db_node, 'is_method': is_method})
+            return {'numberOfParamsRet': args_ret, 'db_function': db_functiondef, 'typeAnnotations': args["typeAnnotations"], 'depth': depth + 1, 'node_id': db_functiondef.functiondef_id}
         
     def visit_ClassDef(self, node: ast.ClassDef, params: Dict) -> Dict:  
         db_node = db_entities.DBNode()
@@ -514,24 +513,24 @@ class VisitorInfo(NodeVisitor):
                 returns = self.visit(child, self.add_param(child_params, "role", stmt_roles[0]))
                 if isinstance(child,ast.FunctionDef) or isinstance(child,ast.AsyncFunctionDef):
                     number_of_methods += 1
-                    number_of_method_stmt += returns["function"].bodyCount
+                    number_of_method_stmt += returns["function"].body_count
                     number_of_method_params_ret += (returns["args"]["numberOfArgs"])
                     if returns['haveReturn']:
                         number_of_method_params_ret += 1
                     number_of_method_type_annotations += returns["args"]["typeAnnotations"]
-                    if returns["function"].isMagic:
+                    if returns["function"].is_magic:
                         number_of_magic_methods += 1
-                    if returns["function"].isPrivate:
+                    if returns["function"].is_private:
                         number_of_private_methods += 1
-                    if returns["function"].isAsync:
+                    if returns["function"].is_async:
                         number_of_async_methods += 1
-                    if returns["method"].isAbstractMethod:
+                    if returns["method"].is_abstract_method:
                         number_of_abstract_methods += 1
-                    if returns["method"].isClassMethod:
+                    if returns["method"].is_class_method:
                         number_of_class_methods += 1
-                    if returns["method"].isStaticMethod:
+                    if returns["method"].is_static_method:
                         number_of_static_methods += 1
-                    if returns["method"].isProperty:
+                    if returns["method"].is_property:
                         number_of_property_methods += 1
             depth = max(depth, returns["depth"])
         for child in node.decorator_list:
@@ -539,30 +538,30 @@ class VisitorInfo(NodeVisitor):
         for child in node.type_params:
             self.visit(child, child_params)
         ########## ENTITY PROPERTIES ############
-        db_classdef.nameConvention = self.name_convention(node.name)
-        db_classdef.isEnumClass = is_enum
-        db_classdef.numberOfCharacters = len(node.name)
-        db_classdef.numberOfMethods = number_of_methods
-        db_classdef.numberOfDecorators = len(node.decorator_list)
-        db_classdef.numberOfBaseClasses = len(node.bases)
-        db_classdef.hasGenericTypeAnnotations = len(node.type_params) > 0
-        db_classdef.hasDocString = (isinstance(node.body[0],ast.Constant)) and isinstance(node.body[0].value, str)
-        db_classdef.bodyCount = body_count
-        db_classdef.assignmentsPct = assignment_number/body_count if body_count > 0 else 0
-        db_classdef.expressionsPct = expression_number/body_count if body_count > 0 else 0
-        db_classdef.usesMetaclass = metaclass_number > 0
-        db_classdef.numberOfKeyWords = keyword_number
+        db_classdef.name_convention = self.name_convention(node.name)
+        db_classdef.is_enum_class = is_enum
+        db_classdef.number_of_characters = len(node.name)
+        db_classdef.number_of_methods = number_of_methods
+        db_classdef.number_of_decorators = len(node.decorator_list)
+        db_classdef.number_of_base_classes = len(node.bases)
+        db_classdef.has_generic_type_annotations = len(node.type_params) > 0
+        db_classdef.has_doc_string = (isinstance(node.body[0],ast.Constant)) and isinstance(node.body[0].value, str)
+        db_classdef.body_count = body_count
+        db_classdef.assignments_pct = assignment_number/body_count if body_count > 0 else 0
+        db_classdef.expressions_pct = expression_number/body_count if body_count > 0 else 0
+        db_classdef.uses_meta_class = metaclass_number > 0
+        db_classdef.number_of_key_words = keyword_number
         db_classdef.height = params["depth"]
-        db_classdef.averageStmtsMethodBody = number_of_method_stmt/number_of_methods if number_of_methods > 0 else 0
-        db_classdef.typeAnnotationsPct = number_of_method_type_annotations/number_of_method_params_ret if number_of_method_params_ret > 0 else 0
-        db_classdef.privateMethodsPct = number_of_private_methods/number_of_methods if number_of_methods > 0 else 0
-        db_classdef.magicMethodsPct = number_of_magic_methods/number_of_methods if number_of_methods > 0 else 0
-        db_classdef.asyncMethodsPct = number_of_async_methods/number_of_methods if number_of_methods > 0 else 0
-        db_classdef.classMethodsPct = number_of_class_methods/number_of_methods if number_of_methods > 0 else 0
-        db_classdef.staticMethodsPct = number_of_static_methods/number_of_methods if number_of_methods > 0 else 0
-        db_classdef.abstractMethodsPct = number_of_abstract_methods/number_of_methods if number_of_methods > 0 else 0
-        db_classdef.propertyMethodsPct = number_of_property_methods/number_of_methods if number_of_methods > 0 else 0
-        db_classdef.sourceCode = ast.unparse(node)
+        db_classdef.average_stmts_method_body = number_of_method_stmt/number_of_methods if number_of_methods > 0 else 0
+        db_classdef.type_annotations_pct = number_of_method_type_annotations/number_of_method_params_ret if number_of_method_params_ret > 0 else 0
+        db_classdef.private_methods_pct = number_of_private_methods/number_of_methods if number_of_methods > 0 else 0
+        db_classdef.magic_methods_pct = number_of_magic_methods/number_of_methods if number_of_methods > 0 else 0
+        db_classdef.async_methods_pct = number_of_async_methods/number_of_methods if number_of_methods > 0 else 0
+        db_classdef.class_methods_pct = number_of_class_methods/number_of_methods if number_of_methods > 0 else 0
+        db_classdef.static_methods_pct = number_of_static_methods/number_of_methods if number_of_methods > 0 else 0
+        db_classdef.abstract_methods_pct = number_of_abstract_methods/number_of_methods if number_of_methods > 0 else 0
+        db_classdef.property_methods_pct = number_of_property_methods/number_of_methods if number_of_methods > 0 else 0
+        db_classdef.source_code = ast.unparse(node)
         db_classdef.expertise_level = params['expertise_level']
         db_classdef.user_id = params['user_id']
         ############## VISITOR DB ################
@@ -582,7 +581,7 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         db_stmt.parent = params["parent"].category
         ############# ROLES ######################
-        db_stmt.statementRole = params["role"]
+        db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id, "role": "Return"}
         ########## ENTITY PROPERTIES ############
@@ -597,9 +596,9 @@ class VisitorInfo(NodeVisitor):
             db_stmt.first_child_id = returns["id"]
         else:
             db_stmt.depth = 0
-        db_stmt.sourceCode = ast.unparse(node)
-        db_stmt.hasOrElse = None
-        db_stmt.bodySize = None
+        db_stmt.source_code = ast.unparse(node)
+        db_stmt.has_or_else = None
+        db_stmt.body_size = None
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
@@ -618,7 +617,7 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         db_stmt.parent = params["parent"].category
         ############# ROLES ######################
-        db_stmt.statementRole = params["role"]
+        db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id, "role": "Delete"}
         ########## ENTITY PROPERTIES ############
@@ -645,9 +644,9 @@ class VisitorInfo(NodeVisitor):
         db_stmt.first_child_id = first_child_id
         db_stmt.second_child_id = second_child_id
         db_stmt.third_child_id = third_child_id
-        db_stmt.sourceCode = ast.unparse(node)
-        db_stmt.hasOrElse = None
-        db_stmt.bodySize = None
+        db_stmt.source_code = ast.unparse(node)
+        db_stmt.has_or_else = None
+        db_stmt.body_size = None
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
@@ -666,7 +665,7 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         db_stmt.parent = params["parent"].category
         ############# ROLES ######################
-        db_stmt.statementRole = params["role"]
+        db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
         roles = ["AssignLHS", "AssignRHS"]
@@ -696,9 +695,9 @@ class VisitorInfo(NodeVisitor):
         db_stmt.first_child_id = first_child_id
         db_stmt.second_child_id = second_child_id
         db_stmt.third_child_id = third_child_id
-        db_stmt.sourceCode = ast.unparse(node)
-        db_stmt.hasOrElse = None
-        db_stmt.bodySize = None
+        db_stmt.source_code = ast.unparse(node)
+        db_stmt.has_or_else = None
+        db_stmt.body_size = None
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
@@ -717,7 +716,7 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         db_stmt.parent = params["parent"].category
         ############# ROLES ######################
-        db_stmt.statementRole = params["role"]
+        db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
         roles = ["TypeAliasLHS", "TypeAliasRHS"]
@@ -732,9 +731,9 @@ class VisitorInfo(NodeVisitor):
         db_stmt.depth = max(returns[0]["depth"], returns[1]["depth"])
         db_stmt.first_child_id = returns[0]["id"]
         db_stmt.second_child_id = returns[1]["id"]
-        db_stmt.sourceCode = ast.unparse(node)
-        db_stmt.hasOrElse = None
-        db_stmt.bodySize = None
+        db_stmt.source_code = ast.unparse(node)
+        db_stmt.has_or_else = None
+        db_stmt.body_size = None
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
@@ -753,7 +752,7 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         db_stmt.parent = params["parent"].category
         ############# ROLES ######################
-        db_stmt.statementRole = params["role"]
+        db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
         roles = ["AugmentedAssigmentLHS", "AugmentedAssigmentRHS"]
@@ -766,9 +765,9 @@ class VisitorInfo(NodeVisitor):
         db_stmt.depth = max(returns[0]["depth"], returns[1]["depth"])
         db_stmt.first_child_id = returns[0]["id"]
         db_stmt.second_child_id = returns[1]["id"]
-        db_stmt.sourceCode = ast.unparse(node)
-        db_stmt.hasOrElse = None
-        db_stmt.bodySize = None
+        db_stmt.source_code = ast.unparse(node)
+        db_stmt.has_or_else = None
+        db_stmt.body_size = None
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
@@ -787,7 +786,7 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         db_stmt.parent = params["parent"].category
         ############# ROLES ######################
-        db_stmt.statementRole = params["role"]
+        db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
         roles = ["VarDefVarName", "VarDefType", "VarDefInitValue"]
@@ -805,9 +804,9 @@ class VisitorInfo(NodeVisitor):
         if len(returns) > 2:
             db_stmt.third_child_id = returns[2]["id"]
             db_stmt.depth = max(db_stmt.depth, returns[2]["depth"])
-        db_stmt.sourceCode = ast.unparse(node)
-        db_stmt.hasOrElse = None
-        db_stmt.bodySize = None
+        db_stmt.source_code = ast.unparse(node)
+        db_stmt.has_or_else = None
+        db_stmt.body_size = None
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
@@ -826,13 +825,13 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         db_stmt.parent = params["parent"].category
         ############# ROLES ######################
-        db_stmt.statementRole = params["role"]
+        db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
         stmt_roles = ["For", "ForElse"]
         expr_roles = ["ForElement", "ForEnumerable", "ForBody", "ForElseBody"]
         ########## ENTITY PROPERTIES ############
-        db_stmt.hasOrElse = False
+        db_stmt.has_or_else = False
         depth = 0
         first_child_id = None
         second_child_id = None
@@ -877,9 +876,9 @@ class VisitorInfo(NodeVisitor):
         db_stmt.first_child_id = first_child_id
         db_stmt.second_child_id = second_child_id
         db_stmt.third_child_id = third_child_id
-        db_stmt.sourceCode = ast.unparse(node)
-        db_stmt.bodySize = index
-        db_stmt.hasOrElse = has_or_else
+        db_stmt.source_code = ast.unparse(node)
+        db_stmt.body_size = index
+        db_stmt.has_or_else = has_or_else
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
@@ -898,13 +897,13 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         db_stmt.parent = params["parent"].category
         ############# ROLES ######################
-        db_stmt.statementRole = params["role"]
+        db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
-        stmtRoles = ["AsyncFor", "AsyncForElse"]
-        exprRoles = ["AsyncForElement", "AsyncForEnumerable", "AsyncForBody", "AsyncForElseBody"]
+        stmt_roles = ["AsyncFor", "AsyncForElse"]
+        expr_roles = ["AsyncForElement", "AsyncForEnumerable", "AsyncForBody", "AsyncForElseBody"]
         ########## ENTITY PROPERTIES ############
-        db_stmt.hasOrElse = False
+        db_stmt.has_or_else = False
         depth = 0
         first_child_id = None
         second_child_id = None
@@ -913,13 +912,13 @@ class VisitorInfo(NodeVisitor):
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
-        returns_target = self.visit(node.target, self.add_param(child_params, 'role', exprRoles[0]))
-        returns_iter = self.visit(node.iter, self.add_param(child_params, 'role', exprRoles[1]))
+        returns_target = self.visit(node.target, self.add_param(child_params, 'role', expr_roles[0]))
+        returns_iter = self.visit(node.iter, self.add_param(child_params, 'role', expr_roles[1]))
         for child in node.body:
             if isinstance(child, ast.Expr):
-                returns.append(self.visit(child, self.add_param(child_params, "role", exprRoles[2])))
+                returns.append(self.visit(child, self.add_param(child_params, "role", expr_roles[2])))
             else:
-                returns.append(self.visit(child, self.add_param(child_params, "role", stmtRoles[0])))
+                returns.append(self.visit(child, self.add_param(child_params, "role", stmt_roles[0])))
             depth = max(depth, returns[index]["depth"])
             if index == 0:
                 first_child_id = returns[index]["id"]
@@ -931,9 +930,9 @@ class VisitorInfo(NodeVisitor):
         for child in node.orelse:
             has_or_else = True
             if isinstance(child, ast.Expr):
-                returns.append(self.visit(child, self.add_param(child_params, "role", exprRoles[3])))
+                returns.append(self.visit(child, self.add_param(child_params, "role", expr_roles[3])))
             else:
-                returns.append(self.visit(child, self.add_param(child_params, "role", stmtRoles[1])))
+                returns.append(self.visit(child, self.add_param(child_params, "role", stmt_roles[1])))
             depth = max(depth, returns[index]["depth"])
             if index == 0:
                 first_child_id = returns[index]["id"]
@@ -949,9 +948,9 @@ class VisitorInfo(NodeVisitor):
         db_stmt.first_child_id = first_child_id
         db_stmt.second_child_id = second_child_id
         db_stmt.third_child_id = third_child_id
-        db_stmt.sourceCode = ast.unparse(node)
-        db_stmt.bodySize = index
-        db_stmt.hasOrElse = has_or_else
+        db_stmt.source_code = ast.unparse(node)
+        db_stmt.body_size = index
+        db_stmt.has_or_else = has_or_else
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
@@ -970,13 +969,13 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         db_stmt.parent = params["parent"].category
         ############# ROLES ######################
-        db_stmt.statementRole = params["role"]
+        db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
         stmt_roles = ["While", "WhileElse"]
         expr_roles = ["WhileCondition", "WhileBody", "WhileElseBody"]
         ########## ENTITY PROPERTIES ############
-        db_stmt.hasOrElse = False
+        db_stmt.has_or_else = False
         depth = 0
         first_child_id = None
         second_child_id = None
@@ -1019,9 +1018,9 @@ class VisitorInfo(NodeVisitor):
         db_stmt.first_child_id = first_child_id
         db_stmt.second_child_id = second_child_id
         db_stmt.third_child_id = third_child_id
-        db_stmt.sourceCode = ast.unparse(node)
-        db_stmt.bodySize = index
-        db_stmt.hasOrElse = has_or_else
+        db_stmt.source_code = ast.unparse(node)
+        db_stmt.body_size = index
+        db_stmt.has_or_else = has_or_else
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
@@ -1040,13 +1039,13 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         db_stmt.parent = params["parent"].category
         ############# ROLES ######################
-        db_stmt.statementRole = params["role"]
+        db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
-        stmtRoles = ["If", "IfElse"]
-        exprRoles = ["IfCondition", "IfBody", "IfElseBody"]
+        stmt_roles = ["If", "IfElse"]
+        expr_roles = ["IfCondition", "IfBody", "IfElseBody"]
         ########## ENTITY PROPERTIES ############
-        db_stmt.hasOrElse = False
+        db_stmt.has_or_else = False
         depth = 0
         first_child_id = None
         second_child_id = None
@@ -1055,12 +1054,12 @@ class VisitorInfo(NodeVisitor):
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
-        returns_test = self.visit(node.test, self.add_param(child_params, 'role', exprRoles[0]))
+        returns_test = self.visit(node.test, self.add_param(child_params, 'role', expr_roles[0]))
         for child in node.body:
             if isinstance(child, ast.Expr):
-                returns.append(self.visit(child, self.add_param(child_params, "role", exprRoles[1])))
+                returns.append(self.visit(child, self.add_param(child_params, "role", expr_roles[1])))
             else:
-                returns.append(self.visit(child, self.add_param(child_params, "role", stmtRoles[0])))
+                returns.append(self.visit(child, self.add_param(child_params, "role", stmt_roles[0])))
             
                 depth = max(depth, returns[index]["depth"])
             if index == 0:
@@ -1074,9 +1073,9 @@ class VisitorInfo(NodeVisitor):
         for child in node.orelse:
             has_or_else = True
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, self.add_param(child_params, "role", exprRoles[2])))
+                returns.append(self.visit(child, self.add_param(child_params, "role", expr_roles[2])))
             else:
-                returns.append(self.visit(child, self.add_param(child_params, "role", stmtRoles[1])))
+                returns.append(self.visit(child, self.add_param(child_params, "role", stmt_roles[1])))
             depth = max(depth, returns[index]["depth"])
             if index == 0:
                 first_child_id = returns[index]["id"]
@@ -1091,9 +1090,9 @@ class VisitorInfo(NodeVisitor):
         db_stmt.first_child_id = first_child_id
         db_stmt.second_child_id = second_child_id
         db_stmt.third_child_id = third_child_id
-        db_stmt.sourceCode = ast.unparse(node)
-        db_stmt.bodySize = body_size
-        db_stmt.hasOrElse = has_or_else
+        db_stmt.source_code = ast.unparse(node)
+        db_stmt.body_size = body_size
+        db_stmt.has_or_else = has_or_else
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
@@ -1112,7 +1111,7 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         db_stmt.parent = params["parent"].category
         ############# ROLES ######################
-        db_stmt.statementRole = params["role"]
+        db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
         stmt_roles = ["With"]
@@ -1143,13 +1142,13 @@ class VisitorInfo(NodeVisitor):
         ########## ENTITY PROPERTIES ############
         db_stmt.height = params["depth"]
         db_stmt.height = params["depth"]
-        db_stmt.hasOrElse = None
+        db_stmt.has_or_else = None
         db_stmt.depth = depth
         db_stmt.first_child_id = first_child_id
         db_stmt.second_child_id = second_child_id
         db_stmt.third_child_id = third_child_id
-        db_stmt.sourceCode = ast.unparse(node)
-        db_stmt.bodySize = index
+        db_stmt.source_code = ast.unparse(node)
+        db_stmt.body_size = index
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
@@ -1169,7 +1168,7 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         db_stmt.parent = params["parent"].category
         ############# ROLES ######################
-        db_stmt.statementRole = params["role"]
+        db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
         stmt_roles = ["AsyncWith"]
@@ -1196,13 +1195,13 @@ class VisitorInfo(NodeVisitor):
             self.visit(child, self.add_param(self.add_param(child_params, "role_ctx", expr_roles[0]), 'role_vars', expr_roles[1]))
         ########## ENTITY PROPERTIES ############
         db_stmt.height = params["depth"]
-        db_stmt.hasOrElse = None
+        db_stmt.has_or_else = None
         db_stmt.depth = depth
         db_stmt.first_child_id = first_child_id
         db_stmt.second_child_id = second_child_id
         db_stmt.third_child_id = third_child_id
-        db_stmt.sourceCode = ast.unparse(node)
-        db_stmt.bodySize = index
+        db_stmt.source_code = ast.unparse(node)
+        db_stmt.body_size = index
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
@@ -1222,15 +1221,15 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         db_stmt.parent = params["parent"].category
         ############# ROLES ######################
-        db_stmt.statementRole = params["role"]
+        db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
-        exprRoles = ["MatchCondition"]
+        expr_roles = ["MatchCondition"]
         ############## PROPAGAR VISIT ############
         returns = []
         depth = 0
         index = 0
-        subject = self.visit(node.subject, self.add_param(child_params, 'role', exprRoles[0]))
+        subject = self.visit(node.subject, self.add_param(child_params, 'role', expr_roles[0]))
         for child in node.cases:
             returns.append(self.visit(child, child_params))
             depth = max(depth, returns[index]["depth"])
@@ -1238,10 +1237,10 @@ class VisitorInfo(NodeVisitor):
         ########## ENTITY PROPERTIES ############
         db_stmt.height = params["depth"]
         db_stmt.first_child_id = subject["id"]
-        db_stmt.hasOrElse = None
+        db_stmt.has_or_else = None
         db_stmt.depth = max(depth,subject["depth"])
-        db_stmt.sourceCode = ast.unparse(node)
-        db_stmt.bodySize = None
+        db_stmt.source_code = ast.unparse(node)
+        db_stmt.body_size = None
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         #-----------------------------------------
@@ -1265,19 +1264,19 @@ class VisitorInfo(NodeVisitor):
             number_of_cases_sequence += returns[i]["matchSequence"]
             number_of_cases_star += returns[i]["matchStar"]
             number_of_guards += returns[i]["guards"]
-            body_total_count += returns[i]["bodyCount"]
+            body_total_count += returns[i]["body_count"]
         total_cases = number_of_cases_as + number_of_cases_or + number_of_cases_mapping + number_of_cases_sequence + number_of_cases_singleton + number_of_cases_star + number_of_cases_class + number_of_cases_value
         case.numberOfCases = total_cases
         case.guards = number_of_guards/total_cases if total_cases > 0 else 0
-        case.averageBodyCount = body_total_count/index if index > 0 else 0
-        case.averageMatchValue = number_of_cases_value/total_cases if total_cases > 0 else 0
-        case.averageMatchSingleton = number_of_cases_singleton/total_cases if total_cases > 0 else 0
-        case.averageMatchSequence = number_of_cases_sequence/total_cases if total_cases > 0 else 0
-        case.averageMatchMapping = number_of_cases_mapping/total_cases if total_cases > 0 else 0
-        case.averageMatchClass = number_of_cases_class/total_cases if total_cases > 0 else 0
-        case.averageMatchStar = number_of_cases_star/total_cases if total_cases > 0 else 0
-        case.averageMatchAs = number_of_cases_as/total_cases if total_cases > 0 else 0
-        case.averageMatchOr = number_of_cases_or/total_cases if total_cases > 0 else 0
+        case.average_body_count = body_total_count/index if index > 0 else 0
+        case.average_match_value = number_of_cases_value/total_cases if total_cases > 0 else 0
+        case.average_match_singleton = number_of_cases_singleton/total_cases if total_cases > 0 else 0
+        case.average_match_sequence = number_of_cases_sequence/total_cases if total_cases > 0 else 0
+        case.average_match_mapping = number_of_cases_mapping/total_cases if total_cases > 0 else 0
+        case.average_match_class = number_of_cases_class/total_cases if total_cases > 0 else 0
+        case.average_match_star = number_of_cases_star/total_cases if total_cases > 0 else 0
+        case.average_match_as = number_of_cases_as/total_cases if total_cases > 0 else 0
+        case.average_match_or = number_of_cases_or/total_cases if total_cases > 0 else 0
         case.statement_id = node_id
         case.expertise_level = params["expertise_level"]
         case.user_id = params["user_id"]
@@ -1297,7 +1296,7 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         db_stmt.parent = params["parent"].category
         ############# ROLES ######################
-        db_stmt.statementRole = params["role"]
+        db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
         expr_roles = ["Raise", "RaiseFrom"]
@@ -1311,7 +1310,7 @@ class VisitorInfo(NodeVisitor):
             cause = self.visit(node.cause, self.add_param(child_params, 'role', expr_roles[1]))
         ########## ENTITY PROPERTIES ############
         db_stmt.height = params["depth"]
-        db_stmt.hasOrElse = None
+        db_stmt.has_or_else = None
         if exc:
             db_stmt.first_child_id = exc["id"]
             if cause:
@@ -1325,8 +1324,8 @@ class VisitorInfo(NodeVisitor):
                 db_stmt.depth = cause["depth"]
             else:
                 db_stmt.depth = 0
-        db_stmt.sourceCode = ast.unparse(node)
-        db_stmt.bodySize = None
+        db_stmt.source_code = ast.unparse(node)
+        db_stmt.body_size = None
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         ############## VISITOR DB ################
@@ -1346,7 +1345,7 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         db_stmt.parent = params["parent"].category
         ############# ROLES ######################
-        db_stmt.statementRole = params["role"]
+        db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
         stmt_roles = ["Try", "TryElse", "TryFinally", "TryHandler"]
@@ -1418,27 +1417,27 @@ class VisitorInfo(NodeVisitor):
             index += 1
         ########## ENTITY PROPERTIES ############
         db_stmt.height = params["depth"]
-        db_stmt.hasOrElse = has_or_else
+        db_stmt.has_or_else = has_or_else
         db_stmt.depth = depth
         db_stmt.first_child_id = first_child_id
         db_stmt.second_child_id = second_child_id
         db_stmt.third_child_id = third_child_id
-        db_stmt.sourceCode = ast.unparse(node)
-        db_stmt.bodySize = index
+        db_stmt.source_code = ast.unparse(node)
+        db_stmt.body_size = index
         db_stmt.expertise_level = params["expertise_level"]
         db_stmt.user_id = params["user_id"]
         #--------------- handler -----------------
-        db_handler.numberOfHandlers = h_index
+        db_handler.number_of_handlers = h_index
         if node.finalbody:
-            db_handler.hasFinally = True
+            db_handler.has_finally = True
         else:
-            db_handler.hasFinally = False
-        db_handler.hasCatchAll = False
+            db_handler.has_finally = False
+        db_handler.has_catch_all = False
         for child in handlers:
-            if child["isCatchAll"]:
-                db_handler.hasCatchAll = True
-        db_handler.averageBodyCount = handlers_bodies/h_index if h_index > 0 else 0
-        db_handler.hasStar = False
+            if child["is_catch_all"]:
+                db_handler.has_catch_all = True
+        db_handler.average_body_count = handlers_bodies/h_index if h_index > 0 else 0
+        db_handler.has_star = False
         db_handler.expertise_level = params["expertise_level"]
         db_handler.user_id = params["user_id"]
         ############## VISITOR DB ################
@@ -1448,27 +1447,27 @@ class VisitorInfo(NodeVisitor):
     def visit_TryStar(self, node: ast.TryStar, params: Dict) -> Dict:  
         db_node = db_entities.DBNode()
         stmt = db_entities.DBStatement()
-        handler = db_entities.DBHandler()
+        db_handler = db_entities.DBHandler()
         ############ IDS #########################
         id = self.id_manager.get_id()
-        db_node.node_id = stmt.statement_id = handler.statement_id = id
+        db_node.node_id = stmt.statement_id = db_handler.statement_id = id
         db_node.parent_id = stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
         stmt.category = "Try"
         db_node.parent_table = params["parent"].table
         stmt.parent = params["parent"].category
         ############# ROLES ######################
-        stmt.statementRole = params["role"]
+        stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": stmt, "depth": params["depth"] + 1, "parent_id": id}
-        stmtRoles = ["Try", "TryElse", "TryFinally", "TryHandlerStar"]
-        exprRoles = ["TryBody", "TryElse", "FinallyBody"]
+        stmt_roles = ["Try", "TryElse", "TryFinally", "TryHandlerStar"]
+        expr_roles = ["TryBody", "TryElse", "FinallyBody"]
         ########## ENTITY PROPERTIES ############
         depth = 0
         first_child_id = None
         second_child_id = None
         third_child_id = None
-        hasOrElse = False
+        has_or_else = False
         ############## PROPAGAR VISIT ############
         returns = []
         handlers = []
@@ -1477,16 +1476,16 @@ class VisitorInfo(NodeVisitor):
         handlersBodies = 0
         for child in node.body:
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, self.add_param(child_params, "role", exprRoles[0])))
+                returns.append(self.visit(child, self.add_param(child_params, "role", expr_roles[0])))
             else:
-                returns.append(self.visit(child, self.add_param(child_params, "role", stmtRoles[0])))
+                returns.append(self.visit(child, self.add_param(child_params, "role", stmt_roles[0])))
             depth = max(depth, returns[index]["depth"])
             if(index == 0): first_child_id = returns[index]["id"]
             if(index == 1): second_child_id = returns[index]["id"]
             if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         for child in node.handlers:
-            handlers.append(self.visit(child, self.add_param(self.add_param(child_params, "role", stmtRoles[3]), 'handler', handler)))
+            handlers.append(self.visit(child, self.add_param(self.add_param(child_params, "role", stmt_roles[3]), 'handler', db_handler)))
             depth = max(depth, handlers[hindex]["depth"])
             hindex += 1
             for id in handlers[hindex]['child_ids']:
@@ -1497,20 +1496,20 @@ class VisitorInfo(NodeVisitor):
                 index += 1
         for child in node.orelse:
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, self.add_param(child_params, "role", exprRoles[1])))
+                returns.append(self.visit(child, self.add_param(child_params, "role", expr_roles[1])))
             else:
-                returns.append(self.visit(child, self.add_param(child_params, "role", stmtRoles[1])))
+                returns.append(self.visit(child, self.add_param(child_params, "role", stmt_roles[1])))
             depth = max(depth, returns[index]["depth"])
             if(index == 0): first_child_id = returns[index]["id"]
             if(index == 1): second_child_id = returns[index]["id"]
             if(index == 2): third_child_id = returns[index]["id"]
             index += 1
-            hasOrElse = True
+            has_or_else = True
         for child in node.finalbody:
             if(isinstance(child,ast.Expr)):
-                returns.append(self.visit(child, self.add_param(child_params, "role", exprRoles[2])))
+                returns.append(self.visit(child, self.add_param(child_params, "role", expr_roles[2])))
             else:
-                returns.append(self.visit(child, self.add_param(child_params, "role", stmtRoles[2])))
+                returns.append(self.visit(child, self.add_param(child_params, "role", stmt_roles[2])))
             depth = max(depth, returns[index]["depth"])
             if(index == 0): first_child_id = returns[index]["id"]
             if(index == 1): second_child_id = returns[index]["id"]
@@ -1518,30 +1517,30 @@ class VisitorInfo(NodeVisitor):
             index += 1
         ########## ENTITY PROPERTIES ############
         stmt.height = params["depth"]
-        stmt.hasOrElse = hasOrElse
+        stmt.has_or_else = has_or_else
         stmt.depth = depth
         stmt.first_child_id = first_child_id
         stmt.second_child_id = second_child_id
         stmt.third_child_id = third_child_id
-        stmt.sourceCode = ast.unparse(node)
-        stmt.bodySize = index
+        stmt.source_code = ast.unparse(node)
+        stmt.body_size = index
         stmt.expertise_level = params['expertise_level']
         stmt.user_id = params['user_id']
         #--------------- handler -----------------
-        handler.numberOfHandlers = hindex
+        db_handler.number_of_handlers = hindex
         if(node.finalbody):
-            handler.hasFinally = True
+            db_handler.has_finally = True
         else:
-            handler.hasFinally = False
-        handler.hasCatchAll = False
+            db_handler.has_finally = False
+        db_handler.has_catch_all = False
         for child in handlers:
-            if(child.isCatchAll): handler.hasCatchAll = True
-        handler.averageBodyCount = handlersBodies/hindex if hindex > 0 else 0
-        handler.hasStar = True
-        handler.expertise_level = params['expertise_level']
-        handler.user_id = params['user_id']
+            if(child.is_catch_all): db_handler.has_catch_all = True
+        db_handler.average_body_count = handlersBodies/hindex if hindex > 0 else 0
+        db_handler.has_star = True
+        db_handler.expertise_level = params['expertise_level']
+        db_handler.user_id = params['user_id']
         ############## VISITOR DB ################
-        self.visitor_db.visit(node, {'node': stmt, 'db_node': db_node, 'handler': handler})
+        self.visitor_db.visit(node, {'node': stmt, 'db_node': db_node, 'handler': db_handler})
         return {'id': id, 'depth': stmt.depth + 1}
 
     
@@ -1557,25 +1556,25 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         stmt.parent = params["parent"].category
         ############# ROLES ######################
-        stmt.statementRole = params["role"]
+        stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": stmt, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["AssertCondition", "AssertMessage"]
+        expr_roles = ["AssertCondition", "AssertMessage"]
         ########## ENTITY PROPERTIES ############
         msg = None
         ############## PROPAGAR VISIT ############
-        test = self.visit(node.test, self.add_param(child_params, 'role', exprRoles[0]))
-        if(node.msg): msg = self.visit(node.msg, self.add_param(child_params, 'role', exprRoles[1]))
+        test = self.visit(node.test, self.add_param(child_params, 'role', expr_roles[0]))
+        if(node.msg): msg = self.visit(node.msg, self.add_param(child_params, 'role', expr_roles[1]))
         ########## ENTITY PROPERTIES ############
         stmt.height = params["depth"]
-        stmt.hasOrElse = None
+        stmt.has_or_else = None
         stmt.first_child_id = test["id"]
         stmt.depth = test["depth"]
         if(msg):
             stmt.second_child_id = msg["id"]  
             stmt.depth = max(msg["depth"], stmt.depth)
-        stmt.sourceCode = ast.unparse(node)
-        stmt.bodySize = None
+        stmt.source_code = ast.unparse(node)
+        stmt.body_size = None
         stmt.expertise_level = params['expertise_level']
         stmt.user_id = params['user_id']
         ############## VISITOR DB ################
@@ -1595,13 +1594,13 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         stmt.parent = params["parent"].category
         ############# ROLES ######################
-        stmt.statementRole = params["role"]
+        stmt.statement_role = params["role"]
         ########## ENTITY PROPERTIES ############
         stmt.height = params["depth"]
-        stmt.hasOrElse = None
+        stmt.has_or_else = None
         stmt.depth = 0
-        stmt.sourceCode = ast.unparse(node)
-        stmt.bodySize = None
+        stmt.source_code = ast.unparse(node)
+        stmt.body_size = None
         stmt.expertise_level = params['expertise_level']
         stmt.user_id = params['user_id']
         ############## VISITOR DB ################
@@ -1621,13 +1620,13 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         stmt.parent = params["parent"].category
         ############# ROLES ######################
-        stmt.statementRole = params["role"]
+        stmt.statement_role = params["role"]
         ########## ENTITY PROPERTIES ############
         stmt.height = params["depth"]
-        stmt.hasOrElse = None
+        stmt.has_or_else = None
         stmt.depth = 0
-        stmt.sourceCode = ast.unparse(node)
-        stmt.bodySize = None
+        stmt.source_code = ast.unparse(node)
+        stmt.body_size = None
         stmt.expertise_level = params['expertise_level']
         stmt.user_id = params['user_id']
         ############## VISITOR DB ################
@@ -1647,13 +1646,13 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         stmt.parent = params["parent"].category
         ############# ROLES ######################
-        stmt.statementRole = params["role"]
+        stmt.statement_role = params["role"]
         ########## ENTITY PROPERTIES ############
         stmt.height = params["depth"]
-        stmt.hasOrElse = None
+        stmt.has_or_else = None
         stmt.depth = 0
-        stmt.sourceCode = ast.unparse(node)
-        stmt.bodySize = None
+        stmt.source_code = ast.unparse(node)
+        stmt.body_size = None
         stmt.expertise_level = params['expertise_level']
         stmt.user_id = params['user_id']
         ############## VISITOR DB ################
@@ -1673,13 +1672,13 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         stmt.parent = params["parent"].category
         ############# ROLES ######################
-        stmt.statementRole = params["role"]
+        stmt.statement_role = params["role"]
         ########## ENTITY PROPERTIES ############
         stmt.height = params["depth"]
-        stmt.hasOrElse = None
+        stmt.has_or_else = None
         stmt.depth = 0
-        stmt.sourceCode = ast.unparse(node)
-        stmt.bodySize = None
+        stmt.source_code = ast.unparse(node)
+        stmt.body_size = None
         stmt.expertise_level = params['expertise_level']
         stmt.user_id = params['user_id']
         ############## VISITOR DB ################
@@ -1699,13 +1698,13 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         stmt.parent = params["parent"].category
         ############# ROLES ######################
-        stmt.statementRole = params["role"]
+        stmt.statement_role = params["role"]
         ########## ENTITY PROPERTIES ############
         stmt.height = params["depth"]
-        stmt.hasOrElse = None
+        stmt.has_or_else = None
         stmt.depth = 0
-        stmt.sourceCode = ast.unparse(node)
-        stmt.bodySize = None
+        stmt.source_code = ast.unparse(node)
+        stmt.body_size = None
         stmt.expertise_level = params['expertise_level']
         stmt.user_id = params['user_id']
         ############## VISITOR DB ################
@@ -1727,13 +1726,13 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         stmt.parent = params["parent"].category
         ############# ROLES ######################
-        stmt.statementRole = params["role"]
+        stmt.statement_role = params["role"]
         ########## ENTITY PROPERTIES ############
         stmt.height = params["depth"]
-        stmt.hasOrElse = None
+        stmt.has_or_else = None
         stmt.depth = 0
-        stmt.sourceCode = ast.unparse(node)
-        stmt.bodySize = None
+        stmt.source_code = ast.unparse(node)
+        stmt.body_size = None
         stmt.expertise_level = params['expertise_level']
         stmt.user_id = params['user_id']
         asnames = 0
@@ -1756,13 +1755,13 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         stmt.parent = params["parent"].category
         ############# ROLES ######################
-        stmt.statementRole = params["role"]
+        stmt.statement_role = params["role"]
         ########## ENTITY PROPERTIES ############
         stmt.height = params["depth"]
-        stmt.hasOrElse = None
+        stmt.has_or_else = None
         stmt.depth = 0
-        stmt.sourceCode = ast.unparse(node)
-        stmt.bodySize = None
+        stmt.source_code = ast.unparse(node)
+        stmt.body_size = None
         stmt.expertise_level = params['expertise_level']
         stmt.user_id = params['user_id']
         asnames = 0
@@ -1786,10 +1785,10 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["Logical"]
+        expr_roles = ["Logical"]
         ########## ENTITY PROPERTIES ############
         depth = 0
         first_child_category = None
@@ -1805,7 +1804,7 @@ class VisitorInfo(NodeVisitor):
         index = 0
         self.visit(node.op, child_params)
         for child in node.values:
-            returns.append(self.visit(child, self.add_param(child_params, 'role', exprRoles[0])))
+            returns.append(self.visit(child, self.add_param(child_params, 'role', expr_roles[0])))
             depth = max(depth, returns[index]["depth"])
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
@@ -1813,7 +1812,7 @@ class VisitorInfo(NodeVisitor):
             if(index == 3): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
             index += 1
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = first_child_category
         expr.second_child_category = second_child_category
@@ -1843,15 +1842,15 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["AssignExpLHS", "AssignExpRHS"]
+        expr_roles = ["AssignExpLHS", "AssignExpRHS"]
         ############## PROPAGAR VISIT ############
-        target = self.visit(node.target, self.add_param(child_params, 'role', exprRoles[0]))
-        value = self.visit(node.value, self.add_param(child_params, 'role', exprRoles[1]))
+        target = self.visit(node.target, self.add_param(child_params, 'role', expr_roles[0]))
+        value = self.visit(node.value, self.add_param(child_params, 'role', expr_roles[1]))
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = target["category"]
         expr.second_child_category = value["category"]
@@ -1877,22 +1876,22 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["Arithmetic", "Shift", "Pow", "MatMult", "BWLogical"]
+        expr_roles = ["Arithmetic", "Shift", "Pow", "MatMult", "BWLogical"]
         ############## PROPAGAR VISIT ############
         self.visit(node.op, child_params)
         match node.op:
-            case ast.MatMult: role = exprRoles[3]
-            case ast.LShift, ast.RShift: role = exprRoles[1]
-            case ast.Pow: role = exprRoles[2]
-            case ast.BitAnd, ast.BitOr, ast.BitXor: role = exprRoles[4]
-            case default: role = exprRoles[0]
+            case ast.MatMult: role = expr_roles[3]
+            case ast.LShift, ast.RShift: role = expr_roles[1]
+            case ast.Pow: role = expr_roles[2]
+            case ast.BitAnd, ast.BitOr, ast.BitXor: role = expr_roles[4]
+            case default: role = expr_roles[0]
         left = self.visit(node.left, self.add_param(child_params, 'role', role))
         right = self.visit(node.right, self.add_param(child_params, 'role', role))
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = left["category"]
         expr.second_child_category = right["category"]
@@ -1918,15 +1917,15 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["Arithmetic"]
+        expr_roles = ["Arithmetic"]
         ############## PROPAGAR VISIT ############
         self.visit(node.op, child_params)
-        operand = self.visit(node.operand, self.add_param(child_params, 'role', exprRoles[0]))
+        operand = self.visit(node.operand, self.add_param(child_params, 'role', expr_roles[0]))
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = operand["category"]
         expr.first_child_id = operand["id"]
@@ -1950,15 +1949,15 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["LambdaBody"]
+        expr_roles = ["LambdaBody"]
         ############## PROPAGAR VISIT ############
         args = self.visit(node.args, self.add_param(self.add_param(child_params, "params_id", id), "role", "LambdaParams"))
-        aux = self.visit(node.body, self.add_param(child_params, 'role', exprRoles[0]))
+        aux = self.visit(node.body, self.add_param(child_params, 'role', expr_roles[0]))
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = aux["category"]
         expr.first_child_id = aux["id"]
@@ -1982,16 +1981,16 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############ PARAMS ######################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["TernaryCondition", "TernaryIfBody", "TernaryElseBody"]
+        expr_roles = ["TernaryCondition", "TernaryIfBody", "TernaryElseBody"]
         ############## PROPAGAR VISIT ############
-        test = self.visit(node.test, self.add_param(child_params, 'role', exprRoles[0]))
-        body = self.visit(node.body, self.add_param(child_params, 'role', exprRoles[1]))
-        orelse = self.visit(node.orelse, self.add_param(child_params, 'role', exprRoles[2]))
+        test = self.visit(node.test, self.add_param(child_params, 'role', expr_roles[0]))
+        body = self.visit(node.body, self.add_param(child_params, 'role', expr_roles[1]))
+        orelse = self.visit(node.orelse, self.add_param(child_params, 'role', expr_roles[2]))
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = test["category"]
         expr.second_child_category = body["category"]
@@ -2022,10 +2021,10 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["ComprenhensionElement"]
+        expr_roles = ["ComprenhensionElement"]
         ########## ENTITY PROPERTIES ############
         depth = 0
         second_child_category = None
@@ -2035,7 +2034,7 @@ class VisitorInfo(NodeVisitor):
         third_child_id = None
         fourth_child_id = None
         numOfIfs = 0
-        isAsync = False
+        is_async = False
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
@@ -2046,11 +2045,11 @@ class VisitorInfo(NodeVisitor):
             if(index == 2): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
             depth = max(depth, returns[index]["depth"])
             numOfIfs += len(child.ifs)
-            if(child.is_async): isAsync = True
+            if(child.is_async): is_async = True
             index += 1
-        elt = self.visit(node.elt, self.add_param(child_params, 'role', exprRoles[0]))
+        elt = self.visit(node.elt, self.add_param(child_params, 'role', expr_roles[0]))
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = elt["category"]
         expr.second_child_category = second_child_category
@@ -2064,9 +2063,9 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         #--------------- COMP --------------------
-        comp.numberOfIfs = numOfIfs
-        comp.numberOfGenerators = len(node.generators)
-        comp.isAsync = isAsync
+        comp.number_of_ifs = numOfIfs
+        comp.number_of_generators = len(node.generators)
+        comp.is_async = is_async
         comp.expertise_level = params['expertise_level']
         comp.user_id = params['user_id']
         ############## VISITOR DB ################
@@ -2087,10 +2086,10 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["ComprenhensionElement"]
+        expr_roles = ["ComprenhensionElement"]
         ########## ENTITY PROPERTIES ############
         depth = 0
         second_child_category = None
@@ -2100,7 +2099,7 @@ class VisitorInfo(NodeVisitor):
         third_child_id = None
         fourth_child_id = None
         numOfIfs = 0
-        isAsync = False
+        is_async = False
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
@@ -2111,11 +2110,11 @@ class VisitorInfo(NodeVisitor):
             if(index == 2): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
             depth = max(depth, returns[index]["depth"])
             numOfIfs += len(child.ifs)
-            if(child.is_async): isAsync = True
+            if(child.is_async): is_async = True
             index += 1
-        elt = self.visit(node.elt, self.add_param(child_params, 'role', exprRoles[0]))
+        elt = self.visit(node.elt, self.add_param(child_params, 'role', expr_roles[0]))
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = elt["category"]
         expr.second_child_category = second_child_category
@@ -2129,9 +2128,9 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         #--------------- COMP --------------------
-        comp.numberOfIfs = numOfIfs
-        comp.numberOfGenerators = len(node.generators)
-        comp.isAsync = isAsync
+        comp.number_of_ifs = numOfIfs
+        comp.number_of_generators = len(node.generators)
+        comp.is_async = is_async
         comp.expertise_level = params['expertise_level']
         comp.user_id = params['user_id']
         ############## VISITOR DB ################
@@ -2152,10 +2151,10 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["DictionaryLiteralKey", "DictionaryLiteralValue"]
+        expr_roles = ["DictionaryLiteralKey", "DictionaryLiteralValue"]
         ########## ENTITY PROPERTIES ############
         depth = 0
         third_child_category = None
@@ -2163,7 +2162,7 @@ class VisitorInfo(NodeVisitor):
         third_child_id = None
         fourth_child_id = None
         numOfIfs = 0
-        isAsync = False
+        is_async = False
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
@@ -2173,12 +2172,12 @@ class VisitorInfo(NodeVisitor):
             if(index == 1): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
             depth = max(depth, returns[index]["depth"])
             numOfIfs += len(child.ifs)
-            if(child.is_async): isAsync = True
+            if(child.is_async): is_async = True
             index += 1
-        key = self.visit(node.key, self.add_param(child_params, 'role', exprRoles[0]))
-        value = self.visit(node.value, self.add_param(child_params, 'role', exprRoles[1]))
+        key = self.visit(node.key, self.add_param(child_params, 'role', expr_roles[0]))
+        value = self.visit(node.value, self.add_param(child_params, 'role', expr_roles[1]))
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = key["category"]
         expr.second_child_category = value["category"]
@@ -2192,9 +2191,9 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         #--------------- COMP --------------------
-        comp.numberOfIfs = numOfIfs
-        comp.numberOfGenerators = len(node.generators)
-        comp.isAsync = isAsync
+        comp.number_of_ifs = numOfIfs
+        comp.number_of_generators = len(node.generators)
+        comp.is_async = is_async
         comp.expertise_level = params['expertise_level']
         comp.user_id = params['user_id']
         ############## VISITOR DB ################
@@ -2215,10 +2214,10 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["ComprenhensionElement"]
+        expr_roles = ["ComprenhensionElement"]
         ########## ENTITY PROPERTIES ############
         depth = 0
         second_child_category = None
@@ -2228,7 +2227,7 @@ class VisitorInfo(NodeVisitor):
         third_child_id = None
         fourth_child_id = None
         numOfIfs = 0
-        isAsync = False
+        is_async = False
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
@@ -2239,11 +2238,11 @@ class VisitorInfo(NodeVisitor):
             if(index == 2): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
             depth = max(depth, returns[index]["depth"])
             numOfIfs += len(child.ifs)
-            if(child.is_async): isAsync = True
+            if(child.is_async): is_async = True
             index += 1
-        elt = self.visit(node.elt, self.add_param(child_params, 'role', exprRoles[0]))
+        elt = self.visit(node.elt, self.add_param(child_params, 'role', expr_roles[0]))
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = elt["category"]
         expr.second_child_category = second_child_category
@@ -2257,9 +2256,9 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         #--------------- COMP --------------------
-        comp.numberOfIfs = numOfIfs
-        comp.numberOfGenerators = len(node.generators)
-        comp.isAsync = isAsync
+        comp.number_of_ifs = numOfIfs
+        comp.number_of_generators = len(node.generators)
+        comp.is_async = is_async
         comp.expertise_level = params['expertise_level']
         comp.user_id = params['user_id']
         ############## VISITOR DB ################
@@ -2281,14 +2280,14 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["Await"]
+        expr_roles = ["Await"]
         ############## PROPAGAR VISIT ############
-        value = self.visit(node.value, self.add_param(child_params, 'role', exprRoles[0]))
+        value = self.visit(node.value, self.add_param(child_params, 'role', expr_roles[0]))
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = value["category"]
         expr.first_child_id = value["id"]
@@ -2312,16 +2311,16 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["Yield"]
+        expr_roles = ["Yield"]
         ########## ENTITY PROPERTIES ############
         value = None
         ############## PROPAGAR VISIT ############
-        if(node.value): value = self.visit(node.value, self.add_param(child_params, 'role', exprRoles[0]))
+        if(node.value): value = self.visit(node.value, self.add_param(child_params, 'role', expr_roles[0]))
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.depth = 0
         if(value):
@@ -2347,14 +2346,14 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["YieldFrom"]
+        expr_roles = ["YieldFrom"]
         ############## PROPAGAR VISIT ############
-        value = self.visit(node.value, self.add_param(child_params, 'role', exprRoles[0]))
+        value = self.visit(node.value, self.add_param(child_params, 'role', expr_roles[0]))
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = value["category"]
         expr.first_child_id = value["id"]
@@ -2378,10 +2377,10 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["Compare", "Relational", "Is", "In"]
+        expr_roles = ["Compare", "Relational", "Is", "In"]
         ########## ENTITY PROPERTIES ############
         depth = 0
         first_child_category = None
@@ -2393,14 +2392,14 @@ class VisitorInfo(NodeVisitor):
         third_child_id = None
         fourth_child_id = None
         ############## PROPAGAR VISIT ############
-        left = self.visit(node.left, self.add_param(child_params, 'role', exprRoles[0]))
+        left = self.visit(node.left, self.add_param(child_params, 'role', expr_roles[0]))
         index = 0
         returns = []
         for child in node.comparators:
             match node.ops[index]:
-                case ast.Is, ast.IsNot: returns.append(self.visit(child, self.add_param(child_params, 'role', exprRoles[2])))
-                case ast.In: returns.append(self.visit(child, self.add_param(child_params, 'role', exprRoles[3])))
-                case default: returns.append(self.visit(child, self.add_param(child_params, 'role', exprRoles[1])))
+                case ast.Is, ast.IsNot: returns.append(self.visit(child, self.add_param(child_params, 'role', expr_roles[2])))
+                case ast.In: returns.append(self.visit(child, self.add_param(child_params, 'role', expr_roles[3])))
+                case default: returns.append(self.visit(child, self.add_param(child_params, 'role', expr_roles[1])))
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
             if(index == 2): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
@@ -2408,7 +2407,7 @@ class VisitorInfo(NodeVisitor):
             depth = max(depth, returns[index]["depth"])
             index += 1
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = first_child_category
         expr.second_child_category = second_child_category
@@ -2441,10 +2440,10 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["CallFuncName", "CallArg"]
+        expr_roles = ["CallFuncName", "CallArg"]
         ########## ENTITY PROPERTIES ############
         depth = 0
         namedArgs = 0
@@ -2461,16 +2460,16 @@ class VisitorInfo(NodeVisitor):
         returns = []
         index = 0
         for child in node.args:
-            returns.append(self.visit(child, self.add_param(child_params, 'role', exprRoles[1])))
+            returns.append(self.visit(child, self.add_param(child_params, 'role', expr_roles[1])))
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
             if(index == 2): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
             if(index == 3): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
             depth = max(depth, returns[index]["depth"])
             index += 1
-        func = self.visit(node.func, self.add_param(child_params, 'role', exprRoles[0]))
+        func = self.visit(node.func, self.add_param(child_params, 'role', expr_roles[0]))
         for child in node.keywords:
-            returns.append(self.visit(child, self.add_param(child_params, 'role', exprRoles[1])))
+            returns.append(self.visit(child, self.add_param(child_params, 'role', expr_roles[1])))
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
             if(index == 2): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
@@ -2480,7 +2479,7 @@ class VisitorInfo(NodeVisitor):
             depth = max(depth, returns[index]["depth"])
             index += 1
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = first_child_category
         expr.second_child_category = second_child_category
@@ -2494,9 +2493,9 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         #------------- CallArgs ------------------
-        callArgs.numberArgs = index
-        callArgs.namedArgsPct = namedArgs/callArgs.numberArgs if callArgs.numberArgs > 0 else 0
-        callArgs.doubleStarArgsPct = staredArgs/callArgs.numberArgs if callArgs.numberArgs > 0 else 0
+        callArgs.number_args = index
+        callArgs.named_args_pct = namedArgs/callArgs.number_args if callArgs.number_args > 0 else 0
+        callArgs.double_star_args_pct = staredArgs/callArgs.number_args if callArgs.number_args > 0 else 0
         callArgs.expertise_level = params['expertise_level']
         callArgs.user_id = params['user_id']
         ############## VISITOR DB ################
@@ -2517,17 +2516,17 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["FormattedValue", "FormattedFormat"]
+        expr_roles = ["FormattedValue", "FormattedFormat"]
         ########## ENTITY PROPERTIES ############
         spec = None
         ############## PROPAGAR VISIT ############
-        value = self.visit(node.value, self.add_param(child_params, 'role', exprRoles[0]))
-        if(node.format_spec): spec = self.visit(node.format_spec, self.add_param(child_params, 'role', exprRoles[1]))
+        value = self.visit(node.value, self.add_param(child_params, 'role', expr_roles[0]))
+        if(node.format_spec): spec = self.visit(node.format_spec, self.add_param(child_params, 'role', expr_roles[1]))
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = value["category"]
         expr.first_child_id = value["id"]
@@ -2558,10 +2557,10 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["FString"]
+        expr_roles = ["FString"]
         ########## ENTITY PROPERTIES ############
         depth = 0
         first_child_category = None
@@ -2578,7 +2577,7 @@ class VisitorInfo(NodeVisitor):
         returns = []
         index = 0
         for child in node.values:
-            returns.append(self.visit(child, self.add_param(child_params, 'role', exprRoles[0])))
+            returns.append(self.visit(child, self.add_param(child_params, 'role', expr_roles[0])))
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
             if(index == 2): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
@@ -2588,7 +2587,7 @@ class VisitorInfo(NodeVisitor):
             depth = max(depth, returns[index]["depth"])
             index += 1
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = first_child_category
         expr.second_child_category = second_child_category
@@ -2602,9 +2601,9 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         #-----------------------------------------
-        fstr.numberOfElements = numConst + numFVal
-        fstr.constantsPct = numConst / len(node.values) if len(node.values) > 0 else 0
-        fstr.expressionsPct = numFVal / len(node.values) if len(node.values) > 0 else 0
+        fstr.number_of_elements = numConst + numFVal
+        fstr.constants_pct = numConst / len(node.values) if len(node.values) > 0 else 0
+        fstr.expressions_pct = numFVal / len(node.values) if len(node.values) > 0 else 0
         fstr.expertise_level = params['expertise_level']
         fstr.user_id = params['user_id']
         ############## VISITOR DB ################
@@ -2626,9 +2625,9 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.depth = 0
         expr.expertise_level = params['expertise_level']
@@ -2650,14 +2649,14 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["Dot"]
+        expr_roles = ["Dot"]
         ############## PROPAGAR VISIT ############
-        value = self.visit(node.value, self.add_param(child_params, 'role', exprRoles[0]))
+        value = self.visit(node.value, self.add_param(child_params, 'role', expr_roles[0]))
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = value["category"]
         expr.first_child_id = value["id"]
@@ -2681,15 +2680,15 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["Slice", "Indexing"]
+        expr_roles = ["Slice", "Indexing"]
         ############## PROPAGAR VISIT ############
-        value = self.visit(node.value, self.add_param(child_params, 'role', exprRoles[1]))
-        slice = self.visit(node.slice, self.add_param(child_params, 'role', exprRoles[0]))
+        value = self.visit(node.value, self.add_param(child_params, 'role', expr_roles[1]))
+        slice = self.visit(node.slice, self.add_param(child_params, 'role', expr_roles[0]))
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = value["category"]
         expr.second_child_category = slice["category"]
@@ -2715,14 +2714,14 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["Star"]
+        expr_roles = ["Star"]
         ############## PROPAGAR VISIT ############
-        value = self.visit(node.value, self.add_param(child_params, 'role', exprRoles[0]))
+        value = self.visit(node.value, self.add_param(child_params, 'role', expr_roles[0]))
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = value["category"]
         expr.first_child_id = value["id"]
@@ -2749,23 +2748,23 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.depth = 0
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         #------------- VARIABLE ------------------
-        var.numberOfCharacters = len(node.id)
-        var.nameConvention = self.name_convention(node.id)
-        var.isPrivate = False
-        var.isMagic = False
+        var.number_of_characters = len(node.id)
+        var.name_convention = self.name_convention(node.id)
+        var.is_private = False
+        var.is_magic = False
         if(node.id.startswith('_')):
             if(node.id.endswith('_')):
-                var.isMagic = True
+                var.is_magic = True
             else:
-                var.isPrivate = True
+                var.is_private = True
         var.expertise_level = params['expertise_level']
         var.user_id = params['user_id']
         ############## VISITOR DB ################
@@ -2788,10 +2787,10 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["ListLiteral"]
+        expr_roles = ["ListLiteral"]
         ########## ENTITY PROPERTIES ############
         depth = 0
         homogeneous = True
@@ -2808,7 +2807,7 @@ class VisitorInfo(NodeVisitor):
         returns = []
         index = 0
         for child in node.elts:
-            returns.append(self.visit(child, self.add_param(child_params, 'role', exprRoles[0])))
+            returns.append(self.visit(child, self.add_param(child_params, 'role', expr_roles[0])))
             depth = max(depth, returns[index]["depth"])
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
@@ -2818,7 +2817,7 @@ class VisitorInfo(NodeVisitor):
             lastType = type(child)
             index += 1
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = first_child_category
         expr.second_child_category = second_child_category
@@ -2832,7 +2831,7 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         #-------------- VECTOR -------------------
-        vct.numberOfElements = len(node.elts)
+        vct.number_of_elements = len(node.elts)
         vct.homogeneous = homogeneous
         vct.expertise_level = params['expertise_level']
         vct.user_id = params['user_id']
@@ -2854,10 +2853,10 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["TupleLiteral"]
+        expr_roles = ["TupleLiteral"]
         ########## ENTITY PROPERTIES ############
         depth = 0
         homogeneous = True
@@ -2874,7 +2873,7 @@ class VisitorInfo(NodeVisitor):
         returns = []
         index = 0
         for child in node.elts:
-            returns.append(self.visit(child, self.add_param(child_params, 'role', exprRoles[0])))
+            returns.append(self.visit(child, self.add_param(child_params, 'role', expr_roles[0])))
             depth = max(depth, returns[index]["depth"])
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
@@ -2884,7 +2883,7 @@ class VisitorInfo(NodeVisitor):
             lastType = type(child)
             index += 1
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = first_child_category
         expr.second_child_category = second_child_category
@@ -2898,7 +2897,7 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         #-------------- VECTOR -------------------
-        vct.numberOfElements = len(node.elts)
+        vct.number_of_elements = len(node.elts)
         vct.homogeneous = homogeneous
         vct.expertise_level = params['expertise_level']
         vct.user_id = params['user_id']
@@ -2920,10 +2919,10 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["DictionaryLiteralKey", "DictionaryLiteralValue"]
+        expr_roles = ["DictionaryLiteralKey", "DictionaryLiteralValue"]
         ########## ENTITY PROPERTIES ############
         depth = 0
         homogeneous = True
@@ -2941,8 +2940,8 @@ class VisitorInfo(NodeVisitor):
         values = []
         index = 0
         for i in range(len(node.keys)):
-            keys.append(self.visit(node.keys[i], self.add_param(child_params, 'role', exprRoles[0])))
-            values.append(self.visit(node.values[i], self.add_param(child_params, 'role', exprRoles[1])))
+            keys.append(self.visit(node.keys[i], self.add_param(child_params, 'role', expr_roles[0])))
+            values.append(self.visit(node.values[i], self.add_param(child_params, 'role', expr_roles[1])))
             depth = max(depth, keys[index]["depth"] if keys[index] else 0, values[index]['depth'])
             if(index == 0): 
                 first_child_category = keys[index]["category"] if keys[index] else 'NoneType'; first_child_id = keys[index]["id"] if keys[index] else None
@@ -2954,7 +2953,7 @@ class VisitorInfo(NodeVisitor):
             lastType = type(node.values[i])
             index += 1
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = first_child_category
         expr.second_child_category = second_child_category
@@ -2968,7 +2967,7 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         #-------------- VECTOR -------------------
-        vct.numberOfElements = len(node.keys)
+        vct.number_of_elements = len(node.keys)
         vct.homogeneous = homogeneous
         vct.expertise_level = params['expertise_level']
         vct.user_id = params['user_id']
@@ -2990,10 +2989,10 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         expr.parent = params["parent"].category
         ############# ROLES ######################
-        expr.expressionRole = params["role"]
+        expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": expr, "depth": params["depth"] + 1, "parent_id": id}
-        exprRoles = ["SetLiteral"]
+        expr_roles = ["SetLiteral"]
         ########## ENTITY PROPERTIES ############
         depth = 0
         homogeneous = True
@@ -3010,7 +3009,7 @@ class VisitorInfo(NodeVisitor):
         returns = []
         index = 0
         for child in node.elts:
-            returns.append(self.visit(child, self.add_param(child_params, 'role', exprRoles[0])))
+            returns.append(self.visit(child, self.add_param(child_params, 'role', expr_roles[0])))
             depth = max(depth, returns[index]["depth"])
             if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
@@ -3020,7 +3019,7 @@ class VisitorInfo(NodeVisitor):
             lastType = type(child)
             index += 1
         ########## ENTITY PROPERTIES ############
-        expr.sourceCode = ast.unparse(node)
+        expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
         expr.first_child_category = first_child_category
         expr.second_child_category = second_child_category
@@ -3034,7 +3033,7 @@ class VisitorInfo(NodeVisitor):
         expr.expertise_level = params['expertise_level']
         expr.user_id = params['user_id']
         #-------------- VECTOR -------------------
-        vct.numberOfElements = len(node.elts)
+        vct.number_of_elements = len(node.elts)
         vct.homogeneous = homogeneous
         vct.expertise_level = params['expertise_level']
         vct.user_id = params['user_id']
@@ -3054,7 +3053,7 @@ class VisitorInfo(NodeVisitor):
         db_node.parent_table = params["parent"].table
         db_expr.parent = params["parent"].category
         ############# ROLES ######################
-        db_expr.expressionRole = params["role"]
+        db_expr.expression_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_expr, "depth": params["depth"] + 1, "parent_id": node_id}
         expr_roles = ["Slice"]
@@ -3074,7 +3073,7 @@ class VisitorInfo(NodeVisitor):
             step = self.visit(node.step, self.add_param(child_params, 'role', expr_roles[0]))
             depth = max(depth, step["depth"])
         ########## ENTITY PROPERTIES ############
-        db_expr.sourceCode = ast.unparse(node)
+        db_expr.source_code = ast.unparse(node)
         db_expr.height = params["depth"]
         if lower:
             db_expr.first_child_category = lower["category"]
@@ -3229,7 +3228,7 @@ class VisitorInfo(NodeVisitor):
             child_ids.append(returns[index]['id'])
             depth = max(depth,returns[index]["depth"])
             index += 1
-        return {'id': params["parent_id"], 'depth': depth, 'isCatchAll': is_catch_all, 'child_ids': child_ids}
+        return {'id': params["parent_id"], 'depth': depth, 'is_catch_all': is_catch_all, 'child_ids': child_ids}
 
     ####################### Extra Visits ######################
     def visit_comprehension(self, node: ast.comprehension, params: Dict) -> Dict:  
@@ -3262,7 +3261,7 @@ class VisitorInfo(NodeVisitor):
         ########## ENTITY PROPERTIES ############
         number_of_annotations = 0
         number_of_params = 0
-        naming_conventions = {'CamelUp': 0, 'CamelLow': 0, 'SnakeCase': 0, 'Discard': 0, 'Upper': 0, 'Lower': 0, 'NoNameConvention': 0}
+        naming_conventions = {'CamelUp': 0, 'CamelLow': 0, 'SnakeCase': 0, 'Discard': 0, 'Upper': 0, 'Lower': 0, 'Noname_convention': 0}
         ############## PROPAGAR VISIT ############
         for child in node.posonlyargs:
             arg = self.visit(child, params)
@@ -3296,7 +3295,7 @@ class VisitorInfo(NodeVisitor):
         for child in node.defaults:
             self.visit(child, self.add_param(params, 'role', expr_roles[0]))
         ########## ENTITY PROPERTIES ############
-        db_params.nameConvention = self.get_args_name_convention(naming_conventions)
+        db_params.name_convention = self.get_args_name_convention(naming_conventions)
         db_params.numberOfParams = number_of_params
         db_params.posOnlyParamPct = len(node.posonlyargs)/number_of_params if number_of_params > 0 else 0
         db_params.varParamPct = (1 if node.vararg else 0)/number_of_params if number_of_params > 0 else 0
@@ -3358,7 +3357,7 @@ class VisitorInfo(NodeVisitor):
             index += 1
         ########## ENTITY PROPERTIES ############
         returns = self.add_param(returns, 'guards', guards)
-        returns = self.add_param(returns, 'bodyCount', index)
+        returns = self.add_param(returns, 'body_count', index)
         returns["depth"] = max(returns["depth"], depth)
         returns["ids"] = ids
         return returns
