@@ -88,7 +88,7 @@ class DBClassDef:
                  number_of_base_classes: int = None,  has_generic_type_annotations: bool = None, 
                  has_doc_string: bool = None,  body_count: int = None,  assignments_pct: float = None, 
                  expressions_pct: float = None,  uses_meta_class: bool = None, 
-                 number_of_key_words: int = None,  height: int = None, 
+                 number_of_keywords: int = None,  height: int = None, 
                  average_stmts_method_body: float = None,  type_annotations_pct: float = None, 
                  private_methods_pct: float = None,  magic_methods_pct: float = None, 
                  async_methods_pct: float = None,  class_methods_pct: float = None, 
@@ -112,7 +112,7 @@ class DBClassDef:
         self.assignments_pct = assignments_pct
         self.expressions_pct = expressions_pct
         self.uses_meta_class = uses_meta_class
-        self.number_of_key_words = number_of_key_words
+        self.number_of_keywords = number_of_keywords
         self.height = height
         self.average_stmts_method_body = average_stmts_method_body
         self.type_annotations_pct = type_annotations_pct

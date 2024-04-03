@@ -550,7 +550,7 @@ class VisitorInfo(NodeVisitor):
         db_classdef.assignments_pct = assignment_number/body_count if body_count > 0 else 0
         db_classdef.expressions_pct = expression_number/body_count if body_count > 0 else 0
         db_classdef.uses_meta_class = metaclass_number > 0
-        db_classdef.number_of_key_words = keyword_number
+        db_classdef.number_of_keywords = keyword_number
         db_classdef.height = params["depth"]
         db_classdef.average_stmts_method_body = number_of_method_stmt/number_of_methods if number_of_methods > 0 else 0
         db_classdef.type_annotations_pct = number_of_method_type_annotations/number_of_method_params_ret if number_of_method_params_ret > 0 else 0
@@ -3255,7 +3255,7 @@ class VisitorInfo(NodeVisitor):
         db_params.parameters_id = params["params_id"]
         db_params.parent_id = params["parent_id"]
         ############## ROLES #####################
-        db_params.parametersRole = params["role"]
+        db_params.parameters_role = params["role"]
         ############# PARAMS #####################
         expr_roles = ["DefaultParamValue"]
         ########## ENTITY PROPERTIES ############
