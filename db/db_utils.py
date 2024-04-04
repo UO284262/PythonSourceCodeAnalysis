@@ -8,16 +8,9 @@ remote_connection_string = {
     'host': '156.35.95.39',
     'port': '5432',
 }
+
 # LOCAL
 local_connection_string = {
-    'dbname': 'python_tfg',
-    'user': 'postgres',
-    'password': 'secreto',
-    'host': '192.168.137.100',
-    'port': '5432',
-}
-# PUTTY (no tengo claro que es lo de local asi que me ciño a lo que a mi me iba)
-putty_connection_string = {
     'dbname': 'python_tfg',
     'user': 'postgres',
     'password': 'ayneastq2219',
@@ -25,7 +18,16 @@ putty_connection_string = {
     'port': '5432',
 }
 
-connection_string = remote_connection_string
+# HYPER-V
+hyperv_connection_string = {
+    'dbname': 'python_tfg',
+    'user': 'postgres',
+    'password': 'secreto',
+    'host': '192.168.137.100',
+    'port': '5432',
+}
+
+connection_string = local_connection_string
 
 
 def write_on_db(sql_nodes_to_insert, nodes_data_to_insert, sql_insert, data_to_insert):
