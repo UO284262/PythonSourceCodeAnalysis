@@ -1,4 +1,5 @@
 import ast
+import re
 from db.db_utils import get_db_current_id
 
 
@@ -25,6 +26,28 @@ def const_category(node: ast.Constant):
         case 'str': return 'StringLiteral'
         case 'ellipsis': return 'EllipsisLiteral'
         case _: return 'ComplexLiteral'
+
+def name_convention(name) -> str:
+    lower_pattern = re.compile(r'^[a-z0-9]+$')
+    upper_pattern = re.compile(r'^[A-Z_0-9]+$')
+    camel_low_pattern = re.compile(r'^[a-z][a-zA-Z0-9]*$')
+    camel_up_pattern = re.compile(r'^[A-Z][a-zA-Z0-9]*$')
+    snake_case_pattern = re.compile(r'^[a-z_0-9]+$')
+    discard_pattern = re.compile(r'^_+$')
+    if discard_pattern.match(name):
+        return 'Discard'
+    elif lower_pattern.match(name):
+        return 'Lower'
+    elif snake_case_pattern.match(name):
+        return 'SnakeCase'
+    elif upper_pattern.match(name):
+        return 'Upper'
+    elif camel_low_pattern.match(name):
+        return 'CamelLow'
+    elif camel_up_pattern.match(name):
+        return 'CamelUp'
+    else: 
+        return 'Noname_convention'
 
 
 class IDManager:

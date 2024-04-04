@@ -2,7 +2,7 @@ import ast
 import re
 import os
 from typing import Dict
-from util.util import op_category, const_category
+from util.util import op_category, const_category, name_convention
 import db.db_entities as db_entities
 from visitors.visitordatabase import VisitorDataBase
 from visitors.nodevisitor import NodeVisitor
@@ -45,29 +45,6 @@ class VisitorInfo(NodeVisitor):
                 if decorator.id == "property":
                     what_is_it["property"] = True
         return what_is_it
-
-    @staticmethod
-    def name_convention(name) -> str:
-        lower_pattern = re.compile(r'^[a-z]+$')
-        upper_pattern = re.compile(r'^[A-Z_]+$')
-        camel_low_pattern = re.compile(r'^[a-z][a-zA-Z]*$')
-        camel_up_pattern = re.compile(r'^[A-Z][a-zA-Z]*$')
-        snake_case_pattern = re.compile(r'^[a-z_]+$')
-        discard_pattern = re.compile(r'^_+$')
-        if discard_pattern.match(name):
-            return 'Discard'
-        elif snake_case_pattern.match(name):
-            return 'SnakeCase'
-        elif upper_pattern.match(name):
-            return 'Upper'
-        elif lower_pattern.match(name):
-            return 'Lower'
-        elif camel_low_pattern.match(name):
-            return 'CamelLow'
-        elif camel_up_pattern.match(name):
-            return 'CamelUp'
-        else: 
-            return 'Noname_convention'
 
     @staticmethod
     def add_param(dict_1: Dict, param, value) -> Dict:
@@ -247,7 +224,7 @@ class VisitorInfo(NodeVisitor):
             index += 1
         ########## ENTITY PROPERTIES ############
         db_module.name = params["filename"]
-        db_module.name_convention = self.name_convention(db_module.name)
+        db_module.name_convention = name_convention(db_module.name)
         db_module.has_doc_string = (isinstance(node.body[0], ast.Constant)) and isinstance(node.body[0].value, str)
         db_module.global_stmts_pct = count["stmt"]/index if(index > 0) else 0
         db_module.global_expressions = count["expr"]/index if(index > 0) else 0
@@ -333,7 +310,7 @@ class VisitorInfo(NodeVisitor):
         what_is_it = self.what_is_it(node)
         args_ret = args['number_of_args'] + 1 if have_return or have_ret_annotation else args['number_of_args']
         number_of_annotations = args['type_annotations'] + 1 if have_ret_annotation else args['type_annotations']
-        db_functiondef.name_convention = self.name_convention(node.name)
+        db_functiondef.name_convention = name_convention(node.name)
         db_functiondef.number_of_characters = len(node.name)
         db_functiondef.is_private = what_is_it["private"]
         db_functiondef.is_magic = what_is_it["magic"]
@@ -422,7 +399,7 @@ class VisitorInfo(NodeVisitor):
         args_ret = args['number_of_args'] + 1 if have_return or have_ret_annotation else args['number_of_args']
         number_of_annotations = args['type_annotations'] + 1 if have_ret_annotation else args['type_annotations']
         db_functiondef.number_of_characters = len(node.name)
-        db_functiondef.name_convention = self.name_convention(node.name)
+        db_functiondef.name_convention = name_convention(node.name)
         db_functiondef.is_private = what_is_it["private"]
         db_functiondef.is_magic = what_is_it["magic"]
         db_functiondef.body_count = len(node.body)
@@ -538,7 +515,7 @@ class VisitorInfo(NodeVisitor):
         for child in node.type_params:
             self.visit(child, child_params)
         ########## ENTITY PROPERTIES ############
-        db_classdef.name_convention = self.name_convention(node.name)
+        db_classdef.name_convention = name_convention(node.name)
         db_classdef.is_enum_class = is_enum
         db_classdef.number_of_characters = len(node.name)
         db_classdef.number_of_methods = number_of_methods
@@ -2753,7 +2730,7 @@ class VisitorInfo(NodeVisitor):
         expr.user_id = params['user_id']
         #------------- VARIABLE ------------------
         var.number_of_characters = len(node.id)
-        var.name_convention = self.name_convention(node.id)
+        var.name_convention = name_convention(node.id)
         var.is_private = False
         var.is_magic = False
         if(node.id.startswith('_')):
@@ -3264,30 +3241,30 @@ class VisitorInfo(NodeVisitor):
             if arg["type_annotation"]:
                 number_of_annotations += 1
             number_of_params += 1
-            naming_conventions[self.name_convention(child.arg)] += 1
+            naming_conventions[name_convention(child.arg)] += 1
         for child in node.args:
             arg = self.visit(child, params)
             if arg["type_annotation"]:
                 number_of_annotations += 1
             number_of_params += 1
-            naming_conventions[self.name_convention(child.arg)] += 1
+            naming_conventions[name_convention(child.arg)] += 1
         if node.vararg:
             arg = self.visit(node.vararg, params)
             if(arg["type_annotation"]): number_of_annotations += 1
             number_of_params += 1
-            naming_conventions[self.name_convention(node.vararg.arg)] += 1
+            naming_conventions[name_convention(node.vararg.arg)] += 1
         for child in node.kwonlyargs:
             arg = self.visit(child, params)
             if(arg["type_annotation"]): number_of_annotations += 1
             number_of_params += 1
-            naming_conventions[self.name_convention(child.arg)] += 1
+            naming_conventions[name_convention(child.arg)] += 1
         for child in node.kw_defaults:
             self.visit(child, self.add_param(params, 'role', expr_roles[0]))
         if node.kwarg:
             arg = self.visit(node.kwarg, params)
             if(arg["type_annotation"]): number_of_annotations += 1
             number_of_params += 1
-            naming_conventions[self.name_convention(node.kwarg.arg)] += 1
+            naming_conventions[name_convention(node.kwarg.arg)] += 1
         for child in node.defaults:
             self.visit(child, self.add_param(params, 'role', expr_roles[0]))
         ########## ENTITY PROPERTIES ############
