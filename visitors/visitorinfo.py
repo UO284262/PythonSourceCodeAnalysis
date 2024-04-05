@@ -2,16 +2,16 @@ import ast
 import re
 import os
 from typing import Dict
-from util.util import op_category, const_category, name_convention
+from util.util import op_category, const_category, name_convention, IDManager
 import db.db_entities as db_entities
 from visitors.visitordatabase import VisitorDataBase
 from visitors.nodevisitor import NodeVisitor
 
 
 class VisitorInfo(NodeVisitor):
-    def __init__(self, id_manager):
+    def __init__(self, id_manager: IDManager, visitor_db: NodeVisitor):
         self.id_manager = id_manager
-        self.visitor_db = VisitorDataBase()
+        self.visitor_db = visitor_db
 
     @staticmethod
     def get_args_name_convention(naming_conventions: Dict) -> str:
@@ -136,7 +136,7 @@ class VisitorInfo(NodeVisitor):
             db_program.enum_defs_pct = total_enum_defs/total_defs if total_defs > 0 else 0
             db_program.expertise_level = params["expertise_level"]
             db_program.user_id = params["user_id"]
-        ############## VISITOR DB ################  
+            ############## VISITOR DB ################
             self.visitor_db.visit_Program(db_program, {})
         return
 

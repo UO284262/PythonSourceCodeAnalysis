@@ -1,6 +1,8 @@
 import ast
 from typing import List
 from util.util import IDManager
+from visitors.visitordatabase import VisitorDataBase
+from visitors.visitorintrospector import VisitorIntrospector
 from visitors.visitorprint import VisitorPrint
 from visitors.visitorinfo import VisitorInfo
 from db.db_utils import init_db
@@ -73,17 +75,17 @@ if __name__ == '__main__':
     id_manager = IDManager()
     warnings.filterwarnings("error")
 
-    # Testing VisitorInfo
-    visitor = VisitorInfo(id_manager)
-    visit(visitor)
+    # Testing VisitorDataBase
+    # visitor = VisitorInfo(id_manager, VisitorDataBase())
+    # visit(visitor)
 
     # Testing VisitorPrint
-    # visitor = VisitorPrint()
-    # test_path = './test/test2.py'
-    # test_file = ''
-    # with open(test_path, "r", encoding='utf-8') as f:
-    #     test_file = f.read()
-    # visitor.visit(ast.parse(test_file), {})
+    visitor = VisitorPrint()
+    test_path = './test/test2.py'
+    test_file = ''
+    with open(test_path, "r", encoding='utf-8') as f:
+        test_file = f.read()
+    visitor.visit(ast.parse(test_file), {})
 
 
 

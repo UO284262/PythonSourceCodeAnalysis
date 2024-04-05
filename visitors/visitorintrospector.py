@@ -1,0 +1,423 @@
+import ast
+from typing import Dict, List
+
+from util.introspector import TreeApp
+from visitors.nodevisitor import NodeVisitor
+import db.db_entities as db_entities
+
+
+class VisitorIntrospector(NodeVisitor):
+    def __init__(self):
+        self.programs: List[db_entities.DBProgram] = []
+        self.function_defs: List[db_entities.DBFunctionDef] = []
+        self.modules: List[db_entities.DBModule] = []
+        self.nodes: List[db_entities.DBNode] = []
+        self.imports: List[db_entities.DBImport] = []
+        self.class_defs: List[db_entities.DBClassDef] = []
+        self.method_defs: List[db_entities.DBMethodDef] = []
+        self.statements: List[db_entities.DBStatement] = []
+        self.cases: List[db_entities.DBCase] = []
+        self.handlers: List[db_entities.DBHandler] = []
+        self.expressions: List[db_entities.DBExpression] = []
+        self.comprehensions: List[db_entities.DBComprehension] = []
+        self.f_strings: List[db_entities.DBFString] = []
+        self.call_args: List[db_entities.DBCallArg] = []
+        self.variables: List[db_entities.DBVariable] = []
+        self.vectors: List[db_entities.DBVector] = []
+        self.parameters: List[db_entities.DBParameter] = []
+
+    def visit_Program(self, node: db_entities.DBProgram, params: Dict):
+        self.insert_Program(node)
+        app = TreeApp()
+        app.run(self.programs[0])
+        # Show the program in a tree
+    
+    def visit_Module(self, node: db_entities.DBModule, params: Dict):
+        self.insert_Import(params["db_import"])
+        self.insert_Module(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_FunctionDef(self, node: ast.FunctionDef, params: Dict):
+        if params['is_method']:
+            self.insert_MethodDef(params['method'])
+        self.insert_FunctionDef(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef, params: Dict):
+        if params['is_method']:
+            self.insert_MethodDef(params['method'])
+        self.insert_FunctionDef(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_ClassDef(self, node: ast.ClassDef, params: Dict):
+        self.insert_ClassDef(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+
+    ############################### STATEMENTS #############################
+    def visit_Return(self, node: ast.Return, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_Delete(self, node: ast.Delete, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_Assign(self, node: ast.Assign, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])      
+        pass
+    
+    def visit_TypeAlias(self, node: ast.TypeAlias, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"]) 
+        pass
+    
+    def visit_AugAssign(self, node: ast.AugAssign, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_AnnAssign(self, node: ast.AnnAssign, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_For(self, node: ast.For, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_AsyncFor(self, node: ast.AsyncFor, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_While(self, node: ast.While, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_If(self, node: ast.If, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_With(self, node: ast.With, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_AsyncWith(self, node: ast.AsyncWith, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_Match(self, node: ast.Match, params: Dict):
+        self.insert_Case(params["case"])
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_Raise(self, node: ast.Raise, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_Try(self, node: ast.Try, params: Dict):
+        self.insert_Handler(params["handler"])
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_TryStar(self, node: ast.Try, params: Dict):
+        self.insert_Handler(params["handler"])
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_Assert(self, node: ast.Assert, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_Global(self, node: ast.Global, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_NonLocal(self, node: ast.Nonlocal, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_Pass(self, node: ast.Pass, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_Break(self, node: ast.Break, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_Continue(self, node: ast.Continue, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+
+    ############################ IMPORTS ##################################
+    def visit_Import(self, node: ast.Import, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_ImportFrom(self, node: ast.ImportFrom, params: Dict):
+        self.insert_Statement(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+
+    ############################ EXPRESSIONS ##################################
+    def visit_BoolOp(self, node: ast.BoolOp, params: Dict):
+        self.insert_Expression(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_NamedExpr(self, node: ast.NamedExpr, params: Dict):
+        self.insert_Expression(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_BinOp(self, node: ast.BinOp, params: Dict):
+        self.insert_Expression(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_UnaryOp(self, node: ast.UnaryOp, params: Dict):
+        self.insert_Expression(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_Lambda(self, node: ast.Lambda, params: Dict):
+        self.insert_Expression(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_IfExp(self, node: ast.IfExp, params: Dict):
+        self.insert_Expression(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+
+    ######################### COMPREHENSIONS #############################
+    def visit_ListComp(self, node: ast.ListComp, params: Dict):
+        self.insert_Comprehension(params["node"])
+        self.insert_Expression(params["expr"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_SetComp(self, node: ast.SetComp, params: Dict):
+        self.insert_Comprehension(params["node"])
+        self.insert_Expression(params["expr"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_DictComp(self, node: ast.DictComp, params: Dict):
+        self.insert_Comprehension(params["node"])
+        self.insert_Expression(params["expr"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_GeneratorExp(self, node: ast.GeneratorExp, params: Dict):
+        self.insert_Comprehension(params["node"])
+        self.insert_Expression(params["expr"])
+        self.insert_Node(params["db_node"])
+        pass
+
+    ######################################################################
+    def visit_Await(self, node: ast.Await, params: Dict):
+        self.insert_Expression(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_Yield(self, node: ast.Yield, params: Dict):
+        self.insert_Expression(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_YieldFrom(self, node: ast.YieldFrom, params: Dict):
+        self.insert_Expression(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_Compare(self, node: ast.Compare, params: Dict):
+        self.insert_Expression(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+
+    ########################## call_args ###########################
+    def visit_Call(self, node: ast.Call, params: Dict):
+        self.insert_CallArg(params["node"])
+        self.insert_Expression(params["expr"])
+        self.insert_Node(params["db_node"])
+        pass
+
+    ################################################################
+    def visit_FormattedValue(self, node: ast.FormattedValue, params: Dict):
+        self.insert_Expression(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+
+    ########################### F-strings #####################################
+    def visit_JoinedStr(self, node: ast.JoinedStr, params: Dict):
+        self.insert_FString(params["node"])
+        self.insert_Expression(params["expr"])
+        self.insert_Node(params["db_node"])
+        pass
+
+    ###########################################################################
+    def visit_Constant(self, node: ast.Constant, params: Dict):
+        self.insert_Expression(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_Attribute(self, node: ast.Attribute, params: Dict):
+        self.insert_Expression(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_Subscript(self, node: ast.Subscript, params: Dict):
+        self.insert_Expression(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_Starred(self, node: ast.Starred, params: Dict):
+        self.insert_Expression(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+
+    ############################# Variable ##################################
+    def visit_Name(self, node: ast.Name, params: Dict):
+        self.insert_Variable(params["node"])
+        self.insert_Expression(params["expr"])
+        self.insert_Node(params["db_node"])        
+        pass
+
+    ############################### Vectors #################################
+    def visit_List(self, node: ast.List, params: Dict):
+        self.insert_Vector(params["node"])
+        self.insert_Expression(params["expr"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_Tuple(self, node: ast.Tuple, params: Dict):
+        self.insert_Vector(params["node"])
+        self.insert_Expression(params["expr"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_Dict(self, node: ast.Dict, params: Dict):
+        self.insert_Vector(params["node"])
+        self.insert_Expression(params["expr"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_Set(self, node: ast.Set, params: Dict):
+        self.insert_Vector(params["node"])
+        self.insert_Expression(params["expr"])
+        self.insert_Node(params["db_node"])
+        pass
+
+    ########################################################################
+    def visit_Slice(self, node: ast.Slice, params: Dict):
+        self.insert_Expression(params["node"])
+        self.insert_Node(params["db_node"])
+        pass
+    
+    def visit_ExceptHandler(self, node: ast.ExceptHandler, params: Dict):
+        pass
+
+    ############################### Cases ###################################
+    def visit_MatchValue(self, node: ast.MatchValue, params: Dict):
+        pass
+    
+    def visit_MatchSingleton(self, node: ast.MatchSingleton, params: Dict):
+        pass
+    
+    def visit_MatchSequence(self, node: ast.MatchSequence, params: Dict):
+        pass
+    
+    def visit_MatchMapping(self, node: ast.MatchMapping, params: Dict):
+        pass
+    
+    def visit_MatchClass(self, node: ast.MatchClass, params: Dict):
+        pass
+    
+    def visit_MatchStar(self, node: ast.MatchStar, params: Dict):
+        pass
+    
+    def visit_MatchAs(self, node: ast.MatchAs, params: Dict):
+        pass
+    
+    def visit_MatchOr(self, node: ast.MatchOr, params: Dict):
+        pass
+
+    ########################## visit extras #################################
+    def visit_arguments(self, node: ast.arguments, params: Dict):
+        self.insert_Parameter(params["dbparams"])
+        pass
+
+    def insert_Program(self, node: db_entities.DBProgram):
+        self.programs.append(node)
+
+    def insert_FunctionDef(self, node: db_entities.DBFunctionDef):
+        self.function_defs.append(node)
+        
+    def insert_Module(self, node: db_entities.DBModule):
+        self.modules.append(node)
+        
+    def insert_Node(self, node: db_entities.DBNode):
+        self.nodes.append(node)
+        
+    def insert_Import(self, node: db_entities.DBImport):
+        self.imports.append(node)
+        
+    def insert_ClassDef(self, node: db_entities.DBClassDef):
+        self.class_defs.append(node)
+        
+    def insert_MethodDef(self, node: db_entities.DBMethodDef):
+        self.method_defs.append(node)
+        
+    def insert_Statement(self, node: db_entities.DBStatement):
+        self.statements.append(node)
+    
+    def insert_Case(self, node: db_entities.DBCase):
+        self.cases.append(node)
+        
+    def insert_Handler(self, node: db_entities.DBHandler):
+        self.handlers.append(node)
+        
+    def insert_Expression(self, node: db_entities.DBExpression):
+        self.expressions.append(node)
+
+    def insert_Comprehension(self, node: db_entities.DBComprehension):
+        self.comprehensions.append(node)
+        
+    def insert_FString(self, node: db_entities.DBFString):
+        self.f_strings.append(node)
+        
+    def insert_CallArg(self, node: db_entities.DBCallArg):
+        self.call_args.append(node)
+    
+    def insert_Variable(self, node: db_entities.DBVariable):
+        self.variables.append(node)
+        
+    def insert_Vector(self, node: db_entities.DBVector):
+        self.vectors.append(node)
+        
+    def insert_Parameter(self, node: db_entities.DBParameter):
+        self.parameters.append(node)
