@@ -75,17 +75,21 @@ if __name__ == '__main__':
     id_manager = IDManager()
     warnings.filterwarnings("error")
 
+    # Testing VisitorIntrospector
+    visitor = VisitorInfo(id_manager, VisitorIntrospector())
+    visit(visitor)
+
     # Testing VisitorDataBase
-    # visitor = VisitorInfo(id_manager, VisitorDataBase())
-    # visit(visitor)
+    #visitor = VisitorInfo(id_manager, VisitorDataBase())
+    #visit(visitor)
 
     # Testing VisitorPrint
-    visitor = VisitorPrint()
-    test_path = './test/test2.py'
-    test_file = ''
-    with open(test_path, "r", encoding='utf-8') as f:
-        test_file = f.read()
-    visitor.visit(ast.parse(test_file), {})
+    # visitor = VisitorPrint()
+    # test_path = './test/test2.py'
+    # test_file = ''
+    # with open(test_path, "r", encoding='utf-8') as f:
+    #     test_file = f.read()
+    # visitor.visit(ast.parse(test_file), {})
 
 
 

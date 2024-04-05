@@ -1,9 +1,9 @@
 import ast
-from typing import Dict, List
-
-from util.introspector import TreeApp
-from visitors.nodevisitor import NodeVisitor
 import db.db_entities as db_entities
+from typing import Dict, List
+from visitors.nodevisitor import NodeVisitor
+from tkinter import Tk, END
+from tkinter.ttk import Treeview, Style
 
 
 class VisitorIntrospector(NodeVisitor):
@@ -26,12 +26,38 @@ class VisitorIntrospector(NodeVisitor):
         self.vectors: List[db_entities.DBVector] = []
         self.parameters: List[db_entities.DBParameter] = []
 
+        # TreeView
+        self.window = Tk()
+        self.window.title("Introspector")
+        self.window.state("zoomed")
+        Style().theme_use("vista")
+        self.tree = Treeview(self.window)
+
     def visit_Program(self, node: db_entities.DBProgram, params: Dict):
         self.insert_Program(node)
-        app = TreeApp()
-        app.run(self.programs[0])
-        # Show the program in a tree
-    
+        self.add_treeview_item("", node)
+        self.show_treeview()
+
+    def show_treeview(self):
+        self.tree.pack(fill="both", expand=True)
+        self.window.mainloop()
+
+    def add_treeview_item(self, parent, node):
+        item = self.tree.insert(parent, END, text=node.__class__.__name__)
+        for attr_name, attr_value in node.__dict__.items():
+            self.tree.insert(item, END, text=attr_name + ': ' + str(attr_value).replace("\n", ""))
+        if isinstance(node, db_entities.DBProgram):
+            modules = self.tree.insert(item, END, text="Modules")
+            for module in filter(lambda x: x.program_id == node.program_id, self.modules):
+                self.add_treeview_item(modules, module)
+        if isinstance(node, db_entities.DBModule):
+            class_defs = self.tree.insert(item, END, text="ClassDefinitions")
+            for class_def in filter(lambda x: x.module_id == node.module_id, self.class_defs):
+                self.add_treeview_item(class_defs, class_def)
+            function_defs = self.tree.insert(item, END, text="FunctionDefinitions")
+            for function_def in filter(lambda x: x.module_id == node.module_id, self.function_defs):
+                self.add_treeview_item(function_defs, function_def)
+
     def visit_Module(self, node: db_entities.DBModule, params: Dict):
         self.insert_Import(params["db_import"])
         self.insert_Module(params["node"])
