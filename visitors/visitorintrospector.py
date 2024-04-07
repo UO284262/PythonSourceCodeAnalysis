@@ -47,16 +47,30 @@ class VisitorIntrospector(NodeVisitor):
         for attr_name, attr_value in node.__dict__.items():
             self.tree.insert(item, END, text=attr_name + ': ' + str(attr_value).replace("\n", ""))
         if isinstance(node, db_entities.DBProgram):
-            modules = self.tree.insert(item, END, text="Modules")
-            for module in filter(lambda x: x.program_id == node.program_id, self.modules):
-                self.add_treeview_item(modules, module)
+            children = self.tree.insert(item, END, text="Modules")
+            for child in filter(lambda x: x.program_id == node.program_id, self.modules):
+                self.add_treeview_item(children, child)
         if isinstance(node, db_entities.DBModule):
-            class_defs = self.tree.insert(item, END, text="ClassDefinitions")
-            for class_def in filter(lambda x: x.module_id == node.module_id, self.class_defs):
-                self.add_treeview_item(class_defs, class_def)
-            function_defs = self.tree.insert(item, END, text="FunctionDefinitions")
-            for function_def in filter(lambda x: x.module_id == node.module_id, self.function_defs):
-                self.add_treeview_item(function_defs, function_def)
+            children = self.tree.insert(item, END, text="Imports")
+            for child in filter(lambda x: x.import_id == node.import_id, self.imports):
+                self.add_treeview_item(children, child)
+            children = self.tree.insert(item, END, text="ClassDefinitions")
+            for child in filter(lambda x: x.module_id == node.module_id, self.class_defs):
+                self.add_treeview_item(children, child)
+            children = self.tree.insert(item, END, text="FunctionDefinitions")
+            for child in filter(lambda x: x.module_id == node.module_id, self.function_defs):
+                self.add_treeview_item(children, child)
+        if isinstance(node, db_entities.DBClassDef):
+            children = self.tree.insert(item, END, text="MethodDefinitions")
+            for child in filter(lambda x: x.classdef_id == node.classdef_id, self.method_defs):
+                self.add_treeview_item(children, child)
+        if isinstance(node, db_entities.DBFunctionDef):
+            children = self.tree.insert(item, END, text="Parameters")
+            for child in filter(lambda x: x.parameters_id == node.parameters_id, self.parameters):
+                self.add_treeview_item(children, child)
+        if isinstance(node, db_entities.DBMethodDef):
+            for child in filter(lambda x: x.functiondef_id == node.methoddef_id, self.function_defs):
+                self.add_treeview_item(item, child)
 
     def visit_Module(self, node: db_entities.DBModule, params: Dict):
         self.insert_Import(params["db_import"])
