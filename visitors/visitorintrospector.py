@@ -69,9 +69,17 @@ class VisitorIntrospector(NodeVisitor):
             children = self.tree.insert(item, END, text="Parameters")
             for child in filter(lambda x: x.parameters_id == node.parameters_id, self.parameters):
                 self.add_treeview_item(children, child)
+            children = self.tree.insert(item, END, text="Body")
+            for child_id in map(lambda y: y.node_id, filter(lambda x: x.parent_id == node.functiondef_id, self.nodes)):
+                child = next(filter(lambda z: z.statement_id == child_id, self.statements), None)
+                if child is None:
+                    child = next(filter(lambda z: z.expression_id == child_id, self.expressions), None)
+                if child is not None:
+                    self.add_treeview_item(children, child)
         if isinstance(node, db_entities.DBMethodDef):
             for child in filter(lambda x: x.functiondef_id == node.methoddef_id, self.function_defs):
                 self.add_treeview_item(item, child)
+
 
     def visit_Module(self, node: db_entities.DBModule, params: Dict):
         self.insert_Import(params["db_import"])
