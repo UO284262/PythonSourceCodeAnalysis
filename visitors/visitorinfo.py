@@ -3269,14 +3269,14 @@ class VisitorInfo(NodeVisitor):
             self.visit(child, self.add_param(params, 'role', expr_roles[0]))
         ########## ENTITY PROPERTIES ############
         db_params.name_convention = self.get_args_name_convention(naming_conventions)
-        db_params.numberOfParams = number_of_params
-        db_params.posOnlyParamPct = len(node.posonlyargs)/number_of_params if number_of_params > 0 else 0
-        db_params.varParamPct = (1 if node.vararg else 0)/number_of_params if number_of_params > 0 else 0
-        db_params.hasVarParam = True if node.vararg else False
-        db_params.type_annotationPct = number_of_annotations/number_of_params if number_of_params > 0 else 0
-        db_params.kwOnlyParamPct = len(node.kwonlyargs)/number_of_params if number_of_params > 0 else 0
-        db_params.defaultValuePct = (len(node.kw_defaults) + len(node.defaults))/number_of_params if number_of_params > 0 else 0
-        db_params.hasKWParam = True if node.kwarg else False
+        db_params.number_of_params = number_of_params
+        db_params.pos_only_param_pct = len(node.posonlyargs)/number_of_params if number_of_params > 0 else 0
+        db_params.var_param_pct = (1 if node.vararg else 0)/number_of_params if number_of_params > 0 else 0
+        db_params.has_var_param = True if node.vararg else False
+        db_params.type_annotation_pct = number_of_annotations/number_of_params if number_of_params > 0 else 0
+        db_params.kw_only_param_pct = len(node.kwonlyargs)/number_of_params if number_of_params > 0 else 0
+        db_params.default_value_pct = (len(node.kw_defaults) + len(node.defaults))/number_of_params if number_of_params > 0 else 0
+        db_params.has_KW_param = True if node.kwarg else False
         db_params.expertise_level = params['expertise_level']
         db_params.user_id = params['user_id']
         ############## VISITOR DB ################

@@ -8,10 +8,9 @@ from visitors.visitorinfo import VisitorInfo
 from db.db_utils import init_db
 import os
 import re
-import uuid
 import warnings
 
-source_folder = './test/test_program'
+source_folder = './python_tfg/test/test_program'
 users = {}
 unknown = {}
 id_manager = None
