@@ -1,4 +1,5 @@
-class Fuyu:
-    def __init__(self):
-        self.name = "Fuyu"
-        self.age = 20
+
+class a():
+    @classmethod
+    def a():
+        pass

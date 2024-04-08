@@ -40,7 +40,7 @@ class VisitorInfo(NodeVisitor):
                     what_is_it["cached"] = True
                 if decorator.id == "staticmethod":
                     what_is_it["static"] = True
-                if decorator.id == "class_method":
+                if decorator.id == "classmethod":
                     what_is_it["class_method"] = True
                 if decorator.id == "property":
                     what_is_it["property"] = True
@@ -1464,13 +1464,13 @@ class VisitorInfo(NodeVisitor):
         for child in node.handlers:
             handlers.append(self.visit(child, self.add_param(self.add_param(child_params, "role", stmt_roles[3]), 'handler', db_handler)))
             depth = max(depth, handlers[hindex]["depth"])
-            hindex += 1
             for id in handlers[hindex]['child_ids']:
                 returns.append(id)
                 if(index == 0): first_child_id = returns[index]["id"]
                 if(index == 1): second_child_id = returns[index]["id"]
                 if(index == 2): third_child_id = returns[index]["id"]
                 index += 1
+            hindex += 1
         for child in node.orelse:
             if(isinstance(child,ast.Expr)):
                 returns.append(self.visit(child, self.add_param(child_params, "role", expr_roles[1])))
