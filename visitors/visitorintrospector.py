@@ -45,7 +45,8 @@ class VisitorIntrospector(NodeVisitor):
     def add_treeview_item(self, parent, node):
         item = self.tree.insert(parent, END, text=node.__class__.__name__)
         for attr_name, attr_value in node.__dict__.items():
-            self.tree.insert(item, END, text=attr_name + ': ' + str(attr_value).replace("\n", ""))
+            if not attr_name.endswith("id") and attr_name not in ["table", "node"]:
+                self.tree.insert(item, END, text=attr_name + ': ' + str(attr_value).replace("\n", ""))
         if isinstance(node, db_entities.DBProgram):
             children = self.tree.insert(item, END, text="Modules")
             for child in filter(lambda x: x.program_id == node.program_id, self.modules):
