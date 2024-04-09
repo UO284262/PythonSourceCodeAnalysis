@@ -232,5 +232,3 @@ async def a():
 async def a():
     async with a as b:
         pass
-
-
