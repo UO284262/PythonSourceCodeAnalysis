@@ -1,6 +1,7 @@
 class A:
-    @classmethod
-    def M(cls) -> List(int):
-        a: List(int) = 4
-
+    4 + 5
+    a: int = 4
+    def M(self):
+        pass
+    def R(self):
         pass

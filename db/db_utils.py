@@ -27,7 +27,7 @@ hyperv_connection_string = {
     'port': '5432',
 }
 
-connection_string = hyperv_connection_string
+connection_string = local_connection_string
 
 
 def write_on_db(sql_nodes_to_insert, nodes_data_to_insert, sql_insert, data_to_insert):
