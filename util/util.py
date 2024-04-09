@@ -3,7 +3,7 @@ import re
 from db.db_utils import get_db_current_id
 
 
-def op_category(node):
+def op_category(node: ast.BinOp) -> str:
     op = node.op.__doc__
     match op:
         case 'Add' | 'Sub' | 'Mult' | 'Div' | 'FloorDiv' | 'Mod': return 'Arithmetic'
@@ -16,7 +16,7 @@ def op_category(node):
         case 'Invert': return 'UnaryBWNot' 
 
 
-def const_category(node: ast.Constant):
+def const_category(node: ast.Constant) -> str:
     const_type = str(type(node.value)).split('\'')[1]
     match const_type:
         case 'int': return 'IntLiteral'
@@ -27,7 +27,8 @@ def const_category(node: ast.Constant):
         case 'ellipsis': return 'EllipsisLiteral'
         case _: return 'ComplexLiteral'
 
-def name_convention(name) -> str:
+
+def name_convention(name: str) -> str:
     lower_pattern = re.compile(r'^[a-z0-9]+$')
     upper_pattern = re.compile(r'^[A-Z_0-9]+$')
     camel_low_pattern = re.compile(r'^[a-z][a-zA-Z0-9]*$')

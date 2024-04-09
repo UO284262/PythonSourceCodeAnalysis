@@ -1,5 +1,5 @@
 class DBNode:
-    def __init__(self, parent_table = None, parent_id = None,  node = None, user_id = None, expertise_level = None):
+    def __init__(self, parent_table=None, parent_id=None, node=None, user_id=None, expertise_level=None):
         self.user_id = user_id
         self.expertise_level = expertise_level
         self.node = node
@@ -10,9 +10,9 @@ class DBNode:
 
 
 class DBProgram:
-    def __init__(self, category = None, name: str = None,  has_sub_dirs_with_code: bool = None,  has_packages: bool = None,  number_of_modules: int = None, 
-                 number_of_sub_dirs_with_code: int = None,  number_of_packages: int = None,  class_defs_pct: int = None,  function_defs_pct: int = None, 
-                 enum_defs_pct: int = None,  has_code_root_package: bool = None,  average_defs_per_module: int = None,  node = None, user_id = None, expertise_level = None):
+    def __init__(self, category=None, name: str = None,  has_sub_dirs_with_code: bool = None,  has_packages: bool = None, number_of_modules: int = None,
+                 number_of_sub_dirs_with_code: int = None,  number_of_packages: int = None,  class_defs_pct: int = None, function_defs_pct: int = None,
+                 enum_defs_pct: int = None, has_code_root_package: bool = None, average_defs_per_module: int = None, node=None, user_id=None, expertise_level=None):
         self.user_id = user_id
         self.expertise_level = expertise_level
         self.node = node
@@ -32,12 +32,12 @@ class DBProgram:
 
 
 class DBModule:
-    def __init__(self, category = None, module_id = None,  name: str = None,  name_convention: str = None,  has_doc_string: bool = None, 
-                 global_stmt_pct: float = None,  global_expressions: float = None,  number_of_classes: int = None, 
-                 number_of_functions: int = None,  class_defs_pct: float = None,  function_defs_pct: float = None, 
-                 enum_defs_pct: float = None,  average_stmts_function_body: float = None, 
-                 average_stmts_method_body: float = None,  type_annotations_pct: float = None, 
-                 has_entry_point: bool = None,  path: str = None,  program_id = None,  import_id = None,  node = None, user_id = None, expertise_level = None):
+    def __init__(self, category=None, module_id=None, name: str = None, name_convention: str = None, has_doc_string: bool = None,
+                 global_stmt_pct: float = None, global_expressions: float = None, number_of_classes: int = None,
+                 number_of_functions: int = None, class_defs_pct: float = None, function_defs_pct: float = None,
+                 enum_defs_pct: float = None, average_stmts_function_body: float = None,
+                 average_stmts_method_body: float = None, type_annotations_pct: float = None,
+                 has_entry_point: bool = None, path: str = None, program_id=None, import_id=None, node=None, user_id=None, expertise_level=None):
         self.user_id = user_id
         self.expertise_level = expertise_level
         self.node = node
@@ -83,17 +83,17 @@ class DBImport:
 
 
 class DBClassDef:
-    def __init__(self, category = None, classdef_id = None,  name_convention: str = None,  is_enum_class: bool = None, 
+    def __init__(self, category = None, classdef_id=None, name_convention: str = None,  is_enum_class: bool = None,
                  number_of_characters: int = None, number_of_methods: int = None, number_of_decorators: int = None, 
-                 number_of_base_classes: int = None,  has_generic_type_annotations: bool = None, 
-                 has_doc_string: bool = None,  body_count: int = None,  assignments_pct: float = None, 
-                 expressions_pct: float = None,  uses_meta_class: bool = None, 
-                 number_of_keywords: int = None,  height: int = None, 
-                 average_stmts_method_body: float = None,  type_annotations_pct: float = None, 
-                 private_methods_pct: float = None,  magic_methods_pct: float = None, 
-                 async_methods_pct: float = None,  class_methods_pct: float = None, 
-                 static_methods_pct: float = None,  abstract_methods_pct: float = None, 
-                 property_methods_pct: float = None, source_code: str = None, module_id = None, parent_id = None , node = None, user_id = None, expertise_level = None):
+                 number_of_base_classes: int = None, has_generic_type_annotations: bool = None,
+                 has_doc_string: bool = None, body_count: int = None,  assignments_pct: float = None,
+                 expressions_pct: float = None, uses_meta_class: bool = None,
+                 number_of_keywords: int = None, height: int = None,
+                 average_stmts_method_body: float = None, type_annotations_pct: float = None,
+                 private_methods_pct: float = None, magic_methods_pct: float = None,
+                 async_methods_pct: float = None, class_methods_pct: float = None,
+                 static_methods_pct: float = None, abstract_methods_pct: float = None,
+                 property_methods_pct: float = None, source_code: str = None, module_id=None, parent_id=None, node=None, user_id=None, expertise_level=None):
         self.user_id = user_id
         self.expertise_level = expertise_level
         self.node = node
