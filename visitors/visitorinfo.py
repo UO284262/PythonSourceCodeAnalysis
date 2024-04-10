@@ -254,7 +254,7 @@ class VisitorInfo(NodeVisitor):
         for child in node.type_params:
             self.visit(child, child_params)
         ########## ENTITY PROPERTIES ############
-        what_is_it = what_is_it(node)
+        what_is_it = get_method_info(node)
         args_ret = args['number_of_args'] + 1 if have_return or have_ret_annotation else args['number_of_args']
         number_of_annotations = args['type_annotations'] + 1 if have_ret_annotation else args['type_annotations']
         db_functiondef.name_convention = name_convention(node.name)
@@ -342,7 +342,7 @@ class VisitorInfo(NodeVisitor):
         for child in node.type_params:
             self.visit(child, child_params)
         ########## ENTITY PROPERTIES ############
-        what_is_it = what_is_it(node)
+        what_is_it = get_method_info(node)
         args_ret = args['number_of_args'] + 1 if have_return or have_ret_annotation else args['number_of_args']
         number_of_annotations = args['type_annotations'] + 1 if have_ret_annotation else args['type_annotations']
         db_functiondef.number_of_characters = len(node.name)
