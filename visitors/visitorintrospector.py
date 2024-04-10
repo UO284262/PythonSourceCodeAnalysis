@@ -85,6 +85,12 @@ class VisitorIntrospector(NodeVisitor):
         if isinstance(node, db_entities.DBStatement):
             children = self.tree.insert(item, END, text="Children")
             self.add_children(children, node.statement_id)
+        if isinstance(node, db_entities.DBExpression):
+            child = next(filter(lambda x: x.node_id == node.fourth_child_id, self.nodes), None)
+            if child is not None:
+                self.add_expression_child(item, child.node_id, "Fourth Child")
+            children = self.tree.insert(item, END, text="Children")
+            self.add_children(children, node.expression_id)
 
     def add_expression_child(self, parent: str, child_id: int, text: str):
         child = next(filter(lambda z: z.expression_id == child_id, self.expressions), None)

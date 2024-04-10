@@ -9,8 +9,9 @@ from db.db_utils import init_db
 import os
 import re
 import warnings
+import sys
 
-source_folder = './python_tfg/test/test_file'
+
 users = {}
 unknown = {}
 id_manager = None
@@ -59,7 +60,7 @@ def not_read(project: str, projects: List[str]) -> bool:
 
 
 # Walk through directories and files using os.walk
-def visit(visitor: ast.NodeVisitor):
+def run(visitor: ast.NodeVisitor, source_folder: str):
     projects = []
     for project in get_source_package(source_folder):
         if project != ' ':
@@ -69,26 +70,34 @@ def visit(visitor: ast.NodeVisitor):
                 visitor.visit_Program({"path": project, "user_id": user_id, "expertise_level": "BEGINNER"})
 
 
+def pretty_print(path: str):
+    visitor = VisitorPrint()
+    with open(path, "r", encoding='utf-8') as f:
+        test_file = f.read()
+    visitor.visit(ast.parse(test_file), {})
+
+
 if __name__ == '__main__':
     # init_db()
     id_manager = IDManager()
     warnings.filterwarnings("error")
+    source_folder = './python_tfg/test/test_file'
+    if len(sys.argv) == 2:
+        source_folder = sys.argv[1]
 
     # Testing VisitorIntrospector
     visitor = VisitorInfo(id_manager, VisitorIntrospector())
-    visit(visitor)
 
     # Testing VisitorDataBase
-    #visitor = VisitorInfo(id_manager, VisitorDataBase())
-    #visit(visitor)
+    # visitor = VisitorInfo(id_manager, VisitorDataBase())
+    run(visitor, source_folder)
 
-    # Testing VisitorPrint
-    # visitor = VisitorPrint()
-    # test_path = './test/test2.py'
-    # test_file = ''
-    # with open(test_path, "r", encoding='utf-8') as f:
-    #     test_file = f.read()
-    # visitor.visit(ast.parse(test_file), {})
+    # Pretty print the AST
+    # pretty_print('./python_tfg/test/test.py')
+
+
+
+
 
 
 
