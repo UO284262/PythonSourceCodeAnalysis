@@ -968,9 +968,6 @@ class VisitorInfo(NodeVisitor):
         ########## ENTITY PROPERTIES ############
         db_stmt.has_or_else = False
         depth = 0
-        first_child_id = None
-        second_child_id = None
-        third_child_id = None
         has_or_else = False
         ############## PROPAGAR VISIT ############
         returns = []
@@ -981,14 +978,7 @@ class VisitorInfo(NodeVisitor):
                 returns.append(self.visit(child, add_param(child_params, "role", expr_roles[1])))
             else:
                 returns.append(self.visit(child, add_param(child_params, "role", stmt_roles[0])))
-            
-                depth = max(depth, returns[index]["depth"])
-            if index == 0:
-                first_child_id = returns[index]["id"]
-            if index == 1:
-                second_child_id = returns[index]["id"]
-            if index == 2:
-                third_child_id = returns[index]["id"]
+            depth = max(depth, returns[index]["depth"])
             index += 1
         body_size = index
         for child in node.orelse:
@@ -998,19 +988,11 @@ class VisitorInfo(NodeVisitor):
             else:
                 returns.append(self.visit(child, add_param(child_params, "role", stmt_roles[1])))
             depth = max(depth, returns[index]["depth"])
-            if index == 0:
-                first_child_id = returns[index]["id"]
-            if index == 1:
-                second_child_id = returns[index]["id"]
-            if index == 2:
-                third_child_id = returns[index]["id"]
             index += 1
         ########## ENTITY PROPERTIES ############
         db_stmt.height = params["depth"]
         db_stmt.depth = max(returns_test["depth"],depth)
-        db_stmt.first_child_id = first_child_id
-        db_stmt.second_child_id = second_child_id
-        db_stmt.third_child_id = third_child_id
+        db_stmt.first_child_id = returns_test["id"]
         db_stmt.source_code = ast.unparse(node)
         db_stmt.body_size = body_size
         db_stmt.has_or_else = has_or_else
