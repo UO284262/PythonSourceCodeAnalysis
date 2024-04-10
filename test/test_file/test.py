@@ -1,2 +1,2 @@
 class A:
-    DEFAULT_LOGGING_LEVEL = logging.DEBUG
+    DEFAULT_LOGGING_LEVEL = logging.pepe.DEBUG

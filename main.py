@@ -10,7 +10,7 @@ import os
 import re
 import warnings
 
-source_folder = './python_tfg/test/test_program'
+source_folder = './python_tfg/test/test_file'
 users = {}
 unknown = {}
 id_manager = None

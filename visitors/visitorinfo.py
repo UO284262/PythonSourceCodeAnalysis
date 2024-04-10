@@ -224,10 +224,10 @@ class VisitorInfo(NodeVisitor):
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_functiondef, "depth": params["depth"] + 1, "parent_id": node_id}
         if is_method:
-            stmt_roles = ["MethodDef"]
+            stmt_roles = ["MethodDefBody"]
             expr_roles = ["FuncDecorator", "ReturnType", "MethodBody"]
         else:
-            stmt_roles = ["FunctionDef"]
+            stmt_roles = ["FunctionDefBody"]
             expr_roles = ["FuncDecorator", "ReturnType", "FuncBody"]
         ########## ENTITY PROPERTIES ############
         number_of_body_expr = 0
@@ -312,10 +312,10 @@ class VisitorInfo(NodeVisitor):
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_functiondef, "depth": params["depth"] + 1, "parent_id": node_id}
         if is_method:
-            stmt_roles = ["AsyncMethodDef"]
+            stmt_roles = ["AsyncMethodDefBody"]
             expr_roles = ["FuncDecorator", "ReturnType", "MethodBody"]
         else:
-            stmt_roles = ["AsyncFunctionDef"]
+            stmt_roles = ["AsyncFunctionDefBody"]
             expr_roles = ["FuncDecorator", "ReturnType", "FuncBody"]
         ########## ENTITY PROPERTIES ############
         number_of_body_expr = 0
@@ -393,7 +393,7 @@ class VisitorInfo(NodeVisitor):
             db_classdef.parent_id = params["parent_id"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_classdef, "depth": params["depth"] + 1, "parent_id": node_id}
-        stmt_roles = ["ClassDef"]
+        stmt_roles = ["ClassDefBody"]
         expr_roles = ["ClassBase", "ClassDecorator", "ClassBody"]
         ########## ENTITY PROPERTIES ############
         number_of_methods = 0
@@ -595,7 +595,6 @@ class VisitorInfo(NodeVisitor):
         roles = ["AssignLHS", "AssignRHS"]
         ########## ENTITY PROPERTIES ############
         depth = 0
-        first_child_id = None
         second_child_id = None
         third_child_id = None
         ############## PROPAGAR VISIT ############
@@ -605,10 +604,8 @@ class VisitorInfo(NodeVisitor):
             returns_targets.append(self.visit(child, add_param(child_params, 'role', roles[0])))
             depth = max(depth, returns_targets[index]["depth"])
             if index == 0: 
-                first_child_id = returns_targets[index]["id"]
-            if index == 1: 
                 second_child_id = returns_targets[index]["id"]
-            if index == 2: 
+            if index == 1: 
                 third_child_id = returns_targets[index]["id"]
             index += 1
         returns_value = self.visit(node.value, add_param(child_params, 'role', roles[1]))
@@ -616,7 +613,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.height = params["depth"]
         db_stmt.depth = 0
         db_stmt.depth = max(returns_value["depth"], depth)
-        db_stmt.first_child_id = first_child_id
+        db_stmt.first_child_id = returns_value["id"]
         db_stmt.second_child_id = second_child_id
         db_stmt.third_child_id = third_child_id
         db_stmt.source_code = ast.unparse(node)
@@ -752,7 +749,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
-        stmt_roles = ["For", "ForElse"]
+        stmt_roles = ["ForBody", "ForElseBody"]
         expr_roles = ["ForElement", "ForEnumerable", "ForBody", "ForElseBody"]
         ########## ENTITY PROPERTIES ############
         db_stmt.has_or_else = False
@@ -824,7 +821,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
-        stmt_roles = ["AsyncFor", "AsyncForElse"]
+        stmt_roles = ["AsyncForBody", "AsyncForElseBody"]
         expr_roles = ["AsyncForElement", "AsyncForEnumerable", "AsyncForBody", "AsyncForElseBody"]
         ########## ENTITY PROPERTIES ############
         db_stmt.has_or_else = False
@@ -896,7 +893,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
-        stmt_roles = ["While", "WhileElse"]
+        stmt_roles = ["WhileBody", "WhileElseBody"]
         expr_roles = ["WhileCondition", "WhileBody", "WhileElseBody"]
         ########## ENTITY PROPERTIES ############
         db_stmt.has_or_else = False
@@ -966,7 +963,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
-        stmt_roles = ["If", "IfElse"]
+        stmt_roles = ["IfBody", "IfElseBody"]
         expr_roles = ["IfCondition", "IfBody", "IfElseBody"]
         ########## ENTITY PROPERTIES ############
         db_stmt.has_or_else = False
@@ -1038,7 +1035,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
-        stmt_roles = ["With"]
+        stmt_roles = ["WithBody"]
         expr_roles = ["WithElement", "WithAs", "WithBody"]
         ########## ENTITY PROPERTIES ############
         depth = 0
@@ -1095,7 +1092,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
-        stmt_roles = ["AsyncWith"]
+        stmt_roles = ["AsyncWithBody"]
         expr_roles = ["AsyncWithElement", "AsyncWithAs", "AsyncWithBody"]
         ########## ENTITY PROPERTIES ############
         depth = 0
@@ -1272,8 +1269,8 @@ class VisitorInfo(NodeVisitor):
         db_stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_stmt, "depth": params["depth"] + 1, "parent_id": node_id}
-        stmt_roles = ["Try", "TryElse", "TryFinally", "TryHandler"]
-        expr_roles = ["TryBody", "TryElse", "FinallyBody"]
+        stmt_roles = ["TryBody", "TryElseBody", "TryFinallyBody", "TryHandler"]
+        expr_roles = ["TryBody", "TryElseBody", "FinallyBody"]
         ########## ENTITY PROPERTIES ############
         depth = 0
         first_child_id = None
@@ -1384,8 +1381,8 @@ class VisitorInfo(NodeVisitor):
         stmt.statement_role = params["role"]
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": stmt, "depth": params["depth"] + 1, "parent_id": id}
-        stmt_roles = ["Try", "TryElse", "TryFinally", "TryHandlerStar"]
-        expr_roles = ["TryBody", "TryElse", "FinallyBody"]
+        stmt_roles = ["TryBody", "TryElseBody", "TryFinallyBody", "TryHandlerStar"]
+        expr_roles = ["TryBody", "TryElseBody", "FinallyBodyBody"]
         ########## ENTITY PROPERTIES ############
         depth = 0
         first_child_id = None
@@ -3231,11 +3228,9 @@ class VisitorInfo(NodeVisitor):
         return {"type_annotations": number_of_annotations, "number_of_args": number_of_params}
     
     def visit_arg(self, node: ast.arg, params: Dict) -> Dict: 
-        ############# PARAMS ##################### 
-        expr_roles = ["TypeAnnotation"]
         ############## PROPAGAR VISIT ############
         if node.annotation:
-            self.visit(node.annotation, add_param(params, 'role', expr_roles[0])) #POSIBLE COMENTADO
+            #self.visit(node.annotation, add_param(params, 'role', expr_roles[0])) #POSIBLE COMENTADO
             return {'type_annotation': True}
         return {'type_annotation': False}
     
@@ -3254,7 +3249,7 @@ class VisitorInfo(NodeVisitor):
     
     def visit_match_case(self, node: ast.match_case, params: Dict) -> Dict:  
         ############# PARAMS #####################
-        stmt_roles = ["Case"]
+        stmt_roles = ["CaseBody"]
         expr_roles = ["CaseGuard", "CaseBody"]
         ########## ENTITY PROPERTIES ############
         depth = 0

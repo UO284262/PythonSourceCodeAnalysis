@@ -140,7 +140,7 @@ class VisitorDataBase(NodeVisitor):
         self.insert_Node(params["db_node"])
         pass
     
-    def visit_NonLocal(self, node: ast.Nonlocal, params: Dict):
+    def visit_Nonlocal(self, node: ast.Nonlocal, params: Dict):
         self.insert_Statement(params["node"])
         self.insert_Node(params["db_node"])
         pass
