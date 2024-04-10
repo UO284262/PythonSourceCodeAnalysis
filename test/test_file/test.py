@@ -1,2 +1,5 @@
-class A:
-    DEFAULT_LOGGING_LEVEL = logging.pepe.DEBUG
+def a():
+    pass
+
+def b(a):
+    pass

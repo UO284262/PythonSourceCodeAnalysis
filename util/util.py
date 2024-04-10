@@ -49,7 +49,7 @@ def name_convention(name: str) -> str:
     elif camel_up_pattern.match(name):
         return 'CamelUp'
     else: 
-        return 'Noname_convention'
+        return 'NoNameConvention'
 
 
 def add_param(dict_1: Dict, param, value) -> Dict:
@@ -96,7 +96,7 @@ def get_method_info(method):
 
 
 def get_args_name_convention(naming_conventions: Dict) -> str:
-    name_convention = ''
+    name_convention = None
     max = 0
     for nc in naming_conventions.keys():
         if naming_conventions[nc] > max:
