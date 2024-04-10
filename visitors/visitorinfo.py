@@ -3202,15 +3202,15 @@ class VisitorInfo(NodeVisitor):
             if(arg["type_annotation"]): number_of_annotations += 1
             number_of_params += 1
             naming_conventions[name_convention(child.arg)] += 1
-        for child in node.kw_defaults:
-            self.visit(child, add_param(params, 'role', expr_roles[0]))
+        #for child in node.kw_defaults:
+            #self.visit(child, add_param(params, 'role', expr_roles[0]))
         if node.kwarg:
             arg = self.visit(node.kwarg, params)
             if(arg["type_annotation"]): number_of_annotations += 1
             number_of_params += 1
             naming_conventions[name_convention(node.kwarg.arg)] += 1
-        for child in node.defaults:
-            self.visit(child, add_param(params, 'role', expr_roles[0]))
+        #for child in node.defaults:
+            #self.visit(child, add_param(params, 'role', expr_roles[0]))
         ########## ENTITY PROPERTIES ############
         db_params.name_convention = get_args_name_convention(naming_conventions)
         db_params.number_of_params = number_of_params
