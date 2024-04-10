@@ -99,7 +99,9 @@ class VisitorIntrospector(NodeVisitor):
 
     def add_children(self, parent: str, parent_id: int):
         for child_id in map(lambda y: y.node_id, filter(lambda x: x.parent_id == parent_id, self.nodes)):
-            child = next(filter(lambda z: z.methoddef_id == child_id, self.method_defs), None)
+            child = next(filter(lambda z: z.functiondef_id == child_id, self.function_defs), None)
+            if child is None:
+                child = next(filter(lambda z: z.methoddef_id == child_id, self.method_defs), None)
             if child is None:
                 child = next(filter(lambda z: z.statement_id == child_id, self.statements), None)
             if child is None:
@@ -107,7 +109,7 @@ class VisitorIntrospector(NodeVisitor):
             if child is not None:
                 self.add_treeview_item(parent, child)
             else:
-                self.tree.insert(parent, END, text="Unknown Child" + ": " + str(child.__class__.__name__))
+                self.tree.insert(parent, END, text="Unknown Child Id" + ": " + str(child_id))
 
     def visit_Module(self, node: db_entities.DBModule, params: Dict):
         self.insert_Import(params["db_import"])

@@ -1,2 +1,6 @@
 class A:
-    DEFAULT_LOGGING_LEVEL = logging.pepe.DEBUG
+    def m(self):
+        if True:
+            def f():
+                return 1
+            return 1
