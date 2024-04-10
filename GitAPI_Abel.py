@@ -96,7 +96,7 @@ def main():
                 print("Se ha excedido el tiempo de peticiones, en espera por 60 min")
                 time.sleep(delay)
         """
-        if count == 2:
+        if count == 15:
             break
     print("Finish!!")
 
