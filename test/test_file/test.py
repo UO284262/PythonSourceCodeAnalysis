@@ -1,5 +1,7 @@
-def a():
-    pass
+class A:
+    def m(self):
+        if True:
+            def f():
+                return 1
+            return 1
 
-def b(a):
-    pass
