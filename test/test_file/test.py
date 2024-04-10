@@ -1,7 +1,6 @@
 class A:
     def m(self):
         if True:
-            def f():
-                return 1
-            return 1
-
+            print(1)
+        else:
+            print(2)

@@ -1,5 +1,5 @@
 class DBNode:
-    def __init__(self, parent_table = None, parent_id = None,  node = None, user_id = None, expertise_level = None):
+    def __init__(self, parent_table=None, parent_id=None,  node=None):
         self.node = node
         self.table = "Nodes"
         self.parent_table = parent_table
@@ -9,8 +9,8 @@ class DBNode:
 
 class DBProgram:
     def __init__(self, name: str = None,  has_sub_dirs_with_code: bool = None,  has_packages: bool = None,  number_of_modules: int = None, 
-                 number_of_sub_dirs_with_code: int = None,  number_of_packages: int = None,  class_defs_pct: int = None,  function_defs_pct: int = None, 
-                 enum_defs_pct: int = None,  has_code_root_package: bool = None,  average_defs_per_module: int = None,  node = None, user_id = None, expertise_level = None):
+                 number_of_sub_dirs_with_code: int = None,  number_of_packages: int = None,  class_defs_pct: int = None, function_defs_pct: int = None,
+                 enum_defs_pct: int = None,  has_code_root_package: bool = None,  average_defs_per_module: int = None, node=None, user_id=None, expertise_level=None):
         self.user_id = user_id
         self.expertise_level = expertise_level
         self.node = node
