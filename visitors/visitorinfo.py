@@ -3160,7 +3160,7 @@ class VisitorInfo(NodeVisitor):
         ########## ENTITY PROPERTIES ############
         number_of_annotations = 0
         number_of_params = 0
-        naming_conventions = {'CamelUp': 0, 'CamelLow': 0, 'SnakeCase': 0, 'Discard': 0, 'Upper': 0, 'Lower': 0, 'Noname_convention': 0}
+        naming_conventions = {'CamelUp': 0, 'CamelLow': 0, 'SnakeCase': 0, 'Discard': 0, 'Upper': 0, 'Lower': 0, 'NoNameConvention': 0}
         ############## PROPAGAR VISIT ############
         for child in node.posonlyargs:
             arg = self.visit(child, params)

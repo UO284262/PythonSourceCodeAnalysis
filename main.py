@@ -2,7 +2,7 @@ import ast
 from typing import List
 from util.util import IDManager
 from visitors.visitordatabase import VisitorDataBase
-from visitors.visitorintrospector import VisitorIntrospector
+#from visitors.visitorintrospector import VisitorIntrospector
 from visitors.visitorprint import VisitorPrint
 from visitors.visitorinfo import VisitorInfo
 from db.db_utils import init_db
