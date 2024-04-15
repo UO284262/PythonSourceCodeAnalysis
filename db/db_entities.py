@@ -263,7 +263,7 @@ class DBExpression:
 class DBComprehension:
     def __init__(self,  category: str = None,  number_of_ifs: int = None, 
                  number_of_generators: int = None,  is_async: bool = None, 
-                 expression_id = None,  node = None, user_id = None, expertise_level = None):
+                 expression_id=None, node=None, user_id=None, expertise_level=None):
         self.user_id = user_id
         self.expertise_level = expertise_level
         self.node = node
@@ -277,7 +277,7 @@ class DBComprehension:
 
 class DBFString:
     def __init__(self,  number_of_elements: int = None,  constants_pct: float = None, 
-                 expressions_pct: float = None,  expression_id = None,  node = None, user_id = None, expertise_level = None):
+                 expressions_pct: float = None, expression_id=None,  node=None, user_id=None, expertise_level=None):
         self.user_id = user_id
         self.expertise_level = expertise_level
         self.node = node
