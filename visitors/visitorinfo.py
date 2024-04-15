@@ -1375,8 +1375,8 @@ class VisitorInfo(NodeVisitor):
         returns = []
         handlers = []
         index = 0
-        hindex = 0
-        handlersBodies = 0
+        h_index = 0
+        handlers_bodies = 0
         for child in node.body:
             if(isinstance(child,ast.Expr)):
                 returns.append(self.visit(child, add_param(child_params, "role", expr_roles[0])))
@@ -1389,14 +1389,17 @@ class VisitorInfo(NodeVisitor):
             index += 1
         for child in node.handlers:
             handlers.append(self.visit(child, add_param(add_param(child_params, "role", stmt_roles[3]), 'handler', db_handler)))
-            depth = max(depth, handlers[hindex]["depth"])
-            for id in handlers[hindex]['child_ids']:
-                returns.append(id)
-                if(index == 0): first_child_id = returns[index]["id"]
-                if(index == 1): second_child_id = returns[index]["id"]
-                if(index == 2): third_child_id = returns[index]["id"]
+            depth = max(depth, handlers[h_index]["depth"])
+            for node_id in handlers[h_index]['child_ids']:
+                returns.append(node_id)
+                if index == 0:
+                    first_child_id = node_id
+                if index == 1:
+                    second_child_id = node_id
+                if index == 2:
+                    third_child_id = node_id
                 index += 1
-            hindex += 1
+            h_index += 1
         for child in node.orelse:
             if(isinstance(child,ast.Expr)):
                 returns.append(self.visit(child, add_param(child_params, "role", expr_roles[1])))
@@ -1430,15 +1433,15 @@ class VisitorInfo(NodeVisitor):
         stmt.expertise_level = params['expertise_level']
         stmt.user_id = params['user_id']
         #--------------- handler -----------------
-        db_handler.number_of_handlers = hindex
+        db_handler.number_of_handlers = h_index
         if(node.finalbody):
             db_handler.has_finally = True
         else:
             db_handler.has_finally = False
         db_handler.has_catch_all = False
         for child in handlers:
-            if(child.is_catch_all): db_handler.has_catch_all = True
-        db_handler.average_body_count = handlersBodies/hindex if hindex > 0 else 0
+            if(child["is_catch_all"]): db_handler.has_catch_all = True
+        db_handler.average_body_count = handlers_bodies/h_index if h_index > 0 else 0
         db_handler.has_star = True
         db_handler.expertise_level = params['expertise_level']
         db_handler.user_id = params['user_id']
