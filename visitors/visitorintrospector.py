@@ -42,8 +42,8 @@ class VisitorIntrospector(NodeVisitor):
         self.tree.pack(fill="both", expand=True)
         self.window.mainloop()
 
-    def add_treeview_item(self, parent, node):
-        item = self.tree.insert(parent, END, text=node.__class__.__name__)
+    def add_treeview_item(self, parent, node, text=None):
+        item = self.tree.insert(parent, END, text=text if text is not None else node.__class__.__name__)
         for attr_name, attr_value in node.__dict__.items():
             if not attr_name.endswith("id") and attr_name not in ["table", "node"]:
                 self.tree.insert(item, END, text=attr_name + ': ' + str(attr_value).replace("\n", ""))
@@ -52,9 +52,8 @@ class VisitorIntrospector(NodeVisitor):
             for child in filter(lambda x: x.program_id == node.program_id, self.modules):
                 self.add_treeview_item(children, child)
         if isinstance(node, db_entities.DBModule):
-            children = self.tree.insert(item, END, text="Imports")
             for child in filter(lambda x: x.import_id == node.import_id, self.imports):
-                self.add_treeview_item(children, child)
+                self.add_treeview_item(item, child, "Import")
             children = self.tree.insert(item, END, text="Definitions")
             for child in filter(lambda x: x.module_id == node.module_id, self.class_defs):
                 self.add_treeview_item(children, child)
@@ -64,9 +63,8 @@ class VisitorIntrospector(NodeVisitor):
             children = self.tree.insert(item, END, text="Body")
             self.add_children(children, node.classdef_id)
         if isinstance(node, db_entities.DBFunctionDef):
-            children = self.tree.insert(item, END, text="Parameters")
             for child in filter(lambda x: x.parameters_id == node.parameters_id, self.parameters):
-                self.add_treeview_item(children, child)
+                self.add_treeview_item(item, child, "Parameters")
             children = self.tree.insert(item, END, text="Body")
             self.add_children(children, node.functiondef_id)
         if isinstance(node, db_entities.DBMethodDef):
@@ -95,7 +93,7 @@ class VisitorIntrospector(NodeVisitor):
     def add_expression_child(self, parent: str, child_id: int, text: str):
         child = next(filter(lambda z: z.expression_id == child_id, self.expressions), None)
         if child is not None:
-            self.add_treeview_item(self.tree.insert(parent, END, text=text), child)
+            self.add_treeview_item(parent, child, text)
 
     def add_children(self, parent: str, parent_id: int):
         for child_id in map(lambda y: y.node_id, filter(lambda x: x.parent_id == parent_id, self.nodes)):
