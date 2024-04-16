@@ -2369,11 +2369,9 @@ class VisitorInfo(NodeVisitor):
         depth = 0
         namedArgs = 0
         staredArgs = 0
-        first_child_category = None
         second_child_category = None
         third_child_category = None
         fourth_child_category = None
-        first_child_id = None
         second_child_id = None
         third_child_id = None
         fourth_child_id = None
@@ -2382,7 +2380,6 @@ class VisitorInfo(NodeVisitor):
         index = 0
         for child in node.args:
             returns.append(self.visit(child, add_param(child_params, 'role', expr_roles[1])))
-            if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
             if(index == 2): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
             if(index == 3): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
@@ -2391,7 +2388,6 @@ class VisitorInfo(NodeVisitor):
         func = self.visit(node.func, add_param(child_params, 'role', expr_roles[0]))
         for child in node.keywords:
             returns.append(self.visit(child, add_param(child_params, 'role', expr_roles[1])))
-            if(index == 0): first_child_category = returns[index]["category"]; first_child_id = returns[index]["id"]
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
             if(index == 2): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
             if(index == 3): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
@@ -2402,11 +2398,11 @@ class VisitorInfo(NodeVisitor):
         ########## ENTITY PROPERTIES ############
         expr.source_code = ast.unparse(node)
         expr.height = params["depth"]
-        expr.first_child_category = first_child_category
+        expr.first_child_category = func["category"]
         expr.second_child_category = second_child_category
         expr.third_child_category = third_child_category
         expr.fourth_child_category = fourth_child_category
-        expr.first_child_id = first_child_id
+        expr.first_child_id = func["id"]
         expr.second_child_id = second_child_id
         expr.third_child_id = third_child_id
         expr.fourth_child_id = fourth_child_id
