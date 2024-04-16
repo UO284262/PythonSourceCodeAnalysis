@@ -55,10 +55,7 @@ class VisitorIntrospector(NodeVisitor):
             for child in filter(lambda x: x.import_id == node.import_id, self.imports):
                 self.add_treeview_item(item, child, "Import")
             children = self.tree.insert(item, END, text="Definitions")
-            for child in filter(lambda x: x.module_id == node.module_id, self.class_defs):
-                self.add_treeview_item(children, child)
-            for child in filter(lambda x: x.module_id == node.module_id, self.function_defs):
-                self.add_treeview_item(children, child)
+            self.add_children(children, node.module_id)
         if isinstance(node, db_entities.DBClassDef):
             children = self.tree.insert(item, END, text="Body")
             self.add_children(children, node.classdef_id)
@@ -98,7 +95,9 @@ class VisitorIntrospector(NodeVisitor):
 
     def add_children(self, parent: str, parent_id: int):
         for child_id in map(lambda y: y.node_id, filter(lambda x: x.parent_id == parent_id, self.nodes)):
-            child = next(filter(lambda z: z.functiondef_id == child_id, self.function_defs), None)
+            child = next(filter(lambda z: z.classdef_id == child_id, self.class_defs), None)
+            if child is None:
+                child = next(filter(lambda z: z.functiondef_id == child_id, self.function_defs), None)
             if child is None:
                 child = next(filter(lambda z: z.statement_id == child_id, self.statements), None)
             if child is None:
