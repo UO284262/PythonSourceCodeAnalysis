@@ -77,26 +77,27 @@ def main():
         git_name = repo.name
         git_owner = repo.owner.login
         url = repo.clone_url
-        print("[" + str(datetime.now()) +  "] Proccessing " + git_owner + ":" + git_name + " ...")
+        if count > 50:
+            print("[" + str(datetime.now()) +  "] Proccessing " + git_owner + ":" + git_name + " ...")
 
-        """
-        if not checkProgramProcessedIsProcessed(session, git_name, git_owner):
-            try:
-                insert_path = path + "/" + git_owner + "_" + git_name
-                if not os.path.isdir(insert_path):
-                    clone = "git clone " + url + " " + git_owner + "_" + git_name  # Path del sistema donde guardar el repositorio. Creado a partir del owner y el name
-                    os.system(clone)  # Llamada al sistema para ejecutar el clone del repo
-        """
-        insertProcessedProgram(None, git_owner, git_name, url) # session
-        """
-                else:
-                    print("Fail :(")
-                    removeFromSystem(insert_path)
-            except RateLimitExceededException:
-                print("Se ha excedido el tiempo de peticiones, en espera por 60 min")
-                time.sleep(delay)
-        """
-        if count == 50:
+            """
+            if not checkProgramProcessedIsProcessed(session, git_name, git_owner):
+                try:
+                    insert_path = path + "/" + git_owner + "_" + git_name
+                    if not os.path.isdir(insert_path):
+                        clone = "git clone " + url + " " + git_owner + "_" + git_name  # Path del sistema donde guardar el repositorio. Creado a partir del owner y el name
+                        os.system(clone)  # Llamada al sistema para ejecutar el clone del repo
+            """
+            insertProcessedProgram(None, git_owner, git_name, url) # session
+            """
+                    else:
+                        print("Fail :(")
+                        removeFromSystem(insert_path)
+                except RateLimitExceededException:
+                    print("Se ha excedido el tiempo de peticiones, en espera por 60 min")
+                    time.sleep(delay)
+            """
+        if count == 100:
             break
     print("Finish!!")
 

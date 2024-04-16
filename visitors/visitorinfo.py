@@ -595,6 +595,7 @@ class VisitorInfo(NodeVisitor):
         roles = ["AssignLHS", "AssignRHS"]
         ########## ENTITY PROPERTIES ############
         depth = 0
+        first_child_id = None
         second_child_id = None
         third_child_id = None
         ############## PROPAGAR VISIT ############
@@ -604,16 +605,24 @@ class VisitorInfo(NodeVisitor):
             returns_targets.append(self.visit(child, add_param(child_params, 'role', roles[0])))
             depth = max(depth, returns_targets[index]["depth"])
             if index == 0: 
-                second_child_id = returns_targets[index]["id"]
+                first_child_id = returns_targets[index]["id"]
             if index == 1: 
+                second_child_id = returns_targets[index]["id"]
+            if index == 2: 
                 third_child_id = returns_targets[index]["id"]
             index += 1
         returns_value = self.visit(node.value, add_param(child_params, 'role', roles[1]))
+        if(index == 0):
+            first_child_id = returns_value["id"]
+        if(index == 1):
+            second_child_id = returns_value["id"]
+        if(index == 2):
+            third_child_id = returns_value["id"]
         ########## ENTITY PROPERTIES ############
         db_stmt.height = params["depth"]
         db_stmt.depth = 0
         db_stmt.depth = max(returns_value["depth"], depth)
-        db_stmt.first_child_id = returns_value["id"]
+        db_stmt.first_child_id = first_child_id
         db_stmt.second_child_id = second_child_id
         db_stmt.third_child_id = third_child_id
         db_stmt.source_code = ast.unparse(node)
@@ -2715,8 +2724,12 @@ class VisitorInfo(NodeVisitor):
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
             if(index == 2): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
             if(index == 3): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
-            if(index > 0 and homogeneous and type(child) != lastType): homogeneous = False
-            lastType = type(child)
+            if(index > 0 and homogeneous and type(child) == ast.Constant):
+                if(type(child.value) != lastType): homogeneous = False
+                else: lastType = type(child.value)
+            elif(index == 0 and type(child) == ast.Constant): lastType = type(child.value)
+            else:
+                homogeneous = False
             index += 1
         ########## ENTITY PROPERTIES ############
         expr.source_code = ast.unparse(node)
@@ -2781,8 +2794,12 @@ class VisitorInfo(NodeVisitor):
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
             if(index == 2): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
             if(index == 3): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
-            if(index > 0 and homogeneous and type(child) != lastType): homogeneous = False
-            lastType = type(child)
+            if(index > 0 and homogeneous and type(child) == ast.Constant):
+                if(type(child.value) != lastType): homogeneous = False
+                else: lastType = type(child.value)
+            elif(index == 0 and type(child) == ast.Constant): lastType = type(child.value)
+            else:
+                homogeneous = False
             index += 1
         ########## ENTITY PROPERTIES ############
         expr.source_code = ast.unparse(node)
@@ -2851,8 +2868,12 @@ class VisitorInfo(NodeVisitor):
             if(index == 1): 
                 third_child_category = keys[index]["category"] if keys[index] else 'NoneType'; third_child_id = keys[index]["id"] if keys[index] else None
                 fourth_child_category = values[index]["category"]; fourth_child_id = values[index]["id"]
-            if(index > 0 and homogeneous and type(node.values[i]) != lastType): homogeneous = False
-            lastType = type(node.values[i])
+            if(index > 0 and homogeneous and type(node.values[i]) == ast.Constant):
+                if(type(node.values[i].value) != lastType): homogeneous = False
+                else: lastType = type(node.values[i].value)
+            elif(index == 0 and type(node.values[i]) == ast.Constant): lastType = type(node.values[i].value)
+            else:
+                homogeneous = False
             index += 1
         ########## ENTITY PROPERTIES ############
         expr.source_code = ast.unparse(node)
@@ -2917,8 +2938,12 @@ class VisitorInfo(NodeVisitor):
             if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
             if(index == 2): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
             if(index == 3): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
-            if(index > 0 and homogeneous and type(child) != lastType): homogeneous = False
-            lastType = type(child)
+            if(index > 0 and homogeneous and type(child) == ast.Constant):
+                if(type(child.value) != lastType): homogeneous = False
+                else: lastType = type(child.value)
+            elif(index == 0 and type(child) == ast.Constant): lastType = type(child.value)
+            else:
+                homogeneous = False
             index += 1
         ########## ENTITY PROPERTIES ############
         expr.source_code = ast.unparse(node)
