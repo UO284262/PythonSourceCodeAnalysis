@@ -1,9 +1,1 @@
-def a():
-    return 5
-
-a =  {'a': a(), 'b': 3.5 }
-
-b = [3, 's']
-
-a = 3 + 4 + 5
-a, b = [1,2]
+squares_generator = (x**2 for x in range(1, 6) if x % 2 == 0 if x % 3 == 0)

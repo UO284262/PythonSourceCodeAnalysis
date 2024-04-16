@@ -1955,9 +1955,10 @@ class VisitorInfo(NodeVisitor):
         index = 0
         for child in node.generators:
             returns.append(self.visit(child, child_params))
-            if(index == 0): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
-            if(index == 1): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
-            if(index == 2): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
+            if(index == 0): 
+                second_child_category = returns[index]["categories"]["target"]; second_child_id = returns[index]["ids"]["target"]
+                third_child_category = returns[index]["categories"]["iter"]; third_child_id = returns[index]["ids"]["iter"]
+                fourth_child_category = returns[index]["categories"]["ifs"]; fourth_child_id = returns[index]["ids"]["ifs"]
             depth = max(depth, returns[index]["depth"])
             numOfIfs += len(child.ifs)
             if(child.is_async): is_async = True
@@ -2020,9 +2021,10 @@ class VisitorInfo(NodeVisitor):
         index = 0
         for child in node.generators:
             returns.append(self.visit(child, child_params))
-            if(index == 0): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
-            if(index == 1): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
-            if(index == 2): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
+            if(index == 0): 
+                second_child_category = returns[index]["categories"]["target"]; second_child_id = returns[index]["ids"]["target"]
+                third_child_category = returns[index]["categories"]["iter"]; third_child_id = returns[index]["ids"]["iter"]
+                fourth_child_category = returns[index]["categories"]["ifs"]; fourth_child_id = returns[index]["ids"]["ifs"]
             depth = max(depth, returns[index]["depth"])
             numOfIfs += len(child.ifs)
             if(child.is_async): is_async = True
@@ -2083,8 +2085,11 @@ class VisitorInfo(NodeVisitor):
         index = 0
         for child in node.generators:
             returns.append(self.visit(child, child_params))
-            if(index == 0): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
-            if(index == 1): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
+            if(index == 0): 
+                third_child_category = returns[index]["categories"]["target"]; third_child_id = returns[index]["ids"]["target"]
+                fourth_child_category = returns[index]["categories"]["iter"]; fourth_child_id = returns[index]["ids"]["iter"]
+                #fourth_child_category = returns[index]["categories"]["ifs"][0]; fourth_child_id = returns[index]["ids"]["ifs"][0]
+            
             depth = max(depth, returns[index]["depth"])
             numOfIfs += len(child.ifs)
             if(child.is_async): is_async = True
@@ -2148,9 +2153,10 @@ class VisitorInfo(NodeVisitor):
         index = 0
         for child in node.generators:
             returns.append(self.visit(child, child_params))
-            if(index == 0): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
-            if(index == 1): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
-            if(index == 2): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
+            if(index == 0): 
+                second_child_category = returns[index]["categories"]["target"]; second_child_id = returns[index]["ids"]["target"]
+                third_child_category = returns[index]["categories"]["iter"]; third_child_id = returns[index]["ids"]["iter"]
+                fourth_child_category = returns[index]["categories"]["ifs"]; fourth_child_id = returns[index]["ids"]["ifs"]
             depth = max(depth, returns[index]["depth"])
             numOfIfs += len(child.ifs)
             if(child.is_async): is_async = True
@@ -3163,6 +3169,8 @@ class VisitorInfo(NodeVisitor):
         expr_roles = ["ComprehensionTarget", "ComprehensionIter", "ComprehensionIf"]
         ########## ENTITY PROPERTIES ############
         depth = 0
+        ifsI = None
+        ifsC = None
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
@@ -3171,10 +3179,11 @@ class VisitorInfo(NodeVisitor):
         for child in node.ifs:
             returns.append(self.visit(child, add_param(params, 'role', expr_roles[2])))
             depth = max(depth, returns[index]["depth"])
+            if(index == 0): 
+                ifsI = returns[index]["id"]
+                ifsC = returns[index]["category"]
             index += 1
-        ########## ENTITY PROPERTIES ############
-        depth = max(max(target["depth"], iter["depth"]), depth)
-        return {'id': params["parent_id"], 'category': params["parent"].category, 'depth': depth + 1}
+        return {'ids': {"target" : target["id"], "iter" : iter["id"], "ifs" : ifsI}, 'categories': {"target" : target["category"], "iter" : iter["category"], "ifs" : ifsC}, 'depth': depth + 1 }
     
     def visit_arguments(self, node: ast.arguments, params: Dict) -> Dict:  
         db_params = db_entities.DBParameter()
