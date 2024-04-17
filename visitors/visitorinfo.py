@@ -2380,17 +2380,17 @@ class VisitorInfo(NodeVisitor):
         index = 0
         for child in node.args:
             returns.append(self.visit(child, add_param(child_params, 'role', expr_roles[1])))
-            if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
-            if(index == 2): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
-            if(index == 3): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
+            if(index == 0): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
+            if(index == 1): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
+            if(index == 2): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
             depth = max(depth, returns[index]["depth"])
             index += 1
         func = self.visit(node.func, add_param(child_params, 'role', expr_roles[0]))
         for child in node.keywords:
             returns.append(self.visit(child, add_param(child_params, 'role', expr_roles[1])))
-            if(index == 1): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
-            if(index == 2): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
-            if(index == 3): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
+            if(index == 0): second_child_category = returns[index]["category"]; second_child_id = returns[index]["id"]
+            if(index == 1): third_child_category = returns[index]["category"]; third_child_id = returns[index]["id"]
+            if(index == 2): fourth_child_category = returns[index]["category"]; fourth_child_id = returns[index]["id"]
             if(child.arg): namedArgs += 1
             if('**' in ast.unparse(child.value)): staredArgs += 1
             depth = max(depth, returns[index]["depth"])
