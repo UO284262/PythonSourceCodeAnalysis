@@ -78,6 +78,7 @@ class VisitorIntrospector(NodeVisitor):
             if child is not None:
                 self.add_expression_child(item, child.node_id, "Third Child")
         if isinstance(node, db_entities.DBStatement):
+            self.add_statement_details(item, node.statement_id)
             children = self.tree.insert(item, END, text="Children")
             self.add_children(children, node.statement_id)
         if isinstance(node, db_entities.DBExpression):
@@ -117,6 +118,13 @@ class VisitorIntrospector(NodeVisitor):
             child = next(filter(lambda z: z.expression_id == node_id, self.variables), None)
         if child is None:
             child = next(filter(lambda z: z.expression_id == node_id, self.vectors), None)
+        if child is not None:
+            self.add_treeview_item(parent, child, "Details (" + child.__class__.__name__ + ")")
+
+    def add_statement_details(self, parent: str, node_id: int):
+        child = next(filter(lambda z: z.statement_id == node_id, self.cases), None)
+        if child is None:
+            child = next(filter(lambda z: z.statement_id == node_id, self.handlers), None)
         if child is not None:
             self.add_treeview_item(parent, child, "Details (" + child.__class__.__name__ + ")")
 

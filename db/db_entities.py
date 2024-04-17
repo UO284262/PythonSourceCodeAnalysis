@@ -302,6 +302,7 @@ class DBVariable:
         self.is_magic = is_magic
         self.expression_id = expression_id
 
+
 class DBVector:
     def __init__(self,  category: str = None,  number_of_elements: int = None, 
                  homogeneous: bool = None,  expression_id = None,  node = None, user_id = None, expertise_level = None):
@@ -328,6 +329,7 @@ class DBCallArg:
         self.double_star_args_pct = double_star_args_pct
         self.expression_id = expression_id
         self.callArgs_id = 0
+
 
 class DBCase:
     def __init__(self,  number_of_cases: int = None,  guards: float = None, 
