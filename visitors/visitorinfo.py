@@ -1178,7 +1178,7 @@ class VisitorInfo(NodeVisitor):
             number_of_guards += returns[i]["guards"]
             body_total_count += returns[i]["body_count"]
         total_cases = number_of_cases_as + number_of_cases_or + number_of_cases_mapping + number_of_cases_sequence + number_of_cases_singleton + number_of_cases_star + number_of_cases_class + number_of_cases_value
-        case.number_of_cases = total_cases
+        case.number_of_cases = len(node.cases)
         case.guards = number_of_guards/total_cases if total_cases > 0 else 0
         case.average_body_count = body_total_count/index if index > 0 else 0
         case.average_match_value = number_of_cases_value/total_cases if total_cases > 0 else 0
@@ -1264,9 +1264,6 @@ class VisitorInfo(NodeVisitor):
         expr_roles = ["TryBody", "TryElseBody", "FinallyBody"]
         ########## ENTITY PROPERTIES ############
         depth = 0
-        first_child_id = None
-        second_child_id = None
-        third_child_id = None
         has_or_else = False
         ############## PROPAGAR VISIT ############
         returns = []
@@ -1280,38 +1277,21 @@ class VisitorInfo(NodeVisitor):
             else:
                 returns.append(self.visit(child, add_param(child_params, "role", stmt_roles[0])))
             depth = max(depth, returns[index]["depth"])
-            if index == 0:
-                first_child_id = returns[index]["id"]
-            if index == 1:
-                second_child_id = returns[index]["id"]
-            if index == 2:
-                third_child_id = returns[index]["id"]
             index += 1
         for child in node.handlers:
             handlers.append(self.visit(child, add_param(add_param(child_params, "role", stmt_roles[3]), 'handler', db_handler)))
             depth = max(depth, handlers[h_index]["depth"])
             for node_id in handlers[h_index]['child_ids']:
                 returns.append(node_id)
-                if index == 0:
-                    first_child_id = node_id
-                if index == 1:
-                    second_child_id = node_id
-                if index == 2:
-                    third_child_id = node_id
                 index += 1
             h_index += 1
+            handlers_bodies += len(child.body)
         for child in node.orelse:
             if isinstance(child, ast.Expr):
                 returns.append(self.visit(child, add_param(child_params, "role", expr_roles[1])))
             else:
                 returns.append(self.visit(child, add_param(child_params, "role", stmt_roles[1])))
             depth = max(depth, returns[index]["depth"])
-            if index == 0:
-                first_child_id = returns[index]["id"]
-            if index == 1:
-                second_child_id = returns[index]["id"]
-            if index == 2:
-                third_child_id = returns[index]["id"]
             index += 1
             has_or_else = True
         for child in node.finalbody:
@@ -1320,20 +1300,11 @@ class VisitorInfo(NodeVisitor):
             else:
                 returns.append(self.visit(child, add_param(child_params, "role", stmt_roles[2])))
             depth = max(depth, returns[index]["depth"])
-            if index == 0:
-                first_child_id = returns[index]["id"]
-            if index == 1:
-                second_child_id = returns[index]["id"]
-            if index == 2:
-                third_child_id = returns[index]["id"]
             index += 1
         ########## ENTITY PROPERTIES ############
         db_stmt.height = params["depth"]
         db_stmt.has_or_else = has_or_else
         db_stmt.depth = depth
-        db_stmt.first_child_id = first_child_id
-        db_stmt.second_child_id = second_child_id
-        db_stmt.third_child_id = third_child_id
         db_stmt.source_code = ast.unparse(node)
         db_stmt.body_size = index
         db_stmt.expertise_level = params["expertise_level"]
@@ -1376,9 +1347,6 @@ class VisitorInfo(NodeVisitor):
         expr_roles = ["TryBody", "TryElseBody", "FinallyBodyBody"]
         ########## ENTITY PROPERTIES ############
         depth = 0
-        first_child_id = None
-        second_child_id = None
-        third_child_id = None
         has_or_else = False
         ############## PROPAGAR VISIT ############
         returns = []
@@ -1392,32 +1360,21 @@ class VisitorInfo(NodeVisitor):
             else:
                 returns.append(self.visit(child, add_param(child_params, "role", stmt_roles[0])))
             depth = max(depth, returns[index]["depth"])
-            if(index == 0): first_child_id = returns[index]["id"]
-            if(index == 1): second_child_id = returns[index]["id"]
-            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         for child in node.handlers:
             handlers.append(self.visit(child, add_param(add_param(child_params, "role", stmt_roles[3]), 'handler', db_handler)))
             depth = max(depth, handlers[h_index]["depth"])
             for node_id in handlers[h_index]['child_ids']:
                 returns.append(node_id)
-                if index == 0:
-                    first_child_id = node_id
-                if index == 1:
-                    second_child_id = node_id
-                if index == 2:
-                    third_child_id = node_id
                 index += 1
             h_index += 1
+            handlers_bodies += len(child.body)
         for child in node.orelse:
             if(isinstance(child,ast.Expr)):
                 returns.append(self.visit(child, add_param(child_params, "role", expr_roles[1])))
             else:
                 returns.append(self.visit(child, add_param(child_params, "role", stmt_roles[1])))
             depth = max(depth, returns[index]["depth"])
-            if(index == 0): first_child_id = returns[index]["id"]
-            if(index == 1): second_child_id = returns[index]["id"]
-            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
             has_or_else = True
         for child in node.finalbody:
@@ -1426,17 +1383,11 @@ class VisitorInfo(NodeVisitor):
             else:
                 returns.append(self.visit(child, add_param(child_params, "role", stmt_roles[2])))
             depth = max(depth, returns[index]["depth"])
-            if(index == 0): first_child_id = returns[index]["id"]
-            if(index == 1): second_child_id = returns[index]["id"]
-            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
         ########## ENTITY PROPERTIES ############
         stmt.height = params["depth"]
         stmt.has_or_else = has_or_else
         stmt.depth = depth
-        stmt.first_child_id = first_child_id
-        stmt.second_child_id = second_child_id
-        stmt.third_child_id = third_child_id
         stmt.source_code = ast.unparse(node)
         stmt.body_size = index
         stmt.expertise_level = params['expertise_level']
