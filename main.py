@@ -67,7 +67,7 @@ def run(visitor: ast.NodeVisitor, source_folder: str):
             user_id = control_users(project)
             if not_read(project, projects):
                 projects.append(project)
-                visitor.visit_Program({"path": project, "user_id": user_id, "expertise_level": "BEGINNER"})
+                visitor.visit_Program({"path": project, "user_id": user_id, "expertise_level": expertice_level})
 
 
 def pretty_print(path: str):
@@ -82,8 +82,12 @@ if __name__ == '__main__':
     id_manager = IDManager()
     warnings.filterwarnings("error")
     source_folder = './python_tfg/test/test_file'
+    expertice_level = 'BEGINNER'
     if len(sys.argv) == 2:
         source_folder = sys.argv[1]
+    elif len(sys.argv) == 3:
+        source_folder = sys.argv[1]
+        expertice_level = sys.argv[2]
 
     # Testing VisitorIntrospector
     visitor = VisitorInfo(id_manager, VisitorIntrospector())
