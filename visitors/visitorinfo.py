@@ -1178,7 +1178,7 @@ class VisitorInfo(NodeVisitor):
             number_of_guards += returns[i]["guards"]
             body_total_count += returns[i]["body_count"]
         total_cases = number_of_cases_as + number_of_cases_or + number_of_cases_mapping + number_of_cases_sequence + number_of_cases_singleton + number_of_cases_star + number_of_cases_class + number_of_cases_value
-        case.numberOfCases = total_cases
+        case.number_of_cases = total_cases
         case.guards = number_of_guards/total_cases if total_cases > 0 else 0
         case.average_body_count = body_total_count/index if index > 0 else 0
         case.average_match_value = number_of_cases_value/total_cases if total_cases > 0 else 0
@@ -3038,7 +3038,7 @@ class VisitorInfo(NodeVisitor):
     ############################### Cases ###################################
     def visit_MatchValue(self, node: ast.MatchValue, params: Dict) -> Dict:  
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": params["parent"], "depth": params["depth"] + 1, "parent_id": params["parent_id"]}
-        expr_roles = ["MatchCondition"]
+        expr_roles = ["CaseCondition"]
         ################ RETURNS #################
         depth = 0
         ############## PROPAGAR VISIT ############
@@ -3067,7 +3067,7 @@ class VisitorInfo(NodeVisitor):
     def visit_MatchMapping(self, node: ast.MatchMapping, params: Dict) -> Dict:  
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": params["parent"], "depth": params["depth"] + 1, "parent_id": params["parent_id"]}
-        expr_roles = ["MatchCondition"]
+        expr_roles = ["CaseCondition"]
         ################ RETURNS #################
         returns = {'match_value': 0, 'match_singleton': 0, 'match_sequence': 0, 'match_mapping': 1, 'match_class': 0, 'match_star': 0, 'match_as': 0, 'match_or': 0, 'depth': 0}
         ############## PROPAGAR VISIT ############
@@ -3089,7 +3089,7 @@ class VisitorInfo(NodeVisitor):
     def visit_MatchClass(self, node: ast.MatchClass, params: Dict) -> Dict:  
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": params["parent"], "depth": params["depth"] + 1, "parent_id": params["parent_id"]}
-        expr_roles = ["MatchCondition"]
+        expr_roles = ["CaseCondition"]
         ################ RETURNS #################
         returns = {'match_value': 0, 'match_singleton': 0, 'match_sequence': 0, 'match_mapping': 0, 'match_class': 1, 'match_star': 0, 'match_as': 0, 'match_or': 0, 'depth': 0}
         ############## PROPAGAR VISIT ############
