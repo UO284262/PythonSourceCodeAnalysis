@@ -78,7 +78,7 @@ def main():
         git_owner = repo.owner.login
         url = repo.clone_url
         if count > 50:
-            print("[" + str(datetime.now()) +  "] Proccessing " + git_owner + ":" + git_name + " ...")
+            #print("[" + str(datetime.now()) +  "] Proccessing " + git_owner + ":" + git_name + " ...")
 
             """
             if not checkProgramProcessedIsProcessed(session, git_name, git_owner):
