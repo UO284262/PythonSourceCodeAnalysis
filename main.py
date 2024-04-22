@@ -62,13 +62,18 @@ def not_read(project: str, projects: List[str]) -> bool:
 # Walk through directories and files using os.walk
 def run(visitor: ast.NodeVisitor, source_folder: str):
     projects = []
-    for project in get_source_package(source_folder):
-        if project != ' ':
-            user_id = control_users(project)
-            if not_read(project, projects):
-                projects.append(project)
-                visitor.visit_Program({"path": project, "user_id": user_id, "expertise_level": expertice_level})
-
+    if(not project_folder):
+        for project in get_source_package(source_folder):
+            if project != ' ':
+                user_id = control_users(project)
+                if not_read(project, projects):
+                    projects.append(project)
+                    visitor.visit_Program({"path": project, "user_id": user_id, "expertise_level": expertice_level})
+    else:
+        user_id = control_users(project_folder)
+        if not_read(project_folder, projects):
+            projects.append(project_folder)
+            visitor.visit_Program({"path": project_folder, "user_id": user_id, "expertise_level": expertice_level})
 
 def pretty_print(path: str):
     visitor = VisitorPrint()
@@ -83,11 +88,16 @@ if __name__ == '__main__':
     warnings.filterwarnings("error")
     source_folder = './python_tfg/test/test_file'
     expertice_level = 'BEGINNER'
+    project_folder = None
     if len(sys.argv) == 2:
         source_folder = sys.argv[1]
     elif len(sys.argv) == 3:
         source_folder = sys.argv[1]
         expertice_level = sys.argv[2]
+    elif len(sys.argv) == 4:
+        source_folder = sys.argv[1]
+        expertice_level = sys.argv[2]
+        project_folder = sys.argv[3]
 
     # Testing VisitorIntrospector
     visitor = VisitorInfo(id_manager, VisitorIntrospector())
