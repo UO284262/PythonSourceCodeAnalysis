@@ -8,6 +8,7 @@ import numpy as np
 import sys
 import os
 import dataset.db.db_utils as db_utils
+from numpy import inf
 
 # Database connection properties
 DB_CONNECTION_STR = f"postgresql://{db_utils.connection_string['user']}:{db_utils.connection_string['password']}@{db_utils.connection_string['host']}:{db_utils.connection_string['port']}/{db_utils.connection_string['dbname']}"
@@ -109,3 +110,35 @@ def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_c
 def print_frequency_anal_for_num_var(df, column_name):
     sns.boxplot(df[column_name])
     print_outliers_for_df_column(df, column_name)
+
+
+def get_statistics(df, columns, size):
+    total = len(df.index)
+    result = df.groupby(columns) \
+        .size() \
+        .reset_index(name='count') \
+        .sort_values(['count'], ascending=False) \
+        .head(size)
+    result['percentage'] = (result['count'] * 100) / total
+    return result.to_string(index=False) + '\n'
+
+
+def get_bin(bins, value):
+    for x, y in bins:
+        if value >= x:
+            if y == 100 and value < 100:
+                return "[" + str(x) + "_" + str(y) + ")"
+            if y == 100 and value == 100:
+                return "100_100"
+            if value < y:
+                return "[" + str(x) + "_" + str(y) + ("]" if y == inf else ")")
+    return "unknown"
+
+
+def create_bins(df, column, bins):
+    return df[column].apply(lambda value: get_bin(bins, value))
+
+
+def discretize_columns(df, columns):
+    for k in columns:
+        df[k] = create_bins(df, k, columns[k])
