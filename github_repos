@@ -1,0 +1,18 @@
+ray-project;ray;https://github.com/ray-project/ray.git as 1
+certbot;certbot;https://github.com/certbot/certbot.git default
+run-llama;llama_index;https://github.com/run-llama/llama_index.git as 1
+sqlmapproject;sqlmap;https://github.com/sqlmapproject/sqlmap.git default
+geekcomputers;Python;https://github.com/geekcomputers/Python.git default
+huggingface;pytorch-image-models;https://github.com/huggingface/pytorch-image-models.git default
+babysor;MockingBird;https://github.com/babysor/MockingBird.git default
+testerSunshine;12306;https://github.com/testerSunshine/12306.git default
+lm-sys;FastChat;https://github.com/lm-sys/FastChat.git as 1
+shadowsocks;shadowsocks;https://github.com/shadowsocks/shadowsocks.git clone master default
+XX-net;XX-Net;https://github.com/XX-net/XX-Net.git as 1
+microsoft;DeepSpeed;https://github.com/microsoft/DeepSpeed.git as 1
+fxsjy;jieba;https://github.com/fxsjy/jieba.git default
+comfyanonymous;ComfyUI;https://github.com/comfyanonymous/ComfyUI.git default
+hankcs;HanLP;https://github.com/hankcs/HanLP.git default
+httpie;cli;https://github.com/httpie/cli.git default
+karpathy;nanoGPT;https://github.com/karpathy/nanoGPT.git default
+streamlit;streamlit;https://github.com/streamlit/streamlit.git as 1
