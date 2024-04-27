@@ -1,11 +1,7 @@
-import ast
-import re
 import os
-from typing import Dict
-from util.util import *
-import db.db_entities as db_entities
-from visitors.visitordatabase import VisitorDataBase
-from visitors.nodevisitor import NodeVisitor
+from dataset.util.util import *
+import dataset.db.db_entities as db_entities
+from dataset.visitors.nodevisitor import NodeVisitor
 
 
 class VisitorInfo(NodeVisitor):
