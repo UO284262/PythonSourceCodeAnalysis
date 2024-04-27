@@ -55,9 +55,9 @@ def print_frequency_anal_for_cat_var(df, column_name, possible_values=[], outlie
     values_and_percentages.sort(reverse=True, key=get_percentage)
     for value in values_and_percentages:
         if value[2]:
-            print(f'La variable {column_name} toma el valor de {value[0]} en un {value[1]}% de los items. [OUTLIER]')
+            print(f'La variable {column_name} toma el valor de {value[0]} en un {value[1]:.4}% de los items. [OUTLIER]')
         else:
-            print(f'La variable {column_name} toma el valor de {value[0]} en un {value[1]}% de los items.')
+            print(f'La variable {column_name} toma el valor de {value[0]} en un {value[1]:.4}% de los items.')
 
 
 def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_coefficient=3.0):
@@ -98,13 +98,13 @@ def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_c
     num_low_out_ad_boxplot_pct = num_low_out_ad_boxplot / len(df[column_name]) * 100
     num_high_out_ad_boxplot_pct = num_high_out_ad_boxplot / len(df[column_name]) * 100
 
-    print(f'-3.0IQR: {num_low_strong_outliers} instancias tienen un valor para {column_name} inferior a {low_strong_iqr_lmt} (Q1-3*IQR) para {column_name}. Representando un {num_low_strong_outliers_pct}% del total de instancias.')
-    print(f'-1.5IQR: {num_low_weak_outliers} instancias tienen un valor para {column_name} inferior a {low_weak_iqr_lmt} (Q1-1.5*IQR) para {column_name}. Representando un {num_low_weak_outliers_pct}% del total de instancias.')
-    print(f'+1.5IQR: {num_high_weak_outliers} instancias tienen un valor para {column_name} superior a {high_weak_iqr_lmt} (Q3+1.5*IQR) para {column_name}. Representando un {num_high_weak_outliers_pct}% del total de instancias.')
-    print(f'+3.0IQR: {num_high_strong_outliers} instancias tienen un valor para {column_name} superior a {high_strong_iqr_lmt} (Q3-3*IQR) para {column_name}. Representando un {num_high_strong_outliers_pct}% del total de instancias.')
+    print(f'-3.0IQR: {num_low_strong_outliers} instancias tienen un valor para {column_name} inferior a {low_strong_iqr_lmt} (Q1-3*IQR) para {column_name}. Representando un {num_low_strong_outliers_pct:.4}% del total de instancias.')
+    print(f'-1.5IQR: {num_low_weak_outliers} instancias tienen un valor para {column_name} inferior a {low_weak_iqr_lmt} (Q1-1.5*IQR) para {column_name}. Representando un {num_low_weak_outliers_pct:.4}% del total de instancias.')
+    print(f'+1.5IQR: {num_high_weak_outliers} instancias tienen un valor para {column_name} superior a {high_weak_iqr_lmt} (Q3+1.5*IQR) para {column_name}. Representando un {num_high_weak_outliers_pct:.4}% del total de instancias.')
+    print(f'+3.0IQR: {num_high_strong_outliers} instancias tienen un valor para {column_name} superior a {high_strong_iqr_lmt} (Q3-3*IQR) para {column_name}. Representando un {num_high_strong_outliers_pct:.4}% del total de instancias.')
 
-    print(f'L: {num_low_out_ad_boxplot} instancias tienen un valor para {column_name} inferior a {low} para {column_name}. Representando un {num_low_out_ad_boxplot_pct}% del total de instancias.')
-    print(f'U: {num_high_out_ad_boxplot} instancias tienen un valor para {column_name} superior a {high} para {column_name}. Representando un {num_high_out_ad_boxplot_pct}% del total de instancias.')
+    print(f'L: {num_low_out_ad_boxplot} instancias tienen un valor para {column_name} inferior a {low} para {column_name}. Representando un {num_low_out_ad_boxplot_pct:.4}% del total de instancias.')
+    print(f'U: {num_high_out_ad_boxplot} instancias tienen un valor para {column_name} superior a {high} para {column_name}. Representando un {num_high_out_ad_boxplot_pct:.4}% del total de instancias.')
 
 
 def print_frequency_anal_for_num_var(df, column_name):
