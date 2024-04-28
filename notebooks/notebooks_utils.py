@@ -126,10 +126,8 @@ def get_statistics(df, columns, size):
 def get_bin(bins, value):
     for x, y in bins:
         if value >= x:
-            if y == 100 and value < 100:
-                return "[" + str(x) + "_" + str(y) + ")"
-            if y == 100 and value == 100:
-                return "100_100"
+            if value == x and value == y:
+                return "[" + str(x) + "_" + str(y) + "]"
             if value < y:
                 return "[" + str(x) + "_" + str(y) + ("]" if y == inf else ")")
     return "unknown"
