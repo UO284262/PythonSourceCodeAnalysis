@@ -1,14 +1,13 @@
 import ast
 from typing import List
-from dataset.util.util import IDManager
-from dataset.visitors.visitorintrospector import VisitorIntrospector
-from dataset.visitors.visitorprint import VisitorPrint
-from dataset.visitors.visitorinfo import VisitorInfo
+from util.util import IDManager
+from visitors.visitorintrospector import VisitorIntrospector
+from visitors.visitorprint import VisitorPrint
+from visitors.visitorinfo import VisitorInfo
 import os
 import re
 import warnings
 import sys
-
 
 users = {}
 unknown = {}
@@ -84,7 +83,7 @@ if __name__ == '__main__':
     # init_db()
     id_manager = IDManager()
     warnings.filterwarnings("error")
-    source_folder = './python_tfg/test/test_file'
+    source_folder = './dataset/test/test_file'
     expertice_level = 'BEGINNER'
     project_folder = None
     if len(sys.argv) == 2:

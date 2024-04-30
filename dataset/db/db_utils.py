@@ -66,7 +66,7 @@ def init_db():
     connection = psycopg2.connect(**connection_string)
     cursor = connection.cursor()
     try:
-        with open("./python_tfg/db/script_bd.sql", "r") as script_file:
+        with open("./db/script_bd.sql", "r") as script_file:
             script = script_file.read()
         cursor.execute(script)
         # Commit transaction

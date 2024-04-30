@@ -1,5 +1,5 @@
 import ast
-from dataset.visitors.nodevisitor import NodeVisitor
+from visitors.nodevisitor import NodeVisitor
 from typing import Dict
 
 

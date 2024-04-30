@@ -1,6 +1,6 @@
 import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt 
 from matplotlib import pyplot
 from statsmodels.stats.stattools import medcouple
 import math

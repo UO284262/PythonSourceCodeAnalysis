@@ -1,7 +1,7 @@
 import os
-from dataset.util.util import *
-import dataset.db.db_entities as db_entities
-from dataset.visitors.nodevisitor import NodeVisitor
+from util.util import *
+import db.db_entities as db_entities
+from visitors.nodevisitor import NodeVisitor
 
 
 class VisitorInfo(NodeVisitor):

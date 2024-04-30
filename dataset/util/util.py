@@ -1,7 +1,7 @@
 import ast
 import re
 from typing import Dict
-from dataset.db.db_utils import get_db_current_id
+from db.db_utils import get_db_current_id
 
 
 def op_category(node: ast.BinOp) -> str:

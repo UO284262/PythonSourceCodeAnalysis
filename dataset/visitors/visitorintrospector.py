@@ -1,7 +1,7 @@
 import ast
-import dataset.db.db_entities as db_entities
+import db.db_entities as db_entities
 from typing import Dict, List
-from dataset.visitors.nodevisitor import NodeVisitor
+from visitors.nodevisitor import NodeVisitor
 from tkinter import Tk, END
 from tkinter.ttk import Treeview, Style
 
