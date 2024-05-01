@@ -1,9 +1,9 @@
 import ast
 from typing import Dict
 
-from db.db_utils import write_on_db
-from visitors.nodevisitor import NodeVisitor
-import db.db_entities as db_entities
+from dataset.db.db_utils import write_on_db
+from dataset.visitors.nodevisitor import NodeVisitor
+import dataset.db.db_entities as db_entities
 
 
 class VisitorDataBase(NodeVisitor):

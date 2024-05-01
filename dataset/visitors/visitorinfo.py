@@ -1,7 +1,7 @@
 import os
-from util.util import *
-import db.db_entities as db_entities
-from visitors.nodevisitor import NodeVisitor
+from dataset.util.util import *
+import dataset.db.db_entities as db_entities
+from dataset.visitors.nodevisitor import NodeVisitor
 
 
 class VisitorInfo(NodeVisitor):
@@ -38,7 +38,7 @@ class VisitorInfo(NodeVisitor):
                         has_code_root = True
                 full_path = os.path.join(current_folder, file)
                 if file.endswith('.py') and not 'MACOSX' in full_path:
-                    with open(r''+full_path+'', "r",  encoding='utf-8') as f:
+                    with open(r'' + full_path + '', "r",  encoding='utf-8') as f:
                         module_ast = None
                         try:
                             content = f.read()
