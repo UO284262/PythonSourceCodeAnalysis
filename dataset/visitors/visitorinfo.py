@@ -23,10 +23,10 @@ class VisitorInfo(NodeVisitor):
         ############## PROPAGAR VISIT ############
         modules = []
         index = 0
+        has_code_root = False
         for current_folder, folders, files in os.walk(params["path"]):
             has_init_py = False
             has_py = False
-            has_code_root = False
             for file in files:
                 if current_folder.split("\\")[-1] != name:
                     if file == '__init__.py':
@@ -64,7 +64,7 @@ class VisitorInfo(NodeVisitor):
                 num_of_dirs += 1
         ########## ENTITY PROPERTIES ############
         if index > 0:
-            total_defs = total_class_defs + total_enum_defs+ total_function_defs
+            total_defs = total_class_defs + total_enum_defs + total_function_defs
             db_program.program_id = node_id
             db_program.name = name
             db_program.number_of_packages = num_of_packages
