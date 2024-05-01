@@ -28,7 +28,7 @@ class VisitorInfo(NodeVisitor):
             has_init_py = False
             has_py = False
             for file in files:
-                if current_folder.split("\\")[-1] != name:
+                if current_folder.split("\\") != params["path"]:
                     if file == '__init__.py':
                         has_init_py = True
                     elif file.endswith('.py'):
