@@ -110,11 +110,6 @@ def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_c
     print(f'U: {num_high_out_ad_boxplot} instancias tienen un valor para {column_name} superior a {high} para {column_name}. Representando un {num_high_out_ad_boxplot_pct:.4}% del total de instancias.')
 
 
-def print_frequency_anal_for_num_var(df, column_name):
-    sns.boxplot(df[column_name])
-    print_outliers_for_df_column(df, column_name)
-
-
 def get_statistics(df, columns, size):
     total = len(df.index)
     result = df.groupby(columns) \
