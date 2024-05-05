@@ -9,6 +9,9 @@ import sys
 import os
 import dataset.db.db_utils as db_utils
 from numpy import inf
+import pickle
+from datetime import datetime
+import sqlalchemy
 
 # Database connection properties
 DB_CONNECTION_STR = f"postgresql://{db_utils.connection_string['user']}:{db_utils.connection_string['password']}@{db_utils.connection_string['host']}:{db_utils.connection_string['port']}/{db_utils.connection_string['dbname']}"
@@ -140,3 +143,29 @@ def create_bins(df, column, bins):
 def discretize_columns(df, columns):
     for k in columns:
         df[k] = create_bins(df, k, columns[k])
+
+
+def get_data(table: str, use_cache=True) -> pd.DataFrame:
+    table_file = f'.{os.sep}cache{os.sep}{table}.pk'
+    if use_cache and os.path.exists(table_file):
+        print(datetime.now(), 'Data cache files found ...')
+        with open(table_file, 'rb') as handle:
+            full_table = pickle.load(handle)
+        print(datetime.now(), 'Data cache files successfully loaded!!')
+        return full_table
+    else:
+        full_table = load_data(table)
+        print(datetime.now(), 'Creating data cache files ...')
+        with open(file=f'.{os.sep}cache{os.sep}{table}.pk', mode='wb') as handle:
+            pickle.dump(full_table, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        print(datetime.now(), 'Data cache files successfully created!!')
+        return full_table
+
+
+def load_data(table: str) -> pd.DataFrame:
+    print(datetime.now(), 'Loading data ...')
+    db_connection = sqlalchemy.create_engine(DB_CONNECTION_STR)
+    sql_query = open(file=f'.{os.sep}queries{os.sep}{table}.sql', mode='r').read()
+    full_table = pd.read_sql_query(sql=sql_query, con=db_connection)
+    print(datetime.now(), 'Data successfully load!!')
+    return full_table
