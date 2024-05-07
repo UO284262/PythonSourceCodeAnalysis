@@ -1,5 +1,5 @@
+"AHAHAHAHHAHA"
 import ast
-
 ast_1 = ast.parse(
 """
 a = 2
