@@ -4,6 +4,7 @@ from util.util import IDManager
 from visitors.visitorintrospector import VisitorIntrospector
 from visitors.visitorprint import VisitorPrint
 from visitors.visitorinfo import VisitorInfo
+from db.db_utils import init_db
 import os
 import re
 import warnings
@@ -80,7 +81,7 @@ def pretty_print(path: str):
 
 
 if __name__ == '__main__':
-    # init_db()
+    init_db()
     id_manager = IDManager()
     warnings.filterwarnings("error")
     source_folder = './dataset/test/test_file'
