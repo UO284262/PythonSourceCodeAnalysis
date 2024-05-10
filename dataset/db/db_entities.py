@@ -31,7 +31,7 @@ class DBProgram:
 
 class DBModule:
     def __init__(self, module_id = None,  name: str = None,  name_convention: str = None,  has_doc_string: bool = None, 
-                 global_stmt_pct: float = None,  global_expressions: float = None,  number_of_classes: int = None, 
+                 global_stmts_pct: float = None,  global_expressions_pct: float = None,  number_of_classes: int = None,
                  number_of_functions: int = None,  class_defs_pct: float = None,  function_defs_pct: float = None, 
                  enum_defs_pct: float = None,  average_stmts_function_body: float = None, 
                  average_stmts_method_body: float = None,  type_annotations_pct: float = None, 
@@ -45,8 +45,8 @@ class DBModule:
         self.name = name
         self.name_convention = name_convention
         self.has_doc_string = has_doc_string
-        self.global_stmts_pct = global_stmt_pct
-        self.global_expressions = global_expressions
+        self.global_stmts_pct = global_stmts_pct
+        self.global_expressions_pct = global_expressions_pct
         self.number_of_classes = number_of_classes
         self.number_of_functions = number_of_functions
         self.class_defs_pct = class_defs_pct
