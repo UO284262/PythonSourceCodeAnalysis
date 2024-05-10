@@ -170,7 +170,7 @@ class VisitorInfo(NodeVisitor):
         db_module.name_convention = name_convention(db_module.name)
         db_module.has_doc_string = (isinstance(node.body[0], ast.Expr)) and (isinstance(node.body[0].value, ast.Constant)) and isinstance(node.body[0].value.value, str)
         db_module.global_stmts_pct = count["stmt"]/index if(index > 0) else 0
-        db_module.global_expressions = count["expr"]/index if(index > 0) else 0
+        db_module.global_expressions_pct = count["expr"]/index if(index > 0) else 0
         db_module.number_of_classes = count["classes"]
         db_module.number_of_functions = count["function"]
         enum_class_funct_sum = (count["function"] + count["enum"] + count["classes"])
@@ -465,7 +465,7 @@ class VisitorInfo(NodeVisitor):
         db_classdef.number_of_decorators = len(node.decorator_list)
         db_classdef.number_of_base_classes = len(node.bases)
         db_classdef.has_generic_type_annotations = len(node.type_params) > 0
-        db_classdef.has_doc_string = (isinstance(node.body[0], ast.Constant)) and isinstance(node.body[0].value, str)
+        db_classdef.has_doc_string = (isinstance(node.body[0], ast.Expr)) and (isinstance(node.body[0].value, ast.Constant)) and isinstance(node.body[0].value.value, str)
         db_classdef.body_count = body_count
         db_classdef.assignments_pct = assignment_number/body_count if body_count > 0 else 0
         db_classdef.expressions_pct = expression_number/body_count if body_count > 0 else 0

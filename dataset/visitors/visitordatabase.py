@@ -446,7 +446,7 @@ class VisitorDataBase(NodeVisitor):
                             name_convention, 
                             has_doc_string, 
                             global_stmts_pct, 
-                            global_expressions, 
+                            global_expressions_pct, 
                             number_of_classes, 
                             number_of_functions, 
                             class_defs_pct, 

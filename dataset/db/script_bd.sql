@@ -51,7 +51,7 @@ CREATE TABLE MODULES (
     name_convention VARCHAR(255),
     has_doc_string BOOLEAN,
     global_stmts_pct REAL CHECK (global_stmts_pct >= 0 AND global_stmts_pct <= 1),
-    global_expressions REAL CHECK (global_expressions >= 0 AND global_expressions <= 1),
+    global_expressions_pct REAL CHECK (global_expressions_pct >= 0 AND global_expressions_pct <= 1),
     number_of_classes INTEGER,
     number_of_functions INTEGER,
     class_defs_pct REAL CHECK (class_defs_pct >= 0 AND class_defs_pct <= 1),

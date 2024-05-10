@@ -1,7 +1,7 @@
 import ast
 import re
 from typing import Dict
-from db.db_utils import get_db_current_id
+from dataset.db.db_utils import get_db_current_id
 
 
 def op_category(node: ast.BinOp) -> str:
@@ -77,7 +77,7 @@ def get_method_info(method):
     magic_pattern = re.compile(r'^__\w+__$')
     private_pattern = re.compile(r'^_\w+$')
     method_info["magic"] = True if magic_pattern.match(method.name) else False
-    method_info["private"] = True if private_pattern.match(method.name) else False
+    method_info["private"] = True if private_pattern.match(method.name) and not method_info["magic"] else False
     for decorator in method.decorator_list:
         if isinstance(decorator, ast.Name):
             if decorator.id == "abstractmethod":
