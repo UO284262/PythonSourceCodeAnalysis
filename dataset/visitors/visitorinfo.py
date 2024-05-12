@@ -262,7 +262,7 @@ class VisitorInfo(NodeVisitor):
         db_functiondef.is_async = False
         db_functiondef.number_of_decorators = len(node.decorator_list)
         db_functiondef.has_return_type_annotation = True if node.returns else False
-        db_functiondef.has_doc_string = (isinstance(node.body[0], ast.Constant)) and isinstance(node.body[0].value, str)
+        db_functiondef.has_doc_string = (isinstance(node.body[0], ast.Expr)) and (isinstance(node.body[0].value, ast.Constant)) and isinstance(node.body[0].value.value, str)
         db_functiondef.height = params["depth"]
         db_functiondef.type_annotations_pct = number_of_annotations/args_ret if args_ret > 0 else 0
         db_functiondef.source_code = ast.unparse(node)
@@ -350,7 +350,7 @@ class VisitorInfo(NodeVisitor):
         db_functiondef.is_async = True
         db_functiondef.number_of_decorators = len(node.decorator_list)
         db_functiondef.has_return_type_annotation = True if node.returns else False
-        db_functiondef.has_doc_string = (isinstance(node.body[0], ast.Constant)) and isinstance(node.body[0].value, str)
+        db_functiondef.has_doc_string = (isinstance(node.body[0], ast.Expr)) and (isinstance(node.body[0].value, ast.Constant)) and isinstance(node.body[0].value.value, str)
         db_functiondef.height = params["depth"]
         db_functiondef.type_annotations_pct = number_of_annotations/args_ret if args_ret > 0 else 0
         db_functiondef.source_code = ast.unparse(node)
