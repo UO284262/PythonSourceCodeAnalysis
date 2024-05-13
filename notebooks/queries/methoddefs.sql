@@ -1,10 +1,22 @@
 SELECT
-    is_class_method as methoddef__is_class_method,
-    is_static_method as methoddef__is_static_method,
-    is_constructor_method as methoddef__is_constructor_method,
-    is_abstract_method as methoddef__is_abstract_method,
-    is_property as methoddef__is_property,
-    is_wrapper as methoddef__is_wrapper,
-    is_cached as methoddef__is_cached,
-    expertise_level as methoddef__expertise_level
-FROM methoddefs;
+    m.is_class_method as methoddef__is_class_method,
+    m.is_static_method as methoddef__is_static_method,
+    m.is_constructor_method as methoddef__is_constructor_method,
+    m.is_abstract_method as methoddef__is_abstract_method,
+    m.is_property as methoddef__is_property,
+    m.is_wrapper as methoddef__is_wrapper,
+    m.is_cached as methoddef__is_cached,
+    m.expertise_level as methoddef__expertise_level,
+    f.name_convention as functiondef__name_convention,
+    f.number_of_characters as functiondef__number_of_characters,
+    f.is_private as functiondef__is_private,
+    f.is_magic as functiondef__is_magic,
+    f.body_count as functiondef__body_count,
+    f.expressions_pct as functiondef__expressions_pct,
+    f.is_async as functiondef__is_async,
+    f.number_of_decorators as functiondef__number_of_decorators,
+    f.has_return_type_annotation as functiondef__has_return_type_annotation,
+    f.has_doc_string as functiondef__has_doc_string,
+    f.height as functiondef__height,
+    f.type_annotations_pct as functiondef__type_annotations_pct
+FROM methoddefs as m INNER JOIN functiondefs as f ON m.methoddef_id = f.functiondef_id;
