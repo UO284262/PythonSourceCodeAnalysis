@@ -2,7 +2,7 @@ SELECT
     name_convention as module__name_convention,
     has_doc_string as module__has_doc_string,
     global_stmts_pct as module__global_stmts_pct,
-    global_expressions as module__global_expressions,
+    global_expressions_pct as module__global_expressions_pct,
     number_of_classes as module__number_of_classes,
     number_of_functions as module__number_of_functions,
     class_defs_pct as module__class_defs_pct,
