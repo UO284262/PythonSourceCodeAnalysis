@@ -2035,7 +2035,6 @@ class VisitorInfo(NodeVisitor):
                 third_child_category = returns[index]["categories"]["target"]; third_child_id = returns[index]["ids"]["target"]
                 fourth_child_category = returns[index]["categories"]["iter"]; fourth_child_id = returns[index]["ids"]["iter"]
                 #fourth_child_category = returns[index]["categories"]["ifs"][0]; fourth_child_id = returns[index]["ids"]["ifs"][0]
-            
             depth = max(depth, returns[index]["depth"])
             numOfIfs += len(child.ifs)
             if(child.is_async): is_async = True
