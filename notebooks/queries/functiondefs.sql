@@ -1,4 +1,5 @@
-SELECT
+select
+	functiondef_id,
     name_convention as functiondef__name_convention,
     number_of_characters as functiondef__number_of_characters,
     is_private as functiondef__is_private,
@@ -12,4 +13,8 @@ SELECT
     height as functiondef__height,
     type_annotations_pct as functiondef__type_annotations_pct,
     expertise_level as functiondef__expertise_level
-FROM functiondefs;
+FROM functiondefs
+    WHERE  functiondef_id NOT IN (
+    SELECT methoddef_id
+    FROM methoddefs
+);
