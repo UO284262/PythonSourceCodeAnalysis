@@ -210,7 +210,8 @@ class DBStatement:
                  height: int = None,  depth: int = None,  source_code: str = None,  parent_id = None,  node = None, 
                  has_or_else: bool = None,  body_size: int = None, 
                  first_child_id: int = None,  second_child_id: int = None, 
-                 third_child_id: int = None, user_id = None, expertise_level = None):
+                 third_child_id: int = None, first_child_category: str = None,  second_child_category: str = None,
+                 third_child_category: str = None, user_id = None, expertise_level = None):
         self.user_id = user_id
         self.expertise_level = expertise_level
         self.node = node
@@ -227,6 +228,9 @@ class DBStatement:
         self.first_child_id = first_child_id
         self.second_child_id = second_child_id
         self.third_child_id = third_child_id
+        self.first_child_category = first_child_category
+        self.second_child_category = second_child_category
+        self.third_child_category = third_child_category
         self.parent_id = parent_id
 
 

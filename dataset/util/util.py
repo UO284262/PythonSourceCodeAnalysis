@@ -82,8 +82,6 @@ def get_method_info(method):
         if isinstance(decorator, ast.Name):
             if decorator.id == "abstractmethod":
                 method_info["abstract"] = True
-            if decorator.id == "wraps":
-                method_info["wrapper"] = True
             if decorator.id == "cache":
                 method_info["cached"] = True
             if decorator.id == "staticmethod":
@@ -92,6 +90,9 @@ def get_method_info(method):
                 method_info["class_method"] = True
             if decorator.id == "property":
                 method_info["property"] = True
+        if isinstance(decorator, ast.Call):
+            if decorator.func.id == "wraps":
+                method_info["wrapper"] = True
     return method_info
 
 

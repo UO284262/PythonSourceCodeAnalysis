@@ -629,10 +629,13 @@ class VisitorDataBase(NodeVisitor):
                             first_child_id, 
                             second_child_id, 
                             third_child_id,
+                            first_child_category, 
+                            second_child_category, 
+                            third_child_category, 
                             parent_id,
                             user_id,
                             expertise_level) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
         data_to_insert = (node.statement_id,
                             node.category, 
                             node.parent, 
@@ -645,6 +648,9 @@ class VisitorDataBase(NodeVisitor):
                             node.first_child_id, 
                             node.second_child_id, 
                             node.third_child_id,
+                            node.first_child_category,
+                            node.second_child_category,
+                            node.third_child_category,
                             node.parent_id,
                             node.user_id,
                             node.expertise_level)
