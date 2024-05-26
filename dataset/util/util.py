@@ -91,8 +91,9 @@ def get_method_info(method):
             if decorator.id == "property":
                 method_info["property"] = True
         if isinstance(decorator, ast.Call):
-            if decorator.func.id == "wraps":
-                method_info["wrapper"] = True
+            if isinstance(decorator.func, ast.Name):
+                if decorator.func.id == "wraps":
+                    method_info["wrapper"] = True
     return method_info
 
 
