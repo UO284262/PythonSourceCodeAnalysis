@@ -63,6 +63,24 @@ def print_frequency_anal_for_cat_var(df, column_name, possible_values=[], outlie
             print(f'La variable {column_name} toma el valor de {value[0]} en un {value[1]:.4}% de los items.')
 
 
+def print_values_usage_for_cat_var(df, column_name, possible_values=[]):
+    unique_values = df[column_name].unique().tolist()
+    unused_values = list(set(possible_values) - set(unique_values))
+    unknown_values = list(set(unique_values) - set(possible_values))
+    possible_values_count = len(possible_values)
+    unique_values_count = len(unique_values)
+    unused_values_count = len(unused_values)
+    print(f'La variable {column_name} puede tomar {possible_values_count} valores distintos')
+    print(f'\t{unique_values_count} ({((unique_values_count*100)/possible_values_count):.4}%) valores utilizados')
+    print(f'\t{unused_values_count} ({((unused_values_count*100)/possible_values_count):.4}%) valores NO utilizados')
+    for value in unused_values:
+        print(f'\t\tLa variable {column_name} nunca toma valor {value}.')
+    if len(unknown_values) > 0:
+        print(f'La variable {column_name} toma {len(unknown_values)} valores desconocidos')
+        for value in unknown_values:
+            print(f'\t\tLa variable {column_name} toma valor el desconocido {value}.')
+
+
 def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_coefficient=3.0):
     column_dataframe = df[column_name].describe()
     column_np_array = np.array(column_dataframe)
