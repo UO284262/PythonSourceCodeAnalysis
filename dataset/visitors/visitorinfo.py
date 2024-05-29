@@ -218,11 +218,12 @@ class VisitorInfo(NodeVisitor):
             db_method.classdef_id = params["parent_id"]
             db_method.methoddef_id = node_id
         ############# PARAMS #####################
-        child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_functiondef, "depth": params["depth"] + 1, "parent_id": node_id}
         if is_method:
+            child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_method, "depth": params["depth"] + 1, "parent_id": node_id}
             stmt_roles = ["MethodDefBody"]
             expr_roles = ["FuncDecorator", "ReturnType", "MethodBody"]
         else:
+            child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_functiondef, "depth": params["depth"] + 1, "parent_id": node_id}
             stmt_roles = ["FunctionDefBody"]
             expr_roles = ["FuncDecorator", "ReturnType", "FuncBody"]
         ########## ENTITY PROPERTIES ############
