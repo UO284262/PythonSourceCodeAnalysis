@@ -1,8 +1,9 @@
-from functools import wraps
 
-class b:
-    def f(self):
-        pass
-    @wraps(f)
-    def a(self):
+def function():
+    a = 3
+
+class B:
+
+    def method(self):
+        a = 4
         pass

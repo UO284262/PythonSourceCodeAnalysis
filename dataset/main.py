@@ -60,7 +60,7 @@ def not_read(project: str, projects: List[str]) -> bool:
 # Walk through directories and files using os.walk
 def run(visitor: ast.NodeVisitor, source_folder: str):
     projects = []
-    if(not project_folder):
+    if not project_folder:
         for project in get_source_package(source_folder):
             if project != ' ':
                 user_id = control_users(project)
@@ -73,6 +73,7 @@ def run(visitor: ast.NodeVisitor, source_folder: str):
             projects.append(project_folder)
             visitor.visit_Program({"path": project_folder, "user_id": user_id, "expertise_level": expertice_level})
 
+
 def pretty_print(path: str):
     visitor = VisitorPrint()
     with open(path, "r", encoding='utf-8') as f:
@@ -81,7 +82,7 @@ def pretty_print(path: str):
 
 
 if __name__ == '__main__':
-    init_db()
+    #init_db()
     id_manager = IDManager()
     warnings.filterwarnings("error")
     source_folder = './dataset/test/test_file'
