@@ -10,7 +10,7 @@ def op_category(node: ast.BinOp) -> str:
         case 'Add' | 'Sub' | 'Mult' | 'Div' | 'FloorDiv' | 'Mod': return 'Arithmetic'
         case 'Pow': return 'Pow'
         case 'LShift' | 'RShift': return 'Shift'
-        case 'BitOr' | 'BitXor' | 'BitAnd': return 'BW1Logical'
+        case 'BitOr' | 'BitXor' | 'BitAnd': return 'BWLogical'
         case 'MatMult': return 'MatMult'
         case 'UAdd' | 'USub': return 'UnaryArithmetic'
         case 'Not': return 'UnaryNot'

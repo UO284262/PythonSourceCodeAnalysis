@@ -50,7 +50,10 @@ def print_frequency_anal_for_cat_var(df, column_name, possible_values=[], outlie
     total_number_of_items = len(df[column_name])
     values_and_percentages = []
     for value in unique_values:
-        val_count = len(df[df[column_name] == value].index)
+        if value is None:
+            val_count = df[column_name].isna().sum()
+        else:
+            val_count = len(df[df[column_name] == value].index)
         val_count_percentage = val_count / total_number_of_items * 100
         is_outlier = val_count_percentage < threshold
         values_and_percentages.append((value, val_count_percentage, is_outlier))
