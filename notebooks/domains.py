@@ -10,3 +10,5 @@ EXPRESSION_ROLE_VALUES = ['Module', 'FuncDecorator', 'FuncBody', 'ReturnType', '
 
 STATEMENT_CHILDREN_VALUES = ['Parameter', None] + EXPRESSION_CATEGORY_VALUES
 EXPRESSION_CHILDREN_VALUES = STATEMENT_CHILDREN_VALUES
+
+COMPREHENSION_CATEGORY_VALUES = ['ListComprehension', 'GeneratorComprehension', 'DictComprehension', 'SetComprehension']
