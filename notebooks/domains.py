@@ -12,3 +12,6 @@ STATEMENT_CHILDREN_VALUES = ['Parameter', None] + EXPRESSION_CATEGORY_VALUES
 EXPRESSION_CHILDREN_VALUES = STATEMENT_CHILDREN_VALUES
 
 COMPREHENSION_CATEGORY_VALUES = ['ListComprehension', 'GeneratorComprehension', 'DictComprehension', 'SetComprehension']
+VECTOR_CATEGORY_VALUES = ['TupleLiteral', 'ListLiteral', 'DictionaryLiteral', 'SetLiteral']
+
+
