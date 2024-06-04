@@ -828,7 +828,7 @@ class VisitorInfo(NodeVisitor):
         db_node.node_id = db_stmt.statement_id = node_id
         db_node.parent_id = db_stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
-        db_stmt.category = "For"
+        db_stmt.category = "AsyncFor"
         db_node.parent_table = params["parent"].table
         db_stmt.parent = params["parent"].category
         ############# ROLES ######################
