@@ -11,7 +11,7 @@ shadowsocks;shadowsocks;https://github.com/shadowsocks/shadowsocks.git clone mas
 XX-net;XX-Net;https://github.com/XX-net/XX-Net.git as 1
 microsoft;DeepSpeed;https://github.com/microsoft/DeepSpeed.git as 1
 fxsjy;jieba;https://github.com/fxsjy/jieba.git default
-comfyanonymous;ComfyUI;https://github.com/comfyanonymous/ComfyUI.git default
+comfyanonymous; ComfyUI;https://github.com/comfyanonymous/ComfyUI.git default
 hankcs;HanLP;https://github.com/hankcs/HanLP.git default
 httpie;cli;https://github.com/httpie/cli.git default
 karpathy;nanoGPT;https://github.com/karpathy/nanoGPT.git default
