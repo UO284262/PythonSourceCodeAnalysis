@@ -16,14 +16,22 @@ The dataset used to the outliers analysis contains more than 13 million database
 - Student's projects from the subject Introduction to the Programming of the first year of the University of Oviedo degree in [Software Engineering](https://www.uniovi.es/estudia/grados/ingenieria/informaticasoftware)
 - Expert's projects obtained with the GitHub API. The list of repositories used to obtain information are listed in the file [github_repos](https://github.com/ComputationalReflection/PythonSourceCodeAnalysis/blob/6444e0ecc23411c7e8a5ed6fdf959572d96a0ac5/github_repos).
 
-## Methodology
-In order to achieve the purpose explained before, the program uses the _ast_ module of the _Python Standard Library_ (PSL). This module defines a method that generate the _Abstract Syntax Tree_ (AST) of any _Python_ file that u pass as an argument.
-With this AST as base of the program, the program defines a _Visitor_ pattern. The _visitor_ implements a method for every _Python_ element (all the _Python_ elements are listed in the ast module documentation https://docs.python.org/3/library/ast.html). This method collects all the important information from the AST element and, in addition, collects more information about the element's parent and the element's children. The information is collected with two techniques:
-- Return-up: The method return information for its parent so it can store information of its children.
-- Collect-down: The method recive information from its parent by the arguments and stores it.
+## Example
+As an example, we will supose that there is a directory named "python_projects". Inside this directory must be a structure a subdirectories with Python files.
 
-Finally, the information stored in n-dimensional vectors is stored in 16 homogeneous tables that puts all the syntax-like elements together (Programs, Funcion definitions, Statements, Expressions, ...). As the syntactic information is now stored in table-like structures, we can apply data mining algorithms. In this repository, we apply a simple algorithm to detect outliers. This outliers let us clasify programs into Expert or Beginner attending to the programs used to generate the _dataset_.
+The program can recieve up to 3 arguments, with of them optional:
+- Directory of the Python programs u want to process
+- Expertice level of the programs u want to process (Optional, "BEGINNER" as default)
+- Directory and name of any python subdirectory u want to process as a unique program, ignoring program's default detection (Optional, no value by default)
 
-## System
-![image](https://github.com/ComputationalReflection/PythonSourceCodeAnalysis/assets/98962592/d693d7d0-cbe1-4338-aa4a-9731a1bfd280)
+![image](https://github.com/ComputationalReflection/PythonSourceCodeAnalysis/assets/98962592/3985466c-a67b-48a1-a64b-c99f17e8e199)
+
+In this first call, we are processing the ./python_projects directory, flagged as EXPERT programs and following the default program detection system.
+
+![image](https://github.com/ComputationalReflection/PythonSourceCodeAnalysis/assets/98962592/36c9d9f8-9a1b-4015-8b8a-582c3a0a8661)
+
+In this call, we are processing the subdirectorie ./python_projects/program_1, flagged as EXPERT program and ignoring the default program detection system.
+
+
+
 
