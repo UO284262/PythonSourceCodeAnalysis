@@ -16,6 +16,11 @@ The dataset used to the outliers analysis contains more than 13 million database
 - Student's projects from the subject Introduction to the Programming of the first year of the University of Oviedo degree in [Software Engineering](https://www.uniovi.es/estudia/grados/ingenieria/informaticasoftware)
 - Expert's projects obtained with the GitHub API. The list of repositories used to obtain information are listed in the file [github_repos](https://github.com/ComputationalReflection/PythonSourceCodeAnalysis/blob/6444e0ecc23411c7e8a5ed6fdf959572d96a0ac5/github_repos).
 
+## Notebooks
+The outliers analysis of the previus mentioned dataset is collected in the [notebooks directory](https://github.com/ComputationalReflection/PythonSourceCodeAnalysis/tree/8c89d17b4534b34c840366f6adf51433a891ce40/notebooks). Each notebook collect the information of the syntactic construction of the name. 
+For each syntactic construction there are two aditional files, one for the beginners and one for the experts.
+In each notebook there is a complete analysis of each attribute of the table. The information is displayed with graphs.
+
 ## Example
 As an example, we will supose that there is a directory named "python_projects". Inside this directory must be a structure a subdirectories with Python files.
 
