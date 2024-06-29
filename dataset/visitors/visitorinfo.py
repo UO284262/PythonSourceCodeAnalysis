@@ -1,3 +1,14 @@
+"""
+This file is the main visitor of the program. In this visitor, each element of the AST is processed to collect
+the information needed to fill the n-dimensional vector that represents the element on the database.
+
+Each method visit receive 2 arguments (apart from the self argument, necessary in Python POO):
+- AST Element: Used to collect information and to know which method should be called
+- Dictionary: In this dictionary heterogeneous information is passed. Each method receive different information
+              but, in general, every method receive the parent, the role, the category, expertise level, user id,
+              depth and height.
+"""
+
 import os
 from dataset.util.util import *
 import dataset.db.db_entities as db_entities
