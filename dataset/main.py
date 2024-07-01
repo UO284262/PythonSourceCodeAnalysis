@@ -1,3 +1,10 @@
+"""
+The main executable file receive 3 parameters:
+- Source folder of the analysis (obligatory)
+- Expertise level (Optional). Default: BEGINNER
+- Directory (Optional). If this param is set, the directory especified counts as a single program.
+"""
+
 import ast
 from typing import List
 from util.util import IDManager

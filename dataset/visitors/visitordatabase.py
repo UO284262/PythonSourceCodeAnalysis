@@ -1,3 +1,9 @@
+"""
+This visitor declares a method for each one of the 17 tables. Each method inserts into the database the information
+from the element receive as parameter.
+For those elements that have entries in multiple tables of the database, the data is inserted in order of dependency.
+"""
+
 import ast
 from typing import Dict
 
