@@ -187,18 +187,19 @@ def load_data(table: str) -> pd.DataFrame:
     return full_table
 
 
-def print_histogram(data: pd.DataFrame, column: str, expertise_column: str):
+def print_histogram(data: pd.DataFrame, column: str, expertise_column: str, bins: int = 30, include_all: bool = True):
     plt.figure(figsize=(12, 6))
 
     # Histograma del dataset completo
-    plt.hist(data[column], bins=30, alpha=0.5, label='Todos', color='blue')
+    if include_all:
+        plt.hist(data[column], bins=bins, alpha=0.5, label='Todos', color='blue')
 
     # Histograma de los expertos
-    plt.hist(data[data[f'{expertise_column}_EXPERT'] == 1][column], bins=30, alpha=0.5,
+    plt.hist(data[data[f'{expertise_column}_EXPERT'] == 1][column], bins=bins, alpha=0.5,
              label='Expertos', color='green')
 
     # Histograma de los novatos
-    plt.hist(data[data[f'{expertise_column}_EXPERT'] == 0][column], bins=30, alpha=0.5,
+    plt.hist(data[data[f'{expertise_column}_EXPERT'] == 0][column], bins=bins, alpha=0.5,
              label='Novatos', color='red')
 
     # Etiquetas y título
