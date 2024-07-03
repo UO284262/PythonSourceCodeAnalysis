@@ -185,3 +185,25 @@ def load_data(table: str) -> pd.DataFrame:
     full_table = pd.read_sql_query(sql=sql_query, con=db_connection)
     print(datetime.now(), 'Data successfully load!!')
     return full_table
+
+
+def print_histogram(data: pd.DataFrame, column: str, expertise_column: str):
+    plt.figure(figsize=(12, 6))
+
+    # Histograma del dataset completo
+    plt.hist(data[column], bins=30, alpha=0.5, label='Todos', color='blue')
+
+    # Histograma de los expertos
+    plt.hist(data[data[f'{expertise_column}_EXPERT'] == 1][column], bins=30, alpha=0.5,
+             label='Expertos', color='green')
+
+    # Histograma de los novatos
+    plt.hist(data[data[f'{expertise_column}_EXPERT'] == 0][column], bins=30, alpha=0.5,
+             label='Novatos', color='red')
+
+    # Etiquetas y título
+    plt.xlabel(column)
+    plt.ylabel('Frecuencia')
+    plt.title(f'Histograma de {column} por nivel de experiencia')
+    plt.legend()
+    plt.show()
