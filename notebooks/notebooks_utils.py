@@ -187,24 +187,23 @@ def load_data(table: str) -> pd.DataFrame:
     return full_table
 
 
-def print_histogram(data: pd.DataFrame, column: str, expertise_column: str, bins: int = 30, include_all: bool = True):
+def print_histogram(data: pd.DataFrame, column: str, expertise_column: str, bins: int = 30, include_all: bool = True, include_beginners: bool = True, include_experts: bool = True, min_value: float = None, max_value: float = None):
     plt.figure(figsize=(12, 6))
 
-    # Histograma del dataset completo
+    if min_value is not None:
+        data = data[data[column] >= min_value]
+    if max_value is not None:
+        data = data[data[column] <= max_value]
     if include_all:
-        plt.hist(data[column], bins=bins, alpha=0.5, label='Todos', color='blue')
-
-    # Histograma de los expertos
-    plt.hist(data[data[f'{expertise_column}_EXPERT'] == 1][column], bins=bins, alpha=0.5,
-             label='Expertos', color='green')
-
-    # Histograma de los novatos
-    plt.hist(data[data[f'{expertise_column}_EXPERT'] == 0][column], bins=bins, alpha=0.5,
-             label='Novatos', color='red')
-
-    # Etiquetas y título
+        plt.hist(data[column], bins=bins, alpha=0.5, label='All', color='blue')
+    if include_experts:
+        plt.hist(data[data[f'{expertise_column}_EXPERT'] == 1][column], bins=bins, alpha=0.5,
+             label='Experts', color='green')
+    if include_beginners:
+        plt.hist(data[data[f'{expertise_column}_EXPERT'] == 0][column], bins=bins, alpha=0.5,
+             label='Beginners', color='red')
     plt.xlabel(column)
-    plt.ylabel('Frecuencia')
-    plt.title(f'Histograma de {column} por nivel de experiencia')
+    plt.ylabel('Frequency')
+    plt.title(f'{column} by expertise level histogram')
     plt.legend()
     plt.show()
