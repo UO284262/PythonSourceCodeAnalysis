@@ -209,7 +209,14 @@ def print_histogram(data: pd.DataFrame, column: str, expertise_column: str, bins
     plt.show()
 
 
-def print_categorical_histogram(data: pd.DataFrame, column: str):
-    sns.catplot(data=data, x=column, kind="count", order=sorted(data[column].unique())).fig.set_size_inches(12, 6)
+def print_categorical_histogram(data: pd.DataFrame, column: str, vertical: bool = False, fillna: bool = False):
+    if fillna:
+        data[column] = data[column].fillna('None')
+    if vertical:
+        sns.catplot(data[column], kind="count", order=sorted(data[column].unique())).fig.set_size_inches(6, 12)
+    else:
+        sns.catplot(data=data, x=column, kind="count", order=sorted(data[column].unique())).fig.set_size_inches(12, 6)
     plt.show()
+
+
 
