@@ -207,3 +207,9 @@ def print_histogram(data: pd.DataFrame, column: str, expertise_column: str, bins
     plt.title(f'{column} by expertise level histogram')
     plt.legend()
     plt.show()
+
+
+def print_categorical_histogram(data: pd.DataFrame, column: str):
+    sns.catplot(data=data, x=column, kind="count", order=sorted(data[column].unique())).fig.set_size_inches(12, 6)
+    plt.show()
+
