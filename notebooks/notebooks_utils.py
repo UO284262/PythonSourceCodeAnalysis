@@ -209,7 +209,7 @@ def print_histogram(data: pd.DataFrame, column: str, expertise_column: str, bins
     plt.show()
 
 
-def print_categorical_histogram(data: pd.DataFrame, column: str, expertise_column: str, vertical: bool = False, fillna: bool = False, include_all: bool = True, include_beginners: bool = True, include_experts: bool = True):
+def print_categorical_histogram(data: pd.DataFrame, column: str, expertise_column: str, vertical: bool = False, fillna: bool = False, include_all: bool = True, include_beginners: bool = True, include_experts: bool = True, height: int = 6):
     if fillna:
         data[column] = data[column].fillna('None')
 
@@ -233,7 +233,7 @@ def print_categorical_histogram(data: pd.DataFrame, column: str, expertise_colum
             y=column,
             hue='Group',
             kind='count',
-            height=6,
+            height=height,
             aspect=2,
             orient='h',
             order=sorted(combined_data[column].unique())
@@ -244,7 +244,7 @@ def print_categorical_histogram(data: pd.DataFrame, column: str, expertise_colum
             x=column,
             hue='Group',
             kind='count',
-            height=6,
+            height=height,
             aspect=2,
             order=sorted(combined_data[column].unique())
         )
