@@ -209,13 +209,48 @@ def print_histogram(data: pd.DataFrame, column: str, expertise_column: str, bins
     plt.show()
 
 
-def print_categorical_histogram(data: pd.DataFrame, column: str, vertical: bool = False, fillna: bool = False):
+def print_categorical_histogram(data: pd.DataFrame, column: str, expertise_column: str, vertical: bool = False, fillna: bool = False, include_all: bool = True, include_beginners: bool = True, include_experts: bool = True):
     if fillna:
         data[column] = data[column].fillna('None')
+
+    combined_data = pd.DataFrame()
+
+    if include_all:
+        all_data = data.copy()
+        all_data['Group'] = 'All'
+        combined_data = pd.concat([combined_data, all_data])
+    if include_beginners:
+        beginners_data = data[data[expertise_column] == 'BEGINNER'].copy()
+        beginners_data['Group'] = 'Beginners'
+        combined_data = pd.concat([combined_data, beginners_data])
+    if include_experts:
+        experts_data = data[data[expertise_column] == 'EXPERT'].copy()
+        experts_data['Group'] = 'Experts'
+        combined_data = pd.concat([combined_data, experts_data])
     if vertical:
-        sns.catplot(data[column], kind="count", order=sorted(data[column].unique())).fig.set_size_inches(6, 12)
+        sns.catplot(
+            data=combined_data,
+            y=column,
+            hue='Group',
+            kind='count',
+            height=6,
+            aspect=2,
+            orient='h',
+            order=sorted(combined_data[column].unique())
+        )
     else:
-        sns.catplot(data=data, x=column, kind="count", order=sorted(data[column].unique())).fig.set_size_inches(12, 6)
+        sns.catplot(
+            data=combined_data,
+            x=column,
+            hue='Group',
+            kind='count',
+            height=6,
+            aspect=2,
+            order=sorted(combined_data[column].unique())
+        )
+    plt.xlabel(column)
+    plt.ylabel('Count')
+    plt.title(f'Count of {column} by Expertise Level')
     plt.show()
 
 
