@@ -194,14 +194,19 @@ def print_histogram(data: pd.DataFrame, column: str, expertise_column: str, bins
         data = data[data[column] >= min_value]
     if max_value is not None:
         data = data[data[column] <= max_value]
+
+    data_min = data[column].min()
+    data_max = data[column].max()
+
+    num_bins = np.linspace(data_min, data_max, bins + 1)
+
     if include_all:
-        plt.hist(data[column], bins=bins, alpha=0.5, label='All', color='blue')
+        plt.hist(data[column], bins=num_bins, alpha=0.5, label='All', color='blue')
     if include_experts:
-        plt.hist(data[data[f'{expertise_column}_EXPERT'] == 1][column], bins=bins, alpha=0.5,
-             label='Experts', color='green')
+        plt.hist(data[data[f'{expertise_column}_EXPERT'] == 1][column], bins=num_bins, alpha=0.5, label='Experts', color='green')
     if include_beginners:
-        plt.hist(data[data[f'{expertise_column}_EXPERT'] == 0][column], bins=bins, alpha=0.5,
-             label='Beginners', color='red')
+        plt.hist(data[data[f'{expertise_column}_EXPERT'] == 0][column], bins=num_bins, alpha=0.5, label='Beginners', color='red')
+
     plt.xlabel(column)
     plt.ylabel('Frequency')
     plt.title(f'{column} by expertise level histogram')
