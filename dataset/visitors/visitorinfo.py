@@ -1,3 +1,14 @@
+"""
+This file is the main visitor of the program. In this visitor, each element of the AST is processed to collect
+the information needed to fill the n-dimensional vector that represents the element on the database.
+
+Each method visit receive 2 arguments (apart from the self argument, necessary in Python POO):
+- AST Element: Used to collect information and to know which method should be called
+- Dictionary: In this dictionary heterogeneous information is passed. Each method receive different information
+              but, in general, every method receive the parent, the role, the category, expertise level, user id,
+              depth and height.
+"""
+
 import os
 from dataset.util.util import *
 import dataset.db.db_entities as db_entities
@@ -9,7 +20,7 @@ class VisitorInfo(NodeVisitor):
         self.id_manager = id_manager
         self.visitor_db = visitor_db
 
-    def visit_Program(self, params: Dict) -> Dict: 
+    def visit_Program(self, params: Dict) -> Dict:
         db_program = db_entities.DBProgram()
         ################## IDs ###################
         node_id = self.id_manager.get_id()
@@ -23,12 +34,12 @@ class VisitorInfo(NodeVisitor):
         ############## PROPAGAR VISIT ############
         modules = []
         index = 0
+        has_code_root = False
         for current_folder, folders, files in os.walk(params["path"]):
             has_init_py = False
             has_py = False
-            has_code_root = False
             for file in files:
-                if current_folder.split("\\")[-1] != name:
+                if current_folder != params["path"]:
                     if file == '__init__.py':
                         has_init_py = True
                     elif file.endswith('.py'):
@@ -38,7 +49,7 @@ class VisitorInfo(NodeVisitor):
                         has_code_root = True
                 full_path = os.path.join(current_folder, file)
                 if file.endswith('.py') and not 'MACOSX' in full_path:
-                    with open(r''+full_path+'', "r",  encoding='utf-8') as f:
+                    with open(r'' + full_path + '', "r",  encoding='utf-8') as f:
                         module_ast = None
                         try:
                             content = f.read()
@@ -64,7 +75,7 @@ class VisitorInfo(NodeVisitor):
                 num_of_dirs += 1
         ########## ENTITY PROPERTIES ############
         if index > 0:
-            total_defs = total_class_defs + total_enum_defs+ total_function_defs
+            total_defs = total_class_defs + total_enum_defs + total_function_defs
             db_program.program_id = node_id
             db_program.name = name
             db_program.number_of_packages = num_of_packages
@@ -84,10 +95,10 @@ class VisitorInfo(NodeVisitor):
         return
 
     # params = [parent, parent_id = node]
-    def visit_Expr(self, node: ast.Expr, params: Dict) -> Dict: 
+    def visit_Expr(self, node: ast.Expr, params: Dict) -> Dict:
         return self.visit(node.value, params)
 
-    def visit_Module(self, node: ast.Module, params: Dict) -> Dict: 
+    def visit_Module(self, node: ast.Module, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         db_module = db_entities.DBModule()
         db_import = db_entities.DBImport()
@@ -168,9 +179,9 @@ class VisitorInfo(NodeVisitor):
         ########## ENTITY PROPERTIES ############
         db_module.name = params["filename"]
         db_module.name_convention = name_convention(db_module.name)
-        db_module.has_doc_string = (isinstance(node.body[0], ast.Constant)) and isinstance(node.body[0].value, str)
+        db_module.has_doc_string = (isinstance(node.body[0], ast.Expr)) and (isinstance(node.body[0].value, ast.Constant)) and isinstance(node.body[0].value.value, str)
         db_module.global_stmts_pct = count["stmt"]/index if(index > 0) else 0
-        db_module.global_expressions = count["expr"]/index if(index > 0) else 0
+        db_module.global_expressions_pct = count["expr"]/index if(index > 0) else 0
         db_module.number_of_classes = count["classes"]
         db_module.number_of_functions = count["function"]
         enum_class_funct_sum = (count["function"] + count["enum"] + count["classes"])
@@ -197,8 +208,8 @@ class VisitorInfo(NodeVisitor):
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node': db_module, 'db_node': db_node, 'db_import': db_import})
         return {"class_defs": count["classes"], "function_defs": count["function"], "enum_defs": count["enum"]}
-    
-    def visit_FunctionDef(self, node: ast.FunctionDef, params: Dict) -> Dict: 
+
+    def visit_FunctionDef(self, node: ast.FunctionDef, params: Dict) -> Dict:
         is_method = params["parent"].table == 'ClassDefs'
         db_node = db_entities.DBNode()
         db_functiondef = db_entities.DBFunctionDef()
@@ -218,11 +229,12 @@ class VisitorInfo(NodeVisitor):
             db_method.classdef_id = params["parent_id"]
             db_method.methoddef_id = node_id
         ############# PARAMS #####################
-        child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_functiondef, "depth": params["depth"] + 1, "parent_id": node_id}
         if is_method:
+            child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_method, "depth": params["depth"] + 1, "parent_id": node_id}
             stmt_roles = ["MethodDefBody"]
             expr_roles = ["FuncDecorator", "ReturnType", "MethodBody"]
         else:
+            child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": db_functiondef, "depth": params["depth"] + 1, "parent_id": node_id}
             stmt_roles = ["FunctionDefBody"]
             expr_roles = ["FuncDecorator", "ReturnType", "FuncBody"]
         ########## ENTITY PROPERTIES ############
@@ -262,7 +274,7 @@ class VisitorInfo(NodeVisitor):
         db_functiondef.is_async = False
         db_functiondef.number_of_decorators = len(node.decorator_list)
         db_functiondef.has_return_type_annotation = True if node.returns else False
-        db_functiondef.has_doc_string = (isinstance(node.body[0], ast.Constant)) and isinstance(node.body[0].value, str)
+        db_functiondef.has_doc_string = (isinstance(node.body[0], ast.Expr)) and (isinstance(node.body[0].value, ast.Constant)) and isinstance(node.body[0].value.value, str)
         db_functiondef.height = params["depth"]
         db_functiondef.type_annotations_pct = number_of_annotations/args_ret if args_ret > 0 else 0
         db_functiondef.source_code = ast.unparse(node)
@@ -285,8 +297,8 @@ class VisitorInfo(NodeVisitor):
         else:
             self.visitor_db.visit(node, {'node': db_functiondef, 'db_node': db_node, 'is_method': is_method})
             return {'number_of_params_ret': args_ret, 'function': db_functiondef, 'type_annotations': args["type_annotations"], 'depth': depth + 1, 'id': db_functiondef.functiondef_id}
-    
-    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef, params: Dict) -> Dict: 
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef, params: Dict) -> Dict:
         is_method = params["parent"].table == 'ClassDefs'
         db_node = db_entities.DBNode()
         db_functiondef = db_entities.DBFunctionDef()
@@ -350,7 +362,7 @@ class VisitorInfo(NodeVisitor):
         db_functiondef.is_async = True
         db_functiondef.number_of_decorators = len(node.decorator_list)
         db_functiondef.has_return_type_annotation = True if node.returns else False
-        db_functiondef.has_doc_string = (isinstance(node.body[0], ast.Constant)) and isinstance(node.body[0].value, str)
+        db_functiondef.has_doc_string = (isinstance(node.body[0], ast.Expr)) and (isinstance(node.body[0].value, ast.Constant)) and isinstance(node.body[0].value.value, str)
         db_functiondef.height = params["depth"]
         db_functiondef.type_annotations_pct = number_of_annotations/args_ret if args_ret > 0 else 0
         db_functiondef.source_code = ast.unparse(node)
@@ -373,8 +385,8 @@ class VisitorInfo(NodeVisitor):
         else:
             self.visitor_db.visit(node, {'node': db_functiondef, 'db_node': db_node, 'is_method': is_method})
             return {'number_of_params_ret': args_ret, 'function': db_functiondef, 'type_annotations': args["type_annotations"], 'depth': depth + 1, 'id': db_functiondef.functiondef_id}
-        
-    def visit_ClassDef(self, node: ast.ClassDef, params: Dict) -> Dict:  
+
+    def visit_ClassDef(self, node: ast.ClassDef, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         db_classdef = db_entities.DBClassDef()
         ############ IDS #########################
@@ -465,7 +477,7 @@ class VisitorInfo(NodeVisitor):
         db_classdef.number_of_decorators = len(node.decorator_list)
         db_classdef.number_of_base_classes = len(node.bases)
         db_classdef.has_generic_type_annotations = len(node.type_params) > 0
-        db_classdef.has_doc_string = (isinstance(node.body[0], ast.Constant)) and isinstance(node.body[0].value, str)
+        db_classdef.has_doc_string = (isinstance(node.body[0], ast.Expr)) and (isinstance(node.body[0].value, ast.Constant)) and isinstance(node.body[0].value.value, str)
         db_classdef.body_count = body_count
         db_classdef.assignments_pct = assignment_number/body_count if body_count > 0 else 0
         db_classdef.expressions_pct = expression_number/body_count if body_count > 0 else 0
@@ -489,7 +501,7 @@ class VisitorInfo(NodeVisitor):
         return {'number_of_params_ret': number_of_method_params_ret, 'method_count': number_of_methods, 'type_annotations': number_of_method_type_annotations, 'number_of_method_stmt': number_of_method_stmt, 'id': db_classdef.classdef_id, 'depth': depth + 1, 'is_enum': is_enum}
 
     ############################### STATEMENTS #############################
-    def visit_Return(self, node: ast.Return, params: Dict) -> Dict:  
+    def visit_Return(self, node: ast.Return, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -514,6 +526,7 @@ class VisitorInfo(NodeVisitor):
         if returns:
             db_stmt.depth = returns["depth"]
             db_stmt.first_child_id = returns["id"]
+            db_stmt.first_child_category = returns["category"]
         else:
             db_stmt.depth = 0
         db_stmt.source_code = ast.unparse(node)
@@ -525,7 +538,7 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
-    def visit_Delete(self, node: ast.Delete, params: Dict) -> Dict:  
+    def visit_Delete(self, node: ast.Delete, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -553,10 +566,7 @@ class VisitorInfo(NodeVisitor):
             depth = max(depth, returns[index]["depth"])
             if index == 0:
                 first_child_id = returns[index]["id"]
-            if index == 1:
-                second_child_id = returns[index]["id"]
-            if index == 2:
-                third_child_id = returns[index]["id"]
+                db_stmt.first_child_category = returns[index]["category"]
             index += 1
         ########## ENTITY PROPERTIES ############
         db_stmt.height = params["depth"]
@@ -573,7 +583,7 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
-    def visit_Assign(self, node: ast.Assign, params: Dict) -> Dict:  
+    def visit_Assign(self, node: ast.Assign, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -594,26 +604,35 @@ class VisitorInfo(NodeVisitor):
         first_child_id = None
         second_child_id = None
         third_child_id = None
+        first_child_category = None
+        second_child_category = None
+        third_child_category = None
         ############## PROPAGAR VISIT ############
         returns_targets = []
         index = 0
         for child in node.targets:
             returns_targets.append(self.visit(child, add_param(child_params, 'role', roles[0])))
             depth = max(depth, returns_targets[index]["depth"])
-            if index == 0: 
+            if index == 0:
                 first_child_id = returns_targets[index]["id"]
-            if index == 1: 
+                first_child_category = returns_targets[index]["category"]
+            if index == 1:
                 second_child_id = returns_targets[index]["id"]
-            if index == 2: 
+                second_child_category = returns_targets[index]["category"]
+            if index == 2:
                 third_child_id = returns_targets[index]["id"]
+                third_child_category = returns_targets[index]["category"]
             index += 1
         returns_value = self.visit(node.value, add_param(child_params, 'role', roles[1]))
-        if(index == 0):
+        if index == 0:
             first_child_id = returns_value["id"]
-        if(index == 1):
+            first_child_category = returns_value["category"]
+        if index == 1:
             second_child_id = returns_value["id"]
-        if(index == 2):
+            second_child_category = returns_value["category"]
+        if index == 2:
             third_child_id = returns_value["id"]
+            third_child_category = returns_value["category"]
         ########## ENTITY PROPERTIES ############
         db_stmt.height = params["depth"]
         db_stmt.depth = 0
@@ -621,6 +640,9 @@ class VisitorInfo(NodeVisitor):
         db_stmt.first_child_id = first_child_id
         db_stmt.second_child_id = second_child_id
         db_stmt.third_child_id = third_child_id
+        db_stmt.first_child_category = first_child_category
+        db_stmt.second_child_category = second_child_category
+        db_stmt.third_child_category = third_child_category
         db_stmt.source_code = ast.unparse(node)
         db_stmt.has_or_else = None
         db_stmt.body_size = None
@@ -629,8 +651,8 @@ class VisitorInfo(NodeVisitor):
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
-    
-    def visit_TypeAlias(self, node: ast.TypeAlias, params: Dict) -> Dict: 
+
+    def visit_TypeAlias(self, node: ast.TypeAlias, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -656,7 +678,14 @@ class VisitorInfo(NodeVisitor):
         db_stmt.height = params["depth"]
         db_stmt.depth = max(returns[0]["depth"], returns[1]["depth"])
         db_stmt.first_child_id = returns[0]["id"]
-        db_stmt.second_child_id = returns[1]["id"]
+        db_stmt.first_child_category = returns[0]["category"]
+        if len(node.type_params) > 0:
+            db_stmt.second_child_category = "TypeParam"
+            db_stmt.third_child_id = returns[1]["id"]
+            db_stmt.third_child_category = returns[1]["category"]
+        else:
+            db_stmt.second_child_id = returns[1]["id"]
+            db_stmt.second_child_category = returns[1]["category"]
         db_stmt.source_code = ast.unparse(node)
         db_stmt.has_or_else = None
         db_stmt.body_size = None
@@ -665,8 +694,8 @@ class VisitorInfo(NodeVisitor):
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
-    
-    def visit_AugAssign(self, node: ast.AugAssign, params: Dict) -> Dict:  
+
+    def visit_AugAssign(self, node: ast.AugAssign, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -691,6 +720,8 @@ class VisitorInfo(NodeVisitor):
         db_stmt.depth = max(returns[0]["depth"], returns[1]["depth"])
         db_stmt.first_child_id = returns[0]["id"]
         db_stmt.second_child_id = returns[1]["id"]
+        db_stmt.first_child_category = returns[0]["category"]
+        db_stmt.second_child_category = returns[1]["category"]
         db_stmt.source_code = ast.unparse(node)
         db_stmt.has_or_else = None
         db_stmt.body_size = None
@@ -700,7 +731,7 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
-    def visit_AnnAssign(self, node: ast.AnnAssign, params: Dict) -> Dict:  
+    def visit_AnnAssign(self, node: ast.AnnAssign, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -720,15 +751,18 @@ class VisitorInfo(NodeVisitor):
         returns = []
         returns.append(self.visit(node.target, add_param(child_params, 'role', roles[0])))
         returns.append(self.visit(node.annotation, add_param(child_params, 'role', roles[1])))
-        if node.value: 
+        if node.value:
             returns.append(self.visit(node.value, add_param(child_params, 'role', roles[2])))
         ########## ENTITY PROPERTIES ############
         db_stmt.height = params["depth"]
         db_stmt.depth = max(returns[0]["depth"], returns[1]["depth"])
         db_stmt.first_child_id = returns[0]["id"]
         db_stmt.second_child_id = returns[1]["id"]
+        db_stmt.first_child_category = returns[0]["category"]
+        db_stmt.second_child_category = returns[1]["category"]
         if len(returns) > 2:
             db_stmt.third_child_id = returns[2]["id"]
+            db_stmt.third_child_category = returns[2]["category"]
             db_stmt.depth = max(db_stmt.depth, returns[2]["depth"])
         db_stmt.source_code = ast.unparse(node)
         db_stmt.has_or_else = None
@@ -739,7 +773,7 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
-    def visit_For(self, node: ast.For, params: Dict) -> Dict:  
+    def visit_For(self, node: ast.For, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -759,9 +793,6 @@ class VisitorInfo(NodeVisitor):
         ########## ENTITY PROPERTIES ############
         db_stmt.has_or_else = False
         depth = 0
-        first_child_id = None
-        second_child_id = None
-        third_child_id = None
         has_or_else = False
         ############## PROPAGAR VISIT ############
         returns = []
@@ -774,12 +805,6 @@ class VisitorInfo(NodeVisitor):
             else:
                 returns.append(self.visit(child, add_param(child_params, "role", stmt_roles[0])))
             depth = max(depth, returns[index]["depth"])
-            if index == 0:
-                first_child_id = returns[index]["id"]
-            if index == 1:
-                second_child_id = returns[index]["id"]
-            if index == 2:
-                third_child_id = returns[index]["id"]
             index += 1
         for child in node.orelse:
             has_or_else = True
@@ -788,20 +813,15 @@ class VisitorInfo(NodeVisitor):
             else:
                 returns.append(self.visit(child, add_param(child_params, "role", stmt_roles[1])))
             depth = max(depth, returns[index]["depth"])
-            if index == 0:
-                first_child_id = returns[index]["id"]
-            if index == 1:
-                second_child_id = returns[index]["id"]
-            if index == 2:
-                third_child_id = returns[index]["id"]
             index += 1
         ########## ENTITY PROPERTIES ############
         db_stmt.height = params["depth"]
         db_stmt.height = params["depth"]
         db_stmt.depth = max(returns_target["depth"],max(returns_iter["depth"],depth))
-        db_stmt.first_child_id = first_child_id
-        db_stmt.second_child_id = second_child_id
-        db_stmt.third_child_id = third_child_id
+        db_stmt.first_child_id = returns_target["id"]
+        db_stmt.second_child_id = returns_iter["id"]
+        db_stmt.first_child_category = returns_target["category"]
+        db_stmt.second_child_category = returns_iter["category"]
         db_stmt.source_code = ast.unparse(node)
         db_stmt.body_size = index
         db_stmt.has_or_else = has_or_else
@@ -810,8 +830,8 @@ class VisitorInfo(NodeVisitor):
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
-    
-    def visit_AsyncFor(self, node: ast.AsyncFor, params: Dict) -> Dict:  
+
+    def visit_AsyncFor(self, node: ast.AsyncFor, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -819,7 +839,7 @@ class VisitorInfo(NodeVisitor):
         db_node.node_id = db_stmt.statement_id = node_id
         db_node.parent_id = db_stmt.parent_id = params["parent_id"]
         ############ CATEGORIES ##################
-        db_stmt.category = "For"
+        db_stmt.category = "AsyncFor"
         db_node.parent_table = params["parent"].table
         db_stmt.parent = params["parent"].category
         ############# ROLES ######################
@@ -831,9 +851,6 @@ class VisitorInfo(NodeVisitor):
         ########## ENTITY PROPERTIES ############
         db_stmt.has_or_else = False
         depth = 0
-        first_child_id = None
-        second_child_id = None
-        third_child_id = None
         has_or_else = False
         ############## PROPAGAR VISIT ############
         returns = []
@@ -846,12 +863,6 @@ class VisitorInfo(NodeVisitor):
             else:
                 returns.append(self.visit(child, add_param(child_params, "role", stmt_roles[0])))
             depth = max(depth, returns[index]["depth"])
-            if index == 0:
-                first_child_id = returns[index]["id"]
-            if index == 1:
-                second_child_id = returns[index]["id"]
-            if index == 2:
-                third_child_id = returns[index]["id"]
             index += 1
         for child in node.orelse:
             has_or_else = True
@@ -860,20 +871,15 @@ class VisitorInfo(NodeVisitor):
             else:
                 returns.append(self.visit(child, add_param(child_params, "role", stmt_roles[1])))
             depth = max(depth, returns[index]["depth"])
-            if index == 0:
-                first_child_id = returns[index]["id"]
-            if index == 1:
-                second_child_id = returns[index]["id"]
-            if index == 2:
-                third_child_id = returns[index]["id"]
             index += 1
         ########## ENTITY PROPERTIES ############
         db_stmt.height = params["depth"]
         db_stmt.height = params["depth"]
         db_stmt.depth = max(returns_target["depth"], returns_iter["depth"], depth)
-        db_stmt.first_child_id = first_child_id
-        db_stmt.second_child_id = second_child_id
-        db_stmt.third_child_id = third_child_id
+        db_stmt.first_child_id = returns_target["id"]
+        db_stmt.second_child_id = returns_iter["id"]
+        db_stmt.first_child_category = returns_target["category"]
+        db_stmt.second_child_category = returns_iter["category"]
         db_stmt.source_code = ast.unparse(node)
         db_stmt.body_size = index
         db_stmt.has_or_else = has_or_else
@@ -882,8 +888,8 @@ class VisitorInfo(NodeVisitor):
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
-    
-    def visit_While(self, node: ast.While, params: Dict) -> Dict:  
+
+    def visit_While(self, node: ast.While, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -903,9 +909,6 @@ class VisitorInfo(NodeVisitor):
         ########## ENTITY PROPERTIES ############
         db_stmt.has_or_else = False
         depth = 0
-        first_child_id = None
-        second_child_id = None
-        third_child_id = None
         has_or_else = False
         ############## PROPAGAR VISIT ############
         returns = []
@@ -917,33 +920,20 @@ class VisitorInfo(NodeVisitor):
             else:
                 returns.append(self.visit(child, add_param(child_params, "role", stmt_roles[0])))
             depth = max(depth, returns[index]["depth"])
-            if index == 0:
-                first_child_id = returns[index]["id"]
-            if index == 1:
-                second_child_id = returns[index]["id"]
-            if index == 2:
-                third_child_id = returns[index]["id"]
             index += 1
         for child in node.orelse:
             has_or_else = True
-            if(isinstance(child,ast.Expr)):
+            if isinstance(child, ast.Expr):
                 returns.append(self.visit(child, add_param(child_params, "role", expr_roles[2])))
             else:
                 returns.append(self.visit(child, add_param(child_params, "role", stmt_roles[1])))
             depth = max(depth, returns[index]["depth"])
-            if index == 0:
-                first_child_id = returns[index]["id"]
-            if index == 1:
-                second_child_id = returns[index]["id"]
-            if index == 2:
-                third_child_id = returns[index]["id"]
             index += 1
         ########## ENTITY PROPERTIES ############
         db_stmt.height = params["depth"]
         db_stmt.depth = max(returns_test["depth"], depth)
-        db_stmt.first_child_id = first_child_id
-        db_stmt.second_child_id = second_child_id
-        db_stmt.third_child_id = third_child_id
+        db_stmt.first_child_id = returns_test["id"]
+        db_stmt.first_child_category = returns_test["category"]
         db_stmt.source_code = ast.unparse(node)
         db_stmt.body_size = index
         db_stmt.has_or_else = has_or_else
@@ -953,7 +943,7 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
-    def visit_If(self, node: ast.If, params: Dict) -> Dict:  
+    def visit_If(self, node: ast.If, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -998,6 +988,7 @@ class VisitorInfo(NodeVisitor):
         db_stmt.height = params["depth"]
         db_stmt.depth = max(returns_test["depth"],depth)
         db_stmt.first_child_id = returns_test["id"]
+        db_stmt.first_child_category = returns_test["category"]
         db_stmt.source_code = ast.unparse(node)
         db_stmt.body_size = body_size
         db_stmt.has_or_else = has_or_else
@@ -1007,7 +998,7 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
-    def visit_With(self, node: ast.With, params: Dict) -> Dict:  
+    def visit_With(self, node: ast.With, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -1029,6 +1020,9 @@ class VisitorInfo(NodeVisitor):
         first_child_id = None
         second_child_id = None
         third_child_id = None
+        first_child_category = None
+        second_child_category = None
+        third_child_category = None
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
@@ -1037,16 +1031,29 @@ class VisitorInfo(NodeVisitor):
                 returns.append(self.visit(child, add_param(child_params, "role", expr_roles[2])))
             else:
                 returns.append(self.visit(child, add_param(child_params, "role", stmt_roles[0])))
+                returns.append(self.visit(child, add_param(child_params, "role", stmt_roles[0])))
             depth = max(depth, returns[index]["depth"])
-            if index == 0:
-                first_child_id = returns[index]["id"]
-            if index == 1:
-                second_child_id = returns[index]["id"]
-            if index == 2:
-                third_child_id = returns[index]["id"]
             index += 1
+        iindex = 0
+        items = []
+        op = False
         for child in node.items:
-            self.visit(child, add_param(add_param(child_params, "role_ctx", expr_roles[0]), 'role_vars', expr_roles[1]))
+            items.append(self.visit(child, add_param(add_param(child_params, "role_ctx", expr_roles[0]), 'role_vars', expr_roles[1])))
+            if iindex == 0:
+                first_child_id = items[iindex]["ctx"]["id"]
+                first_child_category = items[iindex]["ctx"]["category"]
+                if items[iindex]["op"]:
+                    op = True
+                    second_child_id = items[iindex]["op"]["id"]
+                    second_child_category = items[iindex]["op"]["category"]
+            if iindex == 1:
+                if op:
+                    third_child_id = items[iindex]["ctx"]["id"]
+                    third_child_category = items[iindex]["ctx"]["category"]
+                else:
+                    second_child_id = items[iindex]["ctx"]["id"]
+                    second_child_category = items[iindex]["ctx"]["category"]
+            iindex += 1
         ########## ENTITY PROPERTIES ############
         db_stmt.height = params["depth"]
         db_stmt.height = params["depth"]
@@ -1055,6 +1062,9 @@ class VisitorInfo(NodeVisitor):
         db_stmt.first_child_id = first_child_id
         db_stmt.second_child_id = second_child_id
         db_stmt.third_child_id = third_child_id
+        db_stmt.first_child_category = first_child_category
+        db_stmt.second_child_category = second_child_category
+        db_stmt.third_child_category = third_child_category
         db_stmt.source_code = ast.unparse(node)
         db_stmt.body_size = index
         db_stmt.expertise_level = params["expertise_level"]
@@ -1063,8 +1073,7 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
-    
-    def visit_AsyncWith(self, node: ast.AsyncWith, params: Dict) -> Dict:  
+    def visit_AsyncWith(self, node: ast.AsyncWith, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -1086,6 +1095,9 @@ class VisitorInfo(NodeVisitor):
         first_child_id = None
         second_child_id = None
         third_child_id = None
+        first_child_category = None
+        second_child_category = None
+        third_child_category = None
         ############## PROPAGAR VISIT ############
         returns = []
         index = 0
@@ -1095,12 +1107,28 @@ class VisitorInfo(NodeVisitor):
             else:
                 returns.append(self.visit(child, add_param(child_params, "role", stmt_roles[0])))
             depth = max(depth, returns[index]["depth"])
-            if(index == 0): first_child_id = returns[index]["id"]
-            if(index == 1): second_child_id = returns[index]["id"]
-            if(index == 2): third_child_id = returns[index]["id"]
             index += 1
+        iindex = 0
+        items = []
+        op = False
         for child in node.items:
-            self.visit(child, add_param(add_param(child_params, "role_ctx", expr_roles[0]), 'role_vars', expr_roles[1]))
+            items.append(self.visit(child, add_param(add_param(child_params, "role_ctx", expr_roles[0]), 'role_vars',
+                                                     expr_roles[1])))
+            if iindex == 0:
+                first_child_id = items[iindex]["ctx"]["id"]
+                first_child_category = items[iindex]["ctx"]["category"]
+                if items[iindex]["op"]:
+                    op = True
+                    second_child_id = items[iindex]["op"]["id"]
+                    second_child_category = items[iindex]["op"]["category"]
+            if iindex == 1:
+                if op:
+                    third_child_id = items[iindex]["ctx"]["id"]
+                    third_child_category = items[iindex]["ctx"]["category"]
+                else:
+                    second_child_id = items[iindex]["ctx"]["id"]
+                    second_child_category = items[iindex]["ctx"]["category"]
+            iindex += 1
         ########## ENTITY PROPERTIES ############
         db_stmt.height = params["depth"]
         db_stmt.has_or_else = None
@@ -1108,6 +1136,9 @@ class VisitorInfo(NodeVisitor):
         db_stmt.first_child_id = first_child_id
         db_stmt.second_child_id = second_child_id
         db_stmt.third_child_id = third_child_id
+        db_stmt.first_child_category = first_child_category
+        db_stmt.second_child_category = second_child_category
+        db_stmt.third_child_category = third_child_category
         db_stmt.source_code = ast.unparse(node)
         db_stmt.body_size = index
         db_stmt.expertise_level = params["expertise_level"]
@@ -1115,8 +1146,8 @@ class VisitorInfo(NodeVisitor):
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
-    
-    def visit_Match(self, node: ast.Match, params: Dict) -> Dict:  
+
+    def visit_Match(self, node: ast.Match, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         case = db_entities.DBCase()
@@ -1145,6 +1176,7 @@ class VisitorInfo(NodeVisitor):
         ########## ENTITY PROPERTIES ############
         db_stmt.height = params["depth"]
         db_stmt.first_child_id = subject["id"]
+        db_stmt.first_child_category = subject["category"]
         db_stmt.has_or_else = None
         db_stmt.depth = max(depth,subject["depth"])
         db_stmt.source_code = ast.unparse(node)
@@ -1191,7 +1223,7 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node, 'case': case})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
 
-    def visit_Raise(self, node: ast.Raise, params: Dict) -> Dict:  
+    def visit_Raise(self, node: ast.Raise, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -1220,14 +1252,17 @@ class VisitorInfo(NodeVisitor):
         db_stmt.has_or_else = None
         if exc:
             db_stmt.first_child_id = exc["id"]
+            db_stmt.first_child_category = exc["category"]
             if cause:
                 db_stmt.second_child_id = cause["id"]
+                db_stmt.second_child_category = cause["category"]
                 db_stmt.depth = max(exc["depth"], cause["depth"])
             else:
                 db_stmt.depth = exc["depth"]
         else:
             if cause:
                 db_stmt.first_child_id = cause["id"]
+                db_stmt.first_child_category = cause["id"]
                 db_stmt.depth = cause["depth"]
             else:
                 db_stmt.depth = 0
@@ -1238,8 +1273,8 @@ class VisitorInfo(NodeVisitor):
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
-    
-    def visit_Try(self, node: ast.Try, params: Dict) -> Dict:  
+
+    def visit_Try(self, node: ast.Try, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         db_stmt = db_entities.DBStatement()
         db_handler = db_entities.DBHandler()
@@ -1321,8 +1356,8 @@ class VisitorInfo(NodeVisitor):
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node': db_stmt, 'db_node': db_node, 'handler': db_handler})
         return {'id': node_id, 'depth': db_stmt.depth + 1}
-    
-    def visit_TryStar(self, node: ast.TryStar, params: Dict) -> Dict:  
+
+    def visit_TryStar(self, node: ast.TryStar, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         stmt = db_entities.DBStatement()
         db_handler = db_entities.DBHandler()
@@ -1404,8 +1439,7 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': stmt, 'db_node': db_node, 'handler': db_handler})
         return {'id': id, 'depth': stmt.depth + 1}
 
-    
-    def visit_Assert(self, node: ast.Assert, params: Dict) -> Dict:  
+    def visit_Assert(self, node: ast.Assert, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -1430,9 +1464,11 @@ class VisitorInfo(NodeVisitor):
         stmt.height = params["depth"]
         stmt.has_or_else = None
         stmt.first_child_id = test["id"]
+        stmt.first_child_category = test["category"]
         stmt.depth = test["depth"]
-        if(msg):
-            stmt.second_child_id = msg["id"]  
+        if msg:
+            stmt.second_child_id = msg["id"]
+            stmt.second_child_category = msg["category"]
             stmt.depth = max(msg["depth"], stmt.depth)
         stmt.source_code = ast.unparse(node)
         stmt.body_size = None
@@ -1442,8 +1478,7 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': stmt, 'db_node': db_node})
         return {'id': id, 'depth': stmt.depth + 1}
 
-    
-    def visit_Global(self, node: ast.Global, params: Dict) -> Dict:  
+    def visit_Global(self, node: ast.Global, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -1468,8 +1503,8 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': stmt, 'db_node': db_node})
         return {'id': id, 'depth': stmt.depth + 1}
 
-    
-    def visit_Nonlocal(self, node: ast.Nonlocal, params: Dict) -> Dict:  
+
+    def visit_Nonlocal(self, node: ast.Nonlocal, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -1494,8 +1529,8 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': stmt, 'db_node': db_node})
         return {'id': id, 'depth': stmt.depth + 1}
 
-    
-    def visit_Pass(self, node: ast.Pass, params: Dict) -> Dict:  
+
+    def visit_Pass(self, node: ast.Pass, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -1520,8 +1555,8 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': stmt, 'db_node': db_node})
         return {'id': id, 'depth': stmt.depth + 1}
 
-    
-    def visit_Break(self, node: ast.Break, params: Dict) -> Dict:  
+
+    def visit_Break(self, node: ast.Break, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -1546,8 +1581,8 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': stmt, 'db_node': db_node})
         return {'id': id, 'depth': stmt.depth + 1}
 
-    
-    def visit_Continue(self, node: ast.Continue, params: Dict) -> Dict:  
+
+    def visit_Continue(self, node: ast.Continue, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -1574,8 +1609,8 @@ class VisitorInfo(NodeVisitor):
 
     ############################ IMPORTS ##################################
 
-    
-    def visit_Import(self, node: ast.Import, params: Dict) -> Dict:  
+
+    def visit_Import(self, node: ast.Import, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -1603,8 +1638,8 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': stmt, 'db_node': db_node})
         return {'id': id, 'depth': stmt.depth + 1, 'imported_modules': len(node.names), 'as_names': as_names}
 
-    
-    def visit_ImportFrom(self, node: ast.ImportFrom, params: Dict) -> Dict:  
+
+    def visit_ImportFrom(self, node: ast.ImportFrom, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         stmt = db_entities.DBStatement()
         ############ IDS #########################
@@ -1634,7 +1669,7 @@ class VisitorInfo(NodeVisitor):
 
     ############################ EXPRESSIONS ##################################
 
-    def visit_BoolOp(self, node: ast.BoolOp, params: Dict) -> Dict:  
+    def visit_BoolOp(self, node: ast.BoolOp, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
@@ -1690,8 +1725,8 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
-    
-    def visit_NamedExpr(self, node: ast.NamedExpr, params: Dict) -> Dict:  
+
+    def visit_NamedExpr(self, node: ast.NamedExpr, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
@@ -1724,8 +1759,8 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
-    
-    def visit_BinOp(self, node: ast.BinOp, params: Dict) -> Dict:  
+
+    def visit_BinOp(self, node: ast.BinOp, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
@@ -1764,9 +1799,9 @@ class VisitorInfo(NodeVisitor):
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
-    
-    
-    def visit_UnaryOp(self, node: ast.UnaryOp, params: Dict) -> Dict:  
+
+
+    def visit_UnaryOp(self, node: ast.UnaryOp, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
@@ -1796,9 +1831,9 @@ class VisitorInfo(NodeVisitor):
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
-    
-    
-    def visit_Lambda(self, node: ast.Lambda, params: Dict) -> Dict:  
+
+
+    def visit_Lambda(self, node: ast.Lambda, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
@@ -1828,9 +1863,9 @@ class VisitorInfo(NodeVisitor):
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
-    
-    
-    def visit_IfExp(self, node: ast.IfExp, params: Dict) -> Dict:  
+
+
+    def visit_IfExp(self, node: ast.IfExp, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
@@ -1868,8 +1903,8 @@ class VisitorInfo(NodeVisitor):
 
     ######################### COMPREHENSIONS #############################
 
-    
-    def visit_ListComp(self, node: ast.ListComp, params: Dict) -> Dict:  
+
+    def visit_ListComp(self, node: ast.ListComp, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         comp = db_entities.DBComprehension()
@@ -1901,7 +1936,7 @@ class VisitorInfo(NodeVisitor):
         index = 0
         for child in node.generators:
             returns.append(self.visit(child, child_params))
-            if(index == 0): 
+            if(index == 0):
                 second_child_category = returns[index]["categories"]["target"]; second_child_id = returns[index]["ids"]["target"]
                 third_child_category = returns[index]["categories"]["iter"]; third_child_id = returns[index]["ids"]["iter"]
                 fourth_child_category = returns[index]["categories"]["ifs"]; fourth_child_id = returns[index]["ids"]["ifs"]
@@ -1934,8 +1969,8 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': comp, 'db_node': db_node, 'expr': expr})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
-    
-    def visit_SetComp(self, node: ast.SetComp, params: Dict) -> Dict:  
+
+    def visit_SetComp(self, node: ast.SetComp, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         comp = db_entities.DBComprehension()
@@ -1967,7 +2002,7 @@ class VisitorInfo(NodeVisitor):
         index = 0
         for child in node.generators:
             returns.append(self.visit(child, child_params))
-            if(index == 0): 
+            if(index == 0):
                 second_child_category = returns[index]["categories"]["target"]; second_child_id = returns[index]["ids"]["target"]
                 third_child_category = returns[index]["categories"]["iter"]; third_child_id = returns[index]["ids"]["iter"]
                 fourth_child_category = returns[index]["categories"]["ifs"]; fourth_child_id = returns[index]["ids"]["ifs"]
@@ -2000,8 +2035,8 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': comp, 'db_node': db_node, 'expr': expr})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
-    
-    def visit_DictComp(self, node: ast.DictComp, params: Dict) -> Dict:  
+
+    def visit_DictComp(self, node: ast.DictComp, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         comp = db_entities.DBComprehension()
@@ -2031,11 +2066,10 @@ class VisitorInfo(NodeVisitor):
         index = 0
         for child in node.generators:
             returns.append(self.visit(child, child_params))
-            if(index == 0): 
+            if(index == 0):
                 third_child_category = returns[index]["categories"]["target"]; third_child_id = returns[index]["ids"]["target"]
                 fourth_child_category = returns[index]["categories"]["iter"]; fourth_child_id = returns[index]["ids"]["iter"]
                 #fourth_child_category = returns[index]["categories"]["ifs"][0]; fourth_child_id = returns[index]["ids"]["ifs"][0]
-            
             depth = max(depth, returns[index]["depth"])
             numOfIfs += len(child.ifs)
             if(child.is_async): is_async = True
@@ -2066,8 +2100,8 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': comp, 'db_node': db_node, 'expr': expr})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
-    
-    def visit_GeneratorExp(self, node: ast.GeneratorExp, params: Dict) -> Dict:  
+
+    def visit_GeneratorExp(self, node: ast.GeneratorExp, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         comp = db_entities.DBComprehension()
@@ -2099,7 +2133,7 @@ class VisitorInfo(NodeVisitor):
         index = 0
         for child in node.generators:
             returns.append(self.visit(child, child_params))
-            if(index == 0): 
+            if(index == 0):
                 second_child_category = returns[index]["categories"]["target"]; second_child_id = returns[index]["ids"]["target"]
                 third_child_category = returns[index]["categories"]["iter"]; third_child_id = returns[index]["ids"]["iter"]
                 fourth_child_category = returns[index]["categories"]["ifs"]; fourth_child_id = returns[index]["ids"]["ifs"]
@@ -2134,8 +2168,8 @@ class VisitorInfo(NodeVisitor):
 
     ######################################################################
 
-    
-    def visit_Await(self, node: ast.Await, params: Dict) -> Dict:  
+
+    def visit_Await(self, node: ast.Await, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
@@ -2165,8 +2199,8 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
-    
-    def visit_Yield(self, node: ast.Yield, params: Dict) -> Dict:  
+
+    def visit_Yield(self, node: ast.Yield, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
@@ -2200,8 +2234,8 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
-    
-    def visit_YieldFrom(self, node: ast.YieldFrom, params: Dict) -> Dict:  
+
+    def visit_YieldFrom(self, node: ast.YieldFrom, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
@@ -2231,8 +2265,8 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
-    
-    def visit_Compare(self, node: ast.Compare, params: Dict) -> Dict:  
+
+    def visit_Compare(self, node: ast.Compare, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
@@ -2293,8 +2327,8 @@ class VisitorInfo(NodeVisitor):
 
     ########################## call_args ###########################
 
-    
-    def visit_Call(self, node: ast.Call, params: Dict) -> Dict:  
+
+    def visit_Call(self, node: ast.Call, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         callArgs = db_entities.DBCallArg()
@@ -2367,7 +2401,7 @@ class VisitorInfo(NodeVisitor):
 
     ################################################################
 
-    def visit_FormattedValue(self, node: ast.FormattedValue, params: Dict) -> Dict:  
+    def visit_FormattedValue(self, node: ast.FormattedValue, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
@@ -2406,8 +2440,8 @@ class VisitorInfo(NodeVisitor):
 
     ########################### F-strings #####################################
 
-    
-    def visit_JoinedStr(self, node: ast.JoinedStr, params: Dict) -> Dict:  
+
+    def visit_JoinedStr(self, node: ast.JoinedStr, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         fstr = db_entities.DBFString()
@@ -2496,8 +2530,8 @@ class VisitorInfo(NodeVisitor):
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
-    
-    def visit_Attribute(self, node: ast.Attribute, params: Dict) -> Dict:  
+
+    def visit_Attribute(self, node: ast.Attribute, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
@@ -2527,7 +2561,7 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
-    def visit_Subscript(self, node: ast.Subscript, params: Dict) -> Dict:  
+    def visit_Subscript(self, node: ast.Subscript, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
@@ -2560,8 +2594,8 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': expr, 'db_node': db_node})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
-    
-    def visit_Starred(self, node: ast.Starred, params: Dict) -> Dict:  
+
+    def visit_Starred(self, node: ast.Starred, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         ############ IDS #########################
@@ -2593,8 +2627,8 @@ class VisitorInfo(NodeVisitor):
 
     ############################# Variable ##################################
 
-    
-    def visit_Name(self, node: ast.Name, params: Dict) -> Dict:  
+
+    def visit_Name(self, node: ast.Name, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         var = db_entities.DBVariable()
@@ -2632,8 +2666,8 @@ class VisitorInfo(NodeVisitor):
 
     ############################### Vectors #################################
 
-    
-    def visit_List(self, node: ast.List, params: Dict) -> Dict:  
+
+    def visit_List(self, node: ast.List, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         vct = db_entities.DBVector()
@@ -2702,8 +2736,8 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': vct, 'db_node': db_node, 'expr': expr})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
-    
-    def visit_Tuple(self, node: ast.Tuple, params: Dict) -> Dict:  
+
+    def visit_Tuple(self, node: ast.Tuple, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         vct = db_entities.DBVector()
@@ -2772,8 +2806,8 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': vct, 'db_node': db_node, 'expr': expr})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
-    
-    def visit_Dict(self, node: ast.Dict, params: Dict) -> Dict:  
+
+    def visit_Dict(self, node: ast.Dict, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         vct = db_entities.DBVector()
@@ -2810,10 +2844,10 @@ class VisitorInfo(NodeVisitor):
             keys.append(self.visit(node.keys[i], add_param(child_params, 'role', expr_roles[0])))
             values.append(self.visit(node.values[i], add_param(child_params, 'role', expr_roles[1])))
             depth = max(depth, keys[index]["depth"] if keys[index] else 0, values[index]['depth'])
-            if(index == 0): 
+            if(index == 0):
                 first_child_category = keys[index]["category"] if keys[index] else 'NoneType'; first_child_id = keys[index]["id"] if keys[index] else None
                 second_child_category = values[index]["category"]; second_child_id = values[index]["id"]
-            if(index == 1): 
+            if(index == 1):
                 third_child_category = keys[index]["category"] if keys[index] else 'NoneType'; third_child_id = keys[index]["id"] if keys[index] else None
                 fourth_child_category = values[index]["category"]; fourth_child_id = values[index]["id"]
             if(index > 0 and homogeneous and type(node.values[i]) == ast.Constant):
@@ -2846,8 +2880,8 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': vct, 'db_node': db_node, 'expr': expr})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
-    
-    def visit_Set(self, node: ast.Set, params: Dict) -> Dict:  
+
+    def visit_Set(self, node: ast.Set, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         expr = db_entities.DBExpression()
         vct = db_entities.DBVector()
@@ -2916,7 +2950,7 @@ class VisitorInfo(NodeVisitor):
         self.visitor_db.visit(node, {'node': vct, 'db_node': db_node, 'expr': expr})
         return {'id': id, 'depth': expr.depth + 1, 'category': expr.category}
 
-    def visit_Slice(self, node: ast.Slice, params: Dict) -> Dict:  
+    def visit_Slice(self, node: ast.Slice, params: Dict) -> Dict:
         db_node = db_entities.DBNode()
         db_expr = db_entities.DBExpression()
         ############ IDS #########################
@@ -2982,7 +3016,7 @@ class VisitorInfo(NodeVisitor):
         return {'id': node_id, 'depth': db_expr.depth + 1, 'category': db_expr.category}
 
     ############################### Cases ###################################
-    def visit_MatchValue(self, node: ast.MatchValue, params: Dict) -> Dict:  
+    def visit_MatchValue(self, node: ast.MatchValue, params: Dict) -> Dict:
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": params["parent"], "depth": params["depth"] + 1, "parent_id": params["parent_id"]}
         expr_roles = ["CaseCondition"]
         ################ RETURNS #################
@@ -2991,11 +3025,11 @@ class VisitorInfo(NodeVisitor):
         aux = self.visit(node.value, add_param(child_params, 'role', expr_roles[0]))
         depth = max(aux["depth"], depth)
         return {'match_value': 1, 'match_singleton': 0, 'match_sequence': 0, 'match_mapping': 0, 'match_class': 0, 'match_star': 0, 'match_as': 0, 'match_or': 0, 'depth': depth + 1}
-    
-    def visit_MatchSingleton(self, node: ast.MatchSingleton, params: Dict) -> Dict:  
+
+    def visit_MatchSingleton(self, node: ast.MatchSingleton, params: Dict) -> Dict:
         return {'match_value': 0, 'match_singleton': 1, 'match_sequence': 0, 'match_mapping': 0, 'match_class': 0, 'match_star': 0, 'match_as': 0, 'match_or': 0, 'depth': 1}
 
-    def visit_MatchSequence(self, node: ast.MatchSequence, params: Dict) -> Dict:  
+    def visit_MatchSequence(self, node: ast.MatchSequence, params: Dict) -> Dict:
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": params["parent"], "depth": params["depth"] + 1, "parent_id": params["parent_id"]}
         ################ RETURNS #################
@@ -3009,8 +3043,8 @@ class VisitorInfo(NodeVisitor):
             index += 1
         returns["depth"] += 1
         return returns
-    
-    def visit_MatchMapping(self, node: ast.MatchMapping, params: Dict) -> Dict:  
+
+    def visit_MatchMapping(self, node: ast.MatchMapping, params: Dict) -> Dict:
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": params["parent"], "depth": params["depth"] + 1, "parent_id": params["parent_id"]}
         expr_roles = ["CaseCondition"]
@@ -3031,8 +3065,8 @@ class VisitorInfo(NodeVisitor):
             index += 1
         returns["depth"] += 1
         return returns
-    
-    def visit_MatchClass(self, node: ast.MatchClass, params: Dict) -> Dict:  
+
+    def visit_MatchClass(self, node: ast.MatchClass, params: Dict) -> Dict:
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": params["parent"], "depth": params["depth"] + 1, "parent_id": params["parent_id"]}
         expr_roles = ["CaseCondition"]
@@ -3054,22 +3088,22 @@ class VisitorInfo(NodeVisitor):
         returns["depth"] += 1
         return returns
 
-    def visit_MatchStar(self, node: ast.MatchStar, params: Dict) -> Dict:  
+    def visit_MatchStar(self, node: ast.MatchStar, params: Dict) -> Dict:
         return {'match_value': 0, 'match_singleton': 0, 'match_sequence': 0, 'match_mapping': 0, 'match_class': 0, 'match_star': 1, 'match_as': 0, 'match_or': 0, 'depth': 1}
-    
-    def visit_MatchAs(self, node: ast.MatchAs, params: Dict) -> Dict:  
+
+    def visit_MatchAs(self, node: ast.MatchAs, params: Dict) -> Dict:
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": params["parent"], "depth": params["depth"] + 1, "parent_id": params["parent_id"]}
         ################ RETURNS #################
         returns = {'match_value': 0, 'match_singleton': 0, 'match_sequence': 0, 'match_mapping': 0, 'match_class': 0, 'match_star': 0, 'match_as': 1, 'match_or': 0, 'depth': 0}
         ############## PROPAGAR VISIT ############
-        if(node.pattern): 
+        if(node.pattern):
             child = self.visit(node.pattern, child_params)
             returns["depth"] = max(returns["depth"], child["depth"])
         returns["depth"] += 1
         return returns
-    
-    def visit_MatchOr(self, node: ast.MatchOr, params: Dict) -> Dict:  
+
+    def visit_MatchOr(self, node: ast.MatchOr, params: Dict) -> Dict:
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": params["parent"], "depth": params["depth"] + 1, "parent_id": params["parent_id"]}
         ################ RETURNS #################
@@ -3083,9 +3117,9 @@ class VisitorInfo(NodeVisitor):
             index += 1
         returns["depth"] += 1
         return returns
-    
+
     ############################# HANDLER ####################################
-    def visit_ExceptHandler(self, node: ast.ExceptHandler, params: Dict) -> Dict:  
+    def visit_ExceptHandler(self, node: ast.ExceptHandler, params: Dict) -> Dict:
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": params["handler"], "depth": params["depth"] + 1, "parent_id": params["parent_id"]}
         expr_roles = ["ExceptType", "ExceptBody"]
@@ -3106,7 +3140,7 @@ class VisitorInfo(NodeVisitor):
         return {'id': params["parent_id"], 'depth': depth, 'is_catch_all': is_catch_all, 'child_ids': child_ids}
 
     ####################### Extra Visits ######################
-    def visit_comprehension(self, node: ast.comprehension, params: Dict) -> Dict:  
+    def visit_comprehension(self, node: ast.comprehension, params: Dict) -> Dict:
         ############# PARAMS #####################
         expr_roles = ["ComprehensionTarget", "ComprehensionIter", "ComprehensionIf"]
         ########## ENTITY PROPERTIES ############
@@ -3121,13 +3155,13 @@ class VisitorInfo(NodeVisitor):
         for child in node.ifs:
             returns.append(self.visit(child, add_param(params, 'role', expr_roles[2])))
             depth = max(depth, returns[index]["depth"])
-            if(index == 0): 
+            if(index == 0):
                 ifsI = returns[index]["id"]
                 ifsC = returns[index]["category"]
             index += 1
         return {'ids': {"target" : target["id"], "iter" : iter["id"], "ifs" : ifsI}, 'categories': {"target" : target["category"], "iter" : iter["category"], "ifs" : ifsC}, 'depth': depth + 1 }
-    
-    def visit_arguments(self, node: ast.arguments, params: Dict) -> Dict:  
+
+    def visit_arguments(self, node: ast.arguments, params: Dict) -> Dict:
         db_params = db_entities.DBParameter()
         ############### IDS ######################
         db_params.parameters_id = params["params_id"]
@@ -3187,28 +3221,29 @@ class VisitorInfo(NodeVisitor):
         ############## VISITOR DB ################
         self.visitor_db.visit(node, {"dbparams": db_params})
         return {"type_annotations": number_of_annotations, "number_of_args": number_of_params}
-    
-    def visit_arg(self, node: ast.arg, params: Dict) -> Dict: 
+
+    def visit_arg(self, node: ast.arg, params: Dict) -> Dict:
         ############## PROPAGAR VISIT ############
         if node.annotation:
             #self.visit(node.annotation, add_param(params, 'role', expr_roles[0])) #POSIBLE COMENTADO
             return {'type_annotation': True}
         return {'type_annotation': False}
-    
-    def visit_keyword(self, node: ast.keyword, params: Dict) -> Dict:  
+
+    def visit_keyword(self, node: ast.keyword, params: Dict) -> Dict:
         ############## PROPAGAR VISIT ############
         return self.visit(node.value, params)
-    
-    def visit_withitem(self, node: ast.withitem, params: Dict) -> Dict:  
+
+    def visit_withitem(self, node: ast.withitem, params: Dict) -> Dict:
         ############# PARAMS #####################
         child_params = {'expertise_level': params["expertise_level"], 'user_id': params['user_id'], "parent": params["parent"], "depth": params["depth"], "parent_id": params["parent_id"]}
         ############## PROPAGAR VISIT ############
-        self.visit(node.context_expr, add_param(child_params, 'role', params["role_ctx"]))
+        ctx = self.visit(node.context_expr, add_param(child_params, 'role', params["role_ctx"]))
+        op = None
         if node.optional_vars:
-            self.visit(node.optional_vars, add_param(child_params, 'role', params["role_vars"]))
-        return
-    
-    def visit_match_case(self, node: ast.match_case, params: Dict) -> Dict:  
+            op = self.visit(node.optional_vars, add_param(child_params, 'role', params["role_vars"]))
+        return {"ctx": ctx, "op": op}
+
+    def visit_match_case(self, node: ast.match_case, params: Dict) -> Dict:
         ############# PARAMS #####################
         stmt_roles = ["CaseBody"]
         expr_roles = ["CaseGuard", "CaseBody"]
@@ -3237,17 +3272,17 @@ class VisitorInfo(NodeVisitor):
         returns["depth"] = max(returns["depth"], depth)
         returns["ids"] = ids
         return returns
-    
-    def visit_TypeVar(self, node: ast.TypeVar, params: Dict) -> Dict:  
+
+    def visit_TypeVar(self, node: ast.TypeVar, params: Dict) -> Dict:
         ############# PARAMS #####################
         expr_roles = ["TypeVar"]
         ############## PROPAGAR VISIT ############
         if node.bound:
             self.visit(node.bound, add_param(params, 'role', expr_roles[0]))
         return
-    
-    def visit_ParamSpec(self, node: ast.ParamSpec, params: Dict) -> Dict:  
+
+    def visit_ParamSpec(self, node: ast.ParamSpec, params: Dict) -> Dict:
         return
-    
-    def visit_TypeVarTuple(self, node: ast.TypeVarTuple, params: Dict) -> Dict:  
+
+    def visit_TypeVarTuple(self, node: ast.TypeVarTuple, params: Dict) -> Dict:
         return

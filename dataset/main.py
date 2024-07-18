@@ -1,14 +1,21 @@
+"""
+The main executable file receive 3 parameters:
+- Source folder of the analysis (obligatory)
+- Expertise level (Optional). Default: BEGINNER
+- Directory (Optional). If this param is set, the directory especified counts as a single program.
+"""
+
 import ast
 from typing import List
-from dataset.util.util import IDManager
-from dataset.visitors.visitorintrospector import VisitorIntrospector
-from dataset.visitors.visitorprint import VisitorPrint
-from dataset.visitors.visitorinfo import VisitorInfo
+from util.util import IDManager
+from visitors.visitorintrospector import VisitorIntrospector
+from visitors.visitorprint import VisitorPrint
+from visitors.visitorinfo import VisitorInfo
+from db.db_utils import init_db
 import os
 import re
 import warnings
 import sys
-
 
 users = {}
 unknown = {}
@@ -60,7 +67,7 @@ def not_read(project: str, projects: List[str]) -> bool:
 # Walk through directories and files using os.walk
 def run(visitor: ast.NodeVisitor, source_folder: str):
     projects = []
-    if(not project_folder):
+    if not project_folder:
         for project in get_source_package(source_folder):
             if project != ' ':
                 user_id = control_users(project)
@@ -73,6 +80,7 @@ def run(visitor: ast.NodeVisitor, source_folder: str):
             projects.append(project_folder)
             visitor.visit_Program({"path": project_folder, "user_id": user_id, "expertise_level": expertice_level})
 
+
 def pretty_print(path: str):
     visitor = VisitorPrint()
     with open(path, "r", encoding='utf-8') as f:
@@ -81,10 +89,10 @@ def pretty_print(path: str):
 
 
 if __name__ == '__main__':
-    # init_db()
+    #init_db()
     id_manager = IDManager()
     warnings.filterwarnings("error")
-    source_folder = './python_tfg/test/test_file'
+    source_folder = './dataset/test/test_file'
     expertice_level = 'BEGINNER'
     project_folder = None
     if len(sys.argv) == 2:

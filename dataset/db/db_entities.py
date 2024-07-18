@@ -31,7 +31,7 @@ class DBProgram:
 
 class DBModule:
     def __init__(self, module_id = None,  name: str = None,  name_convention: str = None,  has_doc_string: bool = None, 
-                 global_stmt_pct: float = None,  global_expressions: float = None,  number_of_classes: int = None, 
+                 global_stmts_pct: float = None,  global_expressions_pct: float = None,  number_of_classes: int = None,
                  number_of_functions: int = None,  class_defs_pct: float = None,  function_defs_pct: float = None, 
                  enum_defs_pct: float = None,  average_stmts_function_body: float = None, 
                  average_stmts_method_body: float = None,  type_annotations_pct: float = None, 
@@ -45,8 +45,8 @@ class DBModule:
         self.name = name
         self.name_convention = name_convention
         self.has_doc_string = has_doc_string
-        self.global_stmts_pct = global_stmt_pct
-        self.global_expressions = global_expressions
+        self.global_stmts_pct = global_stmts_pct
+        self.global_expressions_pct = global_expressions_pct
         self.number_of_classes = number_of_classes
         self.number_of_functions = number_of_functions
         self.class_defs_pct = class_defs_pct
@@ -210,7 +210,8 @@ class DBStatement:
                  height: int = None,  depth: int = None,  source_code: str = None,  parent_id = None,  node = None, 
                  has_or_else: bool = None,  body_size: int = None, 
                  first_child_id: int = None,  second_child_id: int = None, 
-                 third_child_id: int = None, user_id = None, expertise_level = None):
+                 third_child_id: int = None, first_child_category: str = None,  second_child_category: str = None,
+                 third_child_category: str = None, user_id = None, expertise_level = None):
         self.user_id = user_id
         self.expertise_level = expertise_level
         self.node = node
@@ -227,6 +228,9 @@ class DBStatement:
         self.first_child_id = first_child_id
         self.second_child_id = second_child_id
         self.third_child_id = third_child_id
+        self.first_child_category = first_child_category
+        self.second_child_category = second_child_category
+        self.third_child_category = third_child_category
         self.parent_id = parent_id
 
 

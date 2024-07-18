@@ -1,11 +1,9 @@
-import ast
 
-ast_1 = ast.parse(
-"""
-a = 2
-b = 5
-print(a+b)
-"""
-)
+def function():
+    a = 3
 
-print(ast_1)
+class B:
+
+    def method(self):
+        a = 4
+        pass

@@ -1,5 +1,13 @@
+"""
+This visitor declares a method for each one of the 17 tables. Each method inserts into the database the information
+from the element receive as parameter.
+For those elements that have entries in multiple tables of the database, the data is inserted in order of dependency.
+"""
+
 import ast
 from typing import Dict
+
+from dataset.db.db_utils import write_on_db
 from dataset.visitors.nodevisitor import NodeVisitor
 import dataset.db.db_entities as db_entities
 
@@ -444,7 +452,7 @@ class VisitorDataBase(NodeVisitor):
                             name_convention, 
                             has_doc_string, 
                             global_stmts_pct, 
-                            global_expressions, 
+                            global_expressions_pct, 
                             number_of_classes, 
                             number_of_functions, 
                             class_defs_pct, 
@@ -627,10 +635,13 @@ class VisitorDataBase(NodeVisitor):
                             first_child_id, 
                             second_child_id, 
                             third_child_id,
+                            first_child_category, 
+                            second_child_category, 
+                            third_child_category, 
                             parent_id,
                             user_id,
                             expertise_level) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'''
         data_to_insert = (node.statement_id,
                             node.category, 
                             node.parent, 
@@ -643,6 +654,9 @@ class VisitorDataBase(NodeVisitor):
                             node.first_child_id, 
                             node.second_child_id, 
                             node.third_child_id,
+                            node.first_child_category,
+                            node.second_child_category,
+                            node.third_child_category,
                             node.parent_id,
                             node.user_id,
                             node.expertise_level)

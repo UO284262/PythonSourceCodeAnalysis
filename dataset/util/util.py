@@ -10,7 +10,7 @@ def op_category(node: ast.BinOp) -> str:
         case 'Add' | 'Sub' | 'Mult' | 'Div' | 'FloorDiv' | 'Mod': return 'Arithmetic'
         case 'Pow': return 'Pow'
         case 'LShift' | 'RShift': return 'Shift'
-        case 'BitOr' | 'BitXor' | 'BitAnd': return 'BW1Logical'
+        case 'BitOr' | 'BitXor' | 'BitAnd': return 'BWLogical'
         case 'MatMult': return 'MatMult'
         case 'UAdd' | 'USub': return 'UnaryArithmetic'
         case 'Not': return 'UnaryNot'
@@ -77,13 +77,11 @@ def get_method_info(method):
     magic_pattern = re.compile(r'^__\w+__$')
     private_pattern = re.compile(r'^_\w+$')
     method_info["magic"] = True if magic_pattern.match(method.name) else False
-    method_info["private"] = True if private_pattern.match(method.name) else False
+    method_info["private"] = True if private_pattern.match(method.name) and not method_info["magic"] else False
     for decorator in method.decorator_list:
         if isinstance(decorator, ast.Name):
             if decorator.id == "abstractmethod":
                 method_info["abstract"] = True
-            if decorator.id == "wraps":
-                method_info["wrapper"] = True
             if decorator.id == "cache":
                 method_info["cached"] = True
             if decorator.id == "staticmethod":
@@ -92,6 +90,10 @@ def get_method_info(method):
                 method_info["class_method"] = True
             if decorator.id == "property":
                 method_info["property"] = True
+        if isinstance(decorator, ast.Call):
+            if isinstance(decorator.func, ast.Name):
+                if decorator.func.id == "wraps":
+                    method_info["wrapper"] = True
     return method_info
 
 

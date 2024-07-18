@@ -29,3 +29,4 @@ pipenv/
 .DS_Store
 Thumbs.db
 20-21/
+/notebooks/cache/
