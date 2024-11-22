@@ -190,6 +190,7 @@ def load_data(table: str) -> pd.DataFrame:
 def print_histogram(data: pd.DataFrame, column: str, expertise_column: str, bins: int = 30, include_all: bool = True, include_beginners: bool = True, include_experts: bool = True, min_value: float = None, max_value: float = None):
     plt.figure(figsize=(12, 6))
 
+    # Filtrar según valores mínimos y máximos
     if min_value is not None:
         data = data[data[column] >= min_value]
     if max_value is not None:
@@ -198,18 +199,35 @@ def print_histogram(data: pd.DataFrame, column: str, expertise_column: str, bins
     data_min = data[column].min()
     data_max = data[column].max()
 
+    # Crear bins
     num_bins = np.linspace(data_min, data_max, bins + 1)
 
-    if include_all:
-        plt.hist(data[column], bins=num_bins, alpha=0.5, label='All', color='blue')
-    if include_experts:
-        plt.hist(data[data[f'{expertise_column}_EXPERT'] == 1][column], bins=num_bins, alpha=0.5, label='Experts', color='green')
-    if include_beginners:
-        plt.hist(data[data[f'{expertise_column}_EXPERT'] == 0][column], bins=num_bins, alpha=0.5, label='Beginners', color='red')
+    # Calcular el total de instancias para los porcentajes
+    total_count = len(data)
 
+    if include_all:
+        counts, _ = np.histogram(data[column], bins=num_bins)
+        percentages = counts / total_count * 100
+        plt.hist(num_bins[:-1], num_bins, weights=percentages, alpha=0.5, label='All', color='blue')
+
+    if include_experts:
+        expert_data = data[data[f'{expertise_column}_EXPERT'] == 1]
+        expert_count = len(expert_data)
+        counts, _ = np.histogram(expert_data[column], bins=num_bins)
+        percentages = counts / expert_count * 100  # Porcentaje en relación a los expertos
+        plt.hist(num_bins[:-1], num_bins, weights=percentages, alpha=0.5, label='Experts', color='green')
+
+    if include_beginners:
+        beginner_data = data[data[f'{expertise_column}_EXPERT'] == 0]
+        beginner_count = len(beginner_data)
+        counts, _ = np.histogram(beginner_data[column], bins=num_bins)
+        percentages = counts / beginner_count * 100  # Porcentaje en relación a los principiantes
+        plt.hist(num_bins[:-1], num_bins, weights=percentages, alpha=0.5, label='Beginners', color='red')
+
+    # Etiquetas y leyenda
     plt.xlabel(column)
-    plt.ylabel('Frequency')
-    plt.title(f'{column} by expertise level histogram')
+    plt.ylabel('Percentage')
+    plt.title(f'{column} by expertise level histogram (Percentage)')
     plt.legend()
     plt.show()
 
