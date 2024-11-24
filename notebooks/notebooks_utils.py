@@ -1,6 +1,10 @@
 import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
 from matplotlib import pyplot
 from statsmodels.stats.stattools import medcouple
 import math
