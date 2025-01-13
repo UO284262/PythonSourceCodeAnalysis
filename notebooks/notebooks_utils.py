@@ -241,8 +241,9 @@ def print_histogram(data: pd.DataFrame, column: str, expertise_column: str, bins
         expert_data = data[data[f'{expertise_column}_PROFESSIONAL'] == 1]
         expert_count = len(expert_data)
         counts, _ = np.histogram(expert_data[column], bins=num_bins)
-        percentages = counts / expert_count * 100  # Porcentaje en relación a los expertos
-        plt.hist(num_bins[:-1], num_bins, weights=percentages, alpha=0.5, label='Professional', color='green')
+        if expert_count > 0:
+            percentages = counts / expert_count * 100  # Porcentaje en relación a los expertos
+            plt.hist(num_bins[:-1], num_bins, weights=percentages, alpha=0.5, label='Professional', color='green')
 
     if include_beginners:
         beginner_data = data[data[f'{expertise_column}_PROFESSIONAL'] == 0]
@@ -258,7 +259,7 @@ def print_histogram(data: pd.DataFrame, column: str, expertise_column: str, bins
     plt.legend()
     plt.show()
 
-
+"""
 def print_categorical_histogram(data: pd.DataFrame, column: str, expertise_column: str, vertical: bool = False, fillna: bool = False, include_all: bool = True, include_beginners: bool = True, include_experts: bool = True, height: int = 6):
     if fillna:
         data[column] = data[column].fillna('None')
@@ -302,6 +303,69 @@ def print_categorical_histogram(data: pd.DataFrame, column: str, expertise_colum
     plt.ylabel('Count')
     plt.title(f'Count of {column} by Expertise Level')
     plt.show()
+"""
+
+def print_categorical_histogram(data: pd.DataFrame, column: str, expertise_column: str, vertical: bool = False, fillna: bool = False, include_all: bool = True, include_beginners: bool = True, include_experts: bool = True, height: int = 6):
+    if fillna:
+        data[column] = data[column].fillna('None')
+
+    combined_data = pd.DataFrame()
+
+    # Filtrar datos según los parámetros
+    if include_all:
+        all_data = data.copy()
+        all_data['Group'] = 'All'
+        combined_data = pd.concat([combined_data, all_data])
+    if include_beginners:
+        beginners_data = data[data[expertise_column] == 'BEGINNER'].copy()
+        beginners_data['Group'] = 'Beginners'
+        combined_data = pd.concat([combined_data, beginners_data])
+    if include_experts:
+        experts_data = data[data[expertise_column] == 'PROFESSIONAL'].copy()
+        experts_data['Group'] = 'Professionals'
+        combined_data = pd.concat([combined_data, experts_data])
+
+    # Calcular porcentajes
+    grouped = (
+        combined_data.groupby(['Group', column])
+        .size()
+        .groupby(level=0)
+        .apply(lambda x: 100 * x / x.sum())
+        .reset_index(name='Percentage')
+    )
+
+    # Configuración del gráfico
+    if vertical:
+        sns.catplot(
+            data=grouped,
+            y=column,
+            hue='Group',
+            x='Percentage',
+            kind='bar',
+            height=height,
+            aspect=2,
+            orient='h',
+            order=sorted(combined_data[column].unique())
+        )
+    else:
+        sns.catplot(
+            data=grouped,
+            x=column,
+            hue='Group',
+            y='Percentage',
+            kind='bar',
+            height=height,
+            aspect=2,
+            order=sorted(combined_data[column].unique())
+        )
+
+    # Etiquetas y título
+    plt.xlabel(column if vertical else 'Percentage')
+    plt.ylabel('Percentage' if vertical else column)
+    plt.title(f'Percentage of {column} by Expertise Level')
+    plt.show()
+
+
 
 
 
