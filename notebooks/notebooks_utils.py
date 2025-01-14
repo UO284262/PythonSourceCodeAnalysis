@@ -305,65 +305,89 @@ def print_categorical_histogram(data: pd.DataFrame, column: str, expertise_colum
     plt.show()
 """
 
-def print_categorical_histogram(data: pd.DataFrame, column: str, expertise_column: str, vertical: bool = False, fillna: bool = False, include_all: bool = True, include_beginners: bool = True, include_experts: bool = True, height: int = 6):
+def print_categorical_histogram(
+    data: pd.DataFrame,
+    column: str,
+    expertise_column: str,
+    vertical: bool = False,
+    fillna: bool = False,
+    include_all: bool = True,
+    include_beginners: bool = True,
+    include_experts: bool = True,
+    height: int = 6,
+):
     if fillna:
         data[column] = data[column].fillna('None')
 
-    combined_data = pd.DataFrame()
+    # Crear figura
+    plt.figure(figsize=(12, height))
 
-    # Filtrar datos según los parámetros
+    # Configurar colores para los grupos
+    colors = {
+        'All': 'blue',
+        'Beginners': 'red',
+        'Professionals': 'green',
+    }
+
+    # Trazar histograma para "All"
     if include_all:
-        all_data = data.copy()
-        all_data['Group'] = 'All'
-        combined_data = pd.concat([combined_data, all_data])
+        total_count = len(data)
+        counts = data[column].value_counts()
+        percentages = counts / total_count * 100
+        plt.bar(
+            percentages.index,
+            percentages,
+            color=colors['All'],
+            alpha=0.5,
+            label='All',
+        )
+
+    # Trazar histograma para "Beginners"
     if include_beginners:
-        beginners_data = data[data[expertise_column] == 'BEGINNER'].copy()
-        beginners_data['Group'] = 'Beginners'
-        combined_data = pd.concat([combined_data, beginners_data])
+        beginner_data = data[data[expertise_column] == 'BEGINNER']
+        total_beginners = len(beginner_data)
+        if total_beginners > 0:
+            counts = beginner_data[column].value_counts()
+            percentages = counts / total_beginners * 100
+            plt.bar(
+                percentages.index,
+                percentages,
+                color=colors['Beginners'],
+                alpha=0.5,
+                label='Beginners',
+            )
+
+    # Trazar histograma para "Professionals"
     if include_experts:
-        experts_data = data[data[expertise_column] == 'PROFESSIONAL'].copy()
-        experts_data['Group'] = 'Professionals'
-        combined_data = pd.concat([combined_data, experts_data])
+        expert_data = data[data[expertise_column] == 'PROFESSIONAL']
+        total_experts = len(expert_data)
+        if total_experts > 0:
+            counts = expert_data[column].value_counts()
+            percentages = counts / total_experts * 100
+            plt.bar(
+                percentages.index,
+                percentages,
+                color=colors['Professionals'],
+                alpha=0.5,
+                label='Professionals',
+            )
 
-    # Calcular porcentajes
-    grouped = (
-        combined_data.groupby(['Group', column])
-        .size()
-        .groupby(level=0)
-        .apply(lambda x: 100 * x / x.sum())
-        .reset_index(name='Percentage')
-    )
-
-    # Configuración del gráfico
+    # Ajustar orientación
     if vertical:
-        sns.catplot(
-            data=grouped,
-            y=column,
-            hue='Group',
-            x='Percentage',
-            kind='bar',
-            height=height,
-            aspect=2,
-            orient='h',
-            order=sorted(combined_data[column].unique())
-        )
+        plt.xticks(rotation=90)
+        plt.ylabel('Percentage')
     else:
-        sns.catplot(
-            data=grouped,
-            x=column,
-            hue='Group',
-            y='Percentage',
-            kind='bar',
-            height=height,
-            aspect=2,
-            order=sorted(combined_data[column].unique())
-        )
+        plt.xlabel(column)
+        plt.ylabel('Percentage')
 
-    # Etiquetas y título
-    plt.xlabel(column if vertical else 'Percentage')
-    plt.ylabel('Percentage' if vertical else column)
-    plt.title(f'Percentage of {column} by Expertise Level')
+    # Agregar título y leyenda
+    plt.title(f'{column} Distribution by Expertise Level')
+    plt.legend()
+    plt.tight_layout()
     plt.show()
+
+
+
 
 
 
