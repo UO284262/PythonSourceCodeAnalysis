@@ -334,13 +334,10 @@ def print_categorical_histogram(
         total_count = len(data)
         counts = data[column].value_counts()
         percentages = counts / total_count * 100
-        plt.bar(
-            percentages.index,
-            percentages,
-            color=colors['All'],
-            alpha=0.5,
-            label='All',
-        )
+        if vertical:
+            plt.bar(percentages.index, percentages, color=colors['All'], alpha=0.5, label='All')
+        else:
+            plt.barh(percentages.index, percentages, color=colors['All'], alpha=0.5, label='All')
 
     # Trazar histograma para "Beginners"
     if include_beginners:
@@ -349,13 +346,10 @@ def print_categorical_histogram(
         if total_beginners > 0:
             counts = beginner_data[column].value_counts()
             percentages = counts / total_beginners * 100
-            plt.bar(
-                percentages.index,
-                percentages,
-                color=colors['Beginners'],
-                alpha=0.5,
-                label='Beginners',
-            )
+            if vertical:
+                plt.bar(percentages.index, percentages, color=colors['Beginners'], alpha=0.5, label='Beginners')
+            else:
+                plt.barh(percentages.index, percentages, color=colors['Beginners'], alpha=0.5, label='Beginners')
 
     # Trazar histograma para "Professionals"
     if include_experts:
@@ -364,27 +358,25 @@ def print_categorical_histogram(
         if total_experts > 0:
             counts = expert_data[column].value_counts()
             percentages = counts / total_experts * 100
-            plt.bar(
-                percentages.index,
-                percentages,
-                color=colors['Professionals'],
-                alpha=0.5,
-                label='Professionals',
-            )
+            if vertical:
+                plt.bar(percentages.index, percentages, color=colors['Professionals'], alpha=0.5, label='Professionals')
+            else:
+                plt.barh(percentages.index, percentages, color=colors['Professionals'], alpha=0.5, label='Professionals')
 
     # Ajustar orientación
     if vertical:
         plt.xticks(rotation=90)
         plt.ylabel('Percentage')
     else:
-        plt.xlabel(column)
-        plt.ylabel('Percentage')
+        plt.xlabel('Percentage')
+        plt.ylabel(column)
 
     # Agregar título y leyenda
     plt.title(f'{column} Distribution by Expertise Level')
     plt.legend()
     plt.tight_layout()
     plt.show()
+
 
 
 
