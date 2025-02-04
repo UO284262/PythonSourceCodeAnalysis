@@ -15,6 +15,7 @@ import sqlalchemy
 import numpy as np
 import pandas as pd
 from scipy.stats import gaussian_kde
+from IPython.display import display
 
 # Database connection properties
 DB_CONNECTION_STR = f"postgresql://{db_utils.connection_string['user']}:{db_utils.connection_string['password']}@{db_utils.connection_string['host']}:{db_utils.connection_string['port']}/{db_utils.connection_string['dbname']}"
@@ -87,7 +88,7 @@ def print_values_usage_for_cat_var(df, column_name, possible_values=[]):
             print(f'\t\tLa variable {column_name} toma valor el desconocido {value}.')
 
 """
-def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_coefficient=3.0):
+def print_outliers_for_df_column2(df, column_name, weak_coefficient=1.5, strong_coefficient=3.0):
 
     column_dataframe = df[column_name].describe()
     column_np_array = np.array(column_dataframe)
@@ -99,6 +100,8 @@ def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_c
     print('Dependiendo del coeficiente de MC se deben tomar unos límites u otros:')
     print('     |MC| < 0.3    ->  Tukey')
     print('     |MC| >=  0.3  ->  MAD')
+    low_strong_iqr_lmt = q1 - strong_coefficient * iqr
+    high_strong_iqr_lmt = q3 + strong_coefficient * iqr
     low_weak_iqr_lmt = q1 - weak_coefficient * iqr
     high_weak_iqr_lmt = q3 + weak_coefficient * iqr
     print(f"Rango valores atípicos extremos (Tukey): [{low_strong_iqr_lmt},{high_strong_iqr_lmt}]")
@@ -112,14 +115,11 @@ def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_c
         low = (q1-1.5 * math.exp(-3.5*mc) * iqr)
         high = (q3+1.5 * math.exp(4*mc) * iqr)
 
-    # Detectar outliers
-    outliers = data[(data < lower_limit) | (data > upper_limit)]
-
     print(f"Rango valores atípicos extremos (Fixed BoxPlot): [{low},{high}]")
     
     k = 3
-    median = np.median(data)
-    mad = np.median(np.abs(data - median))
+    median = np.median(column_np_array)
+    mad = np.median(np.abs(column_np_array - median))
     mad_lower_limit = median - (k * mad)
     mad_upper_limit = median + (k * mad)
     print(f"Rango valores atípicos MAD (Median Absolute Deviation): [{mad_lower_limit},{mad_upper_limit}]")
@@ -195,7 +195,24 @@ def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_c
     print(f'MAD Inferior: {num_low_mad_outliers} instancias tienen un valor para {column_name} inferior a {mad_lower_limit} para {column_name}. Representando un {num_low_mad_outliers_pct:.4}% del total de instancias.')
     print(f'MAD Superior: {num_high_mad_outliers} instancias tienen un valor para {column_name} superior a {mad_upper_limit} para {column_name}. Representando un {num_high_mad_outliers_pct:.4}% del total de instancias.')
 
-    df[(df[column_name] > mad_upper_limit) | (df[column_name] < mad_lower_limit)].describe(percentiles=[.25, .50, .75], include = ['object', 'float', 'bool', 'int'])
+    if np.abs(mc) > 0.3:
+        print("")
+        print(f"Con un MC de {mc} utilizamos MAD.")
+        print(f"Se consideran anómalos los valores superiores a {mad_upper_limit} o inferiores a {mad_lower_limit}")
+        print("Describimos los valores de las variables de la tabla, cuando el valor de la variable es anómalo")
+        outlier_df = df[(df[column_name] > mad_upper_limit) | (df[column_name] < mad_lower_limit)]
+    else:
+        print("")
+        print(f"Con un MC de {mc} utilizamos Tukey.")
+        print(f"Se consideran anómalos los valores superiores a {high_weak_iqr_lmt} o inferiores a {low_weak_iqr_lmt}")
+        print("Describimos los valores de las variables de la tabla, cuando el valor de la variable es anómalo")
+        outlier_df = df[(df[column_name] > high_weak_iqr_lmt) | (df[column_name] < low_weak_iqr_lmt)]
+
+    if 'ipykernel' in sys.modules:  # Verificar si se ejecuta en Jupyter Notebook
+        display(outlier_df.describe(percentiles=[.25, .50, .75], include=['object', 'float', 'bool', 'int']))
+    else:
+        print(outlier_df.describe(percentiles=[.25, .50, .75], include=['object', 'float', 'bool', 'int']))
+
 
 def get_statistics(df, columns, size):
     total = len(df.index)
@@ -391,8 +408,6 @@ def detect_outliers_kde(dataframe: pd.DataFrame, column, percentile: float):
         print("No se detectaron outliers con el umbral dado.")
 
     return pd.Series(outliers_mask, index=series.index)
-
-def mad_coefficient(dataframe: pd.DataFrame, column):
 
 
 
