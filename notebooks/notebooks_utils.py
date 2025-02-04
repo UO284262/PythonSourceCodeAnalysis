@@ -86,8 +86,9 @@ def print_values_usage_for_cat_var(df, column_name, possible_values=[]):
         for value in unknown_values:
             print(f'\t\tLa variable {column_name} toma valor el desconocido {value}.')
 
-
+"""
 def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_coefficient=3.0):
+
     column_dataframe = df[column_name].describe()
     column_np_array = np.array(column_dataframe)
     q1 = column_dataframe['25%']
@@ -95,12 +96,14 @@ def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_c
     iqr = q3 - q1
     mc = medcouple(column_np_array)
     print(f'El coeficiente MC (Medcouple Coefficient) de balanceo es: {mc}')
-    low_strong_iqr_lmt = q1 - strong_coefficient * iqr
+    print('Dependiendo del coeficiente de MC se deben tomar unos límites u otros:')
+    print('     |MC| < 0.3    ->  Tukey')
+    print('     |MC| >=  0.3  ->  MAD')
     low_weak_iqr_lmt = q1 - weak_coefficient * iqr
     high_weak_iqr_lmt = q3 + weak_coefficient * iqr
-    high_strong_iqr_lmt = q3 + strong_coefficient * iqr
     print(f"Rango valores atípicos extremos (Tukey): [{low_strong_iqr_lmt},{high_strong_iqr_lmt}]")
     print(f"Rango valores atípicos leves (Tukey): [{low_weak_iqr_lmt},{high_weak_iqr_lmt}]")
+
 
     if mc < 0.0:
         low = (q1-1.5 * math.exp(-4*mc) * iqr)
@@ -109,7 +112,18 @@ def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_c
         low = (q1-1.5 * math.exp(-3.5*mc) * iqr)
         high = (q3+1.5 * math.exp(4*mc) * iqr)
 
+    # Detectar outliers
+    outliers = data[(data < lower_limit) | (data > upper_limit)]
+
     print(f"Rango valores atípicos extremos (Fixed BoxPlot): [{low},{high}]")
+    
+    k = 3
+    median = np.median(data)
+    mad = np.median(np.abs(data - median))
+    mad_lower_limit = median - (k * mad)
+    mad_upper_limit = median + (k * mad)
+    print(f"Rango valores atípicos MAD (Median Absolute Deviation): [{mad_lower_limit},{mad_upper_limit}]")
+    
     num_low_strong_outliers = len(df[df[column_name] < low_strong_iqr_lmt].index)
     num_low_weak_outliers = len(df[df[column_name] < low_weak_iqr_lmt].index)
     num_high_weak_outliers = len(df[df[column_name] > high_weak_iqr_lmt].index)
@@ -125,6 +139,11 @@ def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_c
     num_low_out_ad_boxplot_pct = num_low_out_ad_boxplot / len(df[column_name]) * 100
     num_high_out_ad_boxplot_pct = num_high_out_ad_boxplot / len(df[column_name]) * 100
 
+    num_low_mad_outliers = len(df[df[column_name] < mad_lower_limit].index)
+    num_high_mad_outliers = len(df[df[column_name] > mad_upper_limit].index)
+    num_low_mad_outliers_pct = num_low_mad_outliers / len(df[column_name]) * 100
+    num_high_mad_outliers_pct = num_high_mad_outliers / len(df[column_name]) * 100
+
     print(f'-3.0IQR: {num_low_strong_outliers} instancias tienen un valor para {column_name} inferior a {low_strong_iqr_lmt} (Q1-3*IQR) para {column_name}. Representando un {num_low_strong_outliers_pct:.4}% del total de instancias.')
     print(f'-1.5IQR: {num_low_weak_outliers} instancias tienen un valor para {column_name} inferior a {low_weak_iqr_lmt} (Q1-1.5*IQR) para {column_name}. Representando un {num_low_weak_outliers_pct:.4}% del total de instancias.')
     print(f'+1.5IQR: {num_high_weak_outliers} instancias tienen un valor para {column_name} superior a {high_weak_iqr_lmt} (Q3+1.5*IQR) para {column_name}. Representando un {num_high_weak_outliers_pct:.4}% del total de instancias.')
@@ -133,6 +152,50 @@ def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_c
     print(f'L: {num_low_out_ad_boxplot} instancias tienen un valor para {column_name} inferior a {low} para {column_name}. Representando un {num_low_out_ad_boxplot_pct:.4}% del total de instancias.')
     print(f'U: {num_high_out_ad_boxplot} instancias tienen un valor para {column_name} superior a {high} para {column_name}. Representando un {num_high_out_ad_boxplot_pct:.4}% del total de instancias.')
 
+    print(f'MAD Inferior: {num_low_mad_outliers} instancias tienen un valor para {column_name} inferior a {mad_lower_limit} para {column_name}. Representando un {num_low_mad_outliers_pct:.4}% del total de instancias.')
+    print(f'MAD Superior: {num_high_mad_outliers} instancias tienen un valor para {column_name} superior a {mad_upper_limit} para {column_name}. Representando un {num_high_mad_outliers_pct:.4}% del total de instancias.')
+"""
+
+def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_coefficient=3.0):
+
+    column_dataframe = df[column_name].describe()
+    column_np_array = np.array(column_dataframe)
+    q1 = column_dataframe['25%']
+    q3 = column_dataframe['75%']
+    iqr = q3 - q1
+    mc = medcouple(column_np_array)
+    print(f'El coeficiente MC (Medcouple Coefficient) de balanceo es: {mc}')
+    print('Dependiendo del coeficiente de MC se deben tomar unos límites u otros:')
+    print('     |MC| < 0.3    ->  Tukey')
+    print('     |MC| >=  0.3  ->  MAD')
+    low_weak_iqr_lmt = q1 - weak_coefficient * iqr
+    high_weak_iqr_lmt = q3 + weak_coefficient * iqr
+    print(f"Rango valores atípicos leves (Tukey): [{low_weak_iqr_lmt},{high_weak_iqr_lmt}]")
+    
+    k = 3
+    median = np.median(column_np_array)
+    mad = np.median(np.abs(column_np_array - median))
+    mad_lower_limit = median - (k * mad)
+    mad_upper_limit = median + (k * mad)
+    print(f"Rango valores atípicos MAD (Median Absolute Deviation): [{mad_lower_limit},{mad_upper_limit}]")
+    
+    num_low_weak_outliers = len(df[df[column_name] < low_weak_iqr_lmt].index)
+    num_high_weak_outliers = len(df[df[column_name] > high_weak_iqr_lmt].index)
+    num_low_weak_outliers_pct = num_low_weak_outliers / len(df[column_name]) * 100
+    num_high_weak_outliers_pct = num_high_weak_outliers / len(df[column_name]) * 100
+
+    num_low_mad_outliers = len(df[df[column_name] < mad_lower_limit].index)
+    num_high_mad_outliers = len(df[df[column_name] > mad_upper_limit].index)
+    num_low_mad_outliers_pct = num_low_mad_outliers / len(df[column_name]) * 100
+    num_high_mad_outliers_pct = num_high_mad_outliers / len(df[column_name]) * 100
+
+    print(f'-1.5IQR: {num_low_weak_outliers} instancias tienen un valor para {column_name} inferior a {low_weak_iqr_lmt} (Q1-1.5*IQR) para {column_name}. Representando un {num_low_weak_outliers_pct:.4}% del total de instancias.')
+    print(f'+1.5IQR: {num_high_weak_outliers} instancias tienen un valor para {column_name} superior a {high_weak_iqr_lmt} (Q3+1.5*IQR) para {column_name}. Representando un {num_high_weak_outliers_pct:.4}% del total de instancias.')
+
+    print(f'MAD Inferior: {num_low_mad_outliers} instancias tienen un valor para {column_name} inferior a {mad_lower_limit} para {column_name}. Representando un {num_low_mad_outliers_pct:.4}% del total de instancias.')
+    print(f'MAD Superior: {num_high_mad_outliers} instancias tienen un valor para {column_name} superior a {mad_upper_limit} para {column_name}. Representando un {num_high_mad_outliers_pct:.4}% del total de instancias.')
+
+    df[(df[column_name] > mad_upper_limit) | (df[column_name] < mad_lower_limit)].describe(percentiles=[.25, .50, .75], include = ['object', 'float', 'bool', 'int'])
 
 def get_statistics(df, columns, size):
     total = len(df.index)
@@ -144,7 +207,6 @@ def get_statistics(df, columns, size):
     result['percentage'] = (result['count'] * 100) / total
     return result.to_string(index=False) + '\n'
 
-
 def get_bin(bins, value):
     for x, y in bins:
         if value >= x:
@@ -154,15 +216,12 @@ def get_bin(bins, value):
                 return "[" + str(x) + "_" + str(y) + ("]" if y == inf else ")")
     return "unknown"
 
-
 def create_bins(df, column, bins):
     return df[column].apply(lambda value: get_bin(bins, value))
-
 
 def discretize_columns(df, columns):
     for k in columns:
         df[k] = create_bins(df, k, columns[k])
-
 
 def get_data(table: str, use_cache=True) -> pd.DataFrame:
     table_file = f'.{os.sep}cache{os.sep}{table}.pk'
@@ -180,7 +239,6 @@ def get_data(table: str, use_cache=True) -> pd.DataFrame:
         print(datetime.now(), 'Data cache files successfully created!!')
         return full_table
 
-
 def load_data(table: str) -> pd.DataFrame:
     print(datetime.now(), 'Loading data ...')
     db_connection = sqlalchemy.create_engine(DB_CONNECTION_STR)
@@ -188,34 +246,6 @@ def load_data(table: str) -> pd.DataFrame:
     full_table = pd.read_sql_query(sql=sql_query, con=db_connection)
     print(datetime.now(), 'Data successfully load!!')
     return full_table
-
-"""
-def print_histogram(data: pd.DataFrame, column: str, expertise_column: str, bins: int = 30, include_all: bool = True, include_beginners: bool = True, include_experts: bool = True, min_value: float = None, max_value: float = None):
-    plt.figure(figsize=(12, 6))
-
-    if min_value is not None:
-        data = data[data[column] >= min_value]
-    if max_value is not None:
-        data = data[data[column] <= max_value]
-
-    data_min = data[column].min()
-    data_max = data[column].max()
-
-    num_bins = np.linspace(data_min, data_max, bins + 1)
-
-    if include_all:
-        plt.hist(data[column], bins=num_bins, alpha=0.5, label='All', color='blue')
-    if include_experts:
-        plt.hist(data[data[f'{expertise_column}_PROFESSIONAL'] == 1][column], bins=num_bins, alpha=0.5, label='Experts', color='green')
-    if include_beginners:
-        plt.hist(data[data[f'{expertise_column}_PROFESSIONAL'] == 0][column], bins=num_bins, alpha=0.5, label='Beginners', color='red')
-
-    plt.xlabel(column)
-    plt.ylabel('Frequency')
-    plt.title(f'{column} by expertise level histogram')
-    plt.legend()
-    plt.show()
-"""
 
 def print_histogram(data: pd.DataFrame, column: str, expertise_column: str, bins: int = 30, include_all: bool = True, include_beginners: bool = True, include_experts: bool = True, min_value: float = None, max_value: float = None):
     plt.figure(figsize=(12, 6))
@@ -261,52 +291,6 @@ def print_histogram(data: pd.DataFrame, column: str, expertise_column: str, bins
     plt.title(f'{column} by expertise level histogram (Percentage)')
     plt.legend()
     plt.show()
-
-"""
-def print_categorical_histogram(data: pd.DataFrame, column: str, expertise_column: str, vertical: bool = False, fillna: bool = False, include_all: bool = True, include_beginners: bool = True, include_experts: bool = True, height: int = 6):
-    if fillna:
-        data[column] = data[column].fillna('None')
-
-    combined_data = pd.DataFrame()
-
-    if include_all:
-        all_data = data.copy()
-        all_data['Group'] = 'All'
-        combined_data = pd.concat([combined_data, all_data])
-    if include_beginners:
-        beginners_data = data[data[expertise_column] == 'BEGINNER'].copy()
-        beginners_data['Group'] = 'Beginners'
-        combined_data = pd.concat([combined_data, beginners_data])
-    if include_experts:
-        experts_data = data[data[expertise_column] == 'PROFESSIONAL'].copy()
-        experts_data['Group'] = 'Professionals'
-        combined_data = pd.concat([combined_data, experts_data])
-    if vertical:
-        sns.catplot(
-            data=combined_data,
-            y=column,
-            hue='Group',
-            kind='count',
-            height=height,
-            aspect=2,
-            orient='h',
-            order=sorted(combined_data[column].unique())
-        )
-    else:
-        sns.catplot(
-            data=combined_data,
-            x=column,
-            hue='Group',
-            kind='count',
-            height=height,
-            aspect=2,
-            order=sorted(combined_data[column].unique())
-        )
-    plt.xlabel(column)
-    plt.ylabel('Count')
-    plt.title(f'Count of {column} by Expertise Level')
-    plt.show()
-"""
 
 def print_categorical_histogram(
     data: pd.DataFrame,
@@ -407,6 +391,10 @@ def detect_outliers_kde(dataframe: pd.DataFrame, column, percentile: float):
         print("No se detectaron outliers con el umbral dado.")
 
     return pd.Series(outliers_mask, index=series.index)
+
+def mad_coefficient(dataframe: pd.DataFrame, column):
+
+
 
 
 
