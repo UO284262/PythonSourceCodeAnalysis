@@ -12,6 +12,9 @@ from numpy import inf
 import pickle
 from datetime import datetime
 import sqlalchemy
+import numpy as np
+import pandas as pd
+from scipy.stats import gaussian_kde
 
 # Database connection properties
 DB_CONNECTION_STR = f"postgresql://{db_utils.connection_string['user']}:{db_utils.connection_string['password']}@{db_utils.connection_string['host']}:{db_utils.connection_string['port']}/{db_utils.connection_string['dbname']}"
@@ -376,6 +379,34 @@ def print_categorical_histogram(
     plt.legend()
     plt.tight_layout()
     plt.show()
+
+
+def detect_outliers_kde(dataframe: pd.DataFrame, column, percentile: float):
+    # Ajustar la KDE
+    series = dataframe[column]
+
+    # Ajustar la KDE
+    kde = gaussian_kde(series)
+    x_grid = np.linspace(series.min(), series.max(), 1000)
+    density = kde(x_grid)
+
+    # Calcular umbral inferior basado en percentil
+    lower_threshold = np.percentile(density, percentile * 100)
+
+    # Detectar outliers solo en regiones de baja densidad
+    density_values = kde(series)
+    outliers_mask = density_values < lower_threshold
+
+    # Verificar si se han detectado outliers
+    print(f"Umbral de outliers: valores con densidad menor que {lower_threshold:.6f}")
+    if any(outliers_mask):
+        # Mostrar porcentaje de outliers
+        outlier_percentage = (outliers_mask.sum() / len(series)) * 100
+        print(f"Porcentaje de valores detectados como outliers: {outlier_percentage:.2f}%")
+    else:
+        print("No se detectaron outliers con el umbral dado.")
+
+    return pd.Series(outliers_mask, index=series.index)
 
 
 
