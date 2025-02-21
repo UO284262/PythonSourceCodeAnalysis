@@ -16,6 +16,9 @@ import numpy as np
 import pandas as pd
 from scipy.stats import gaussian_kde
 from IPython.display import display
+from sklearn.manifold import TSNE
+from sklearn.preprocessing import RobustScaler
+from sklearn.model_selection import train_test_split
 
 # Database connection properties
 DB_CONNECTION_STR = f"postgresql://{db_utils.connection_string['user']}:{db_utils.connection_string['password']}@{db_utils.connection_string['host']}:{db_utils.connection_string['port']}/{db_utils.connection_string['dbname']}"
@@ -408,6 +411,94 @@ def detect_outliers_kde(dataframe: pd.DataFrame, column, percentile: float):
         print("No se detectaron outliers con el umbral dado.")
 
     return pd.Series(outliers_mask, index=series.index)
+
+def plot_clusters(X: np.array, clusters: np.array, title1: str) -> None:
+    """
+    Plot the clusters (left) and the original dataset (right) in the same figure.
+    The colors of the points represent the cluster labels (left) and the original labels (right).
+    :param X: the dataset
+    :param clusters: the cluster labels
+    :param y: the original labels (setosa, virginica, versicolor)
+    :param title1: title for the clusters plot
+    :param title2: title for the original dataset plot
+    """
+    # reduce the features to 2D using PCA
+    tsne = TSNE(n_components=2)
+    X_tsne = tsne.fit_transform(X)
+
+    plt.figure(figsize=(12, 6))
+    # first plot
+    plt.subplot(1, 2, 1)
+    plt.scatter(X_tsne[:, 0], X_tsne[:, 1], c=clusters, cmap='viridis', s=50)  # s=50 is the size of the points
+    plt.title(title1)
+    plt.xlabel('TSNE 1')
+    plt.ylabel('TSNE 2')
+    plt.show()
+
+def show_cluster_distribution(X: pd.DataFrame, clusters: np.array, n_clusters: int, feature_name: str, bins: int) -> None:
+    """
+    Show the distribution of a feature for each cluster
+    :param X: the dataset to visualize
+    :param clusters: the clusters of the dataset (labels)
+    :param n_clusters: the number of clusters
+    :param feature_name: the name of the feature in X
+    :param bins: the number of bins to categorize the data
+    """
+    plt.figure(figsize=(10, 6))
+    for cluster in range(n_clusters):
+        sns.kdeplot(X[clusters == cluster][feature_name], label=f'Cluster {cluster}')
+    plt.title(f'Distribution of {feature_name} for each Cluster')
+    plt.xlabel(feature_name)
+    plt.ylabel('Density')
+    plt.legend()
+    plt.show()
+
+def plot_dimension_reduction(X: pd.DataFrame, dimensions: int):
+    tsne = TSNE(n_components=dimensions)
+    df_tsne = tsne.fit_transform(X)
+
+    categories = ['BEGINNER' if x == 1 else 'PROFESSIONAL' for x in X['module__expertise_level_BEGINNER']]
+
+    plt.figure(figsize=(10, 8))
+    palette = {'BEGINNER': 'blue', 'PROFESSIONAL': 'red'}
+
+    sns.scatterplot(
+        x=df_tsne[:, 0],
+        y=df_tsne[:, 1],
+        hue=categories,
+        palette=palette,
+        legend='full',
+        alpha=0.5
+    )
+
+    plt.title("Clusters diferenciados por Expertise Level")
+    plt.xlabel('Feature 1')
+    plt.ylabel('Feature 2')
+    plt.legend(title="Expertise Level")
+    plt.show()
+
+def train_val_split(X:pd.DataFrame, y:pd.Series, val_size:float) :
+    y = y.apply(lambda t: 1 if t else 0)
+    X_y = X.copy()
+    X_y['module__expertise_level'] = y
+    X_y.drop(['module__expertise_level_BEGINNER', 'module__expertise_level_PROFESSIONAL'], axis=1, inplace=True)
+
+    df_train, df_val = train_test_split(
+        X_y,
+        test_size=val_size,
+        stratify=X_y['module__expertise_level'],  # Asegura el equilibrio de clases
+        shuffle=True  # Barajar antes de dividir
+    )
+
+    X_train = df_train.copy()
+    X_train = X_train.drop(['module__expertise_level'], axis=1)
+    y_train = df_train['module__expertise_level'].copy()
+
+    X_val = df_val.copy()
+    X_val = X_val.drop(['module__expertise_level'], axis=1)
+    y_val = df_val['module__expertise_level'].copy()
+
+    return X_train, y_train, X_val, y_val
 
 
 
