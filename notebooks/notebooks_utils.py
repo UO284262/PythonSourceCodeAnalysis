@@ -1,7 +1,9 @@
 import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 from matplotlib import pyplot
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 from statsmodels.stats.stattools import medcouple
 import math
 import numpy as np
@@ -81,14 +83,16 @@ def print_values_usage_for_cat_var(df, column_name, possible_values=[]):
     unique_values_count = len(unique_values)
     unused_values_count = len(unused_values)
     print(f'La variable {column_name} puede tomar {possible_values_count} valores distintos')
-    print(f'\t{unique_values_count} ({((unique_values_count*100)/possible_values_count):.4}%) valores utilizados')
-    print(f'\t{unused_values_count} ({((unused_values_count*100)/possible_values_count):.4}%) valores NO utilizados')
+    print(f'\t{unique_values_count} ({((unique_values_count * 100) / possible_values_count):.4}%) valores utilizados')
+    print(
+        f'\t{unused_values_count} ({((unused_values_count * 100) / possible_values_count):.4}%) valores NO utilizados')
     for value in unused_values:
         print(f'\t\tLa variable {column_name} nunca toma valor {value}.')
     if len(unknown_values) > 0:
         print(f'La variable {column_name} toma {len(unknown_values)} valores desconocidos')
         for value in unknown_values:
             print(f'\t\tLa variable {column_name} toma valor el desconocido {value}.')
+
 
 """
 def print_outliers_for_df_column2(df, column_name, weak_coefficient=1.5, strong_coefficient=3.0):
@@ -159,8 +163,8 @@ def print_outliers_for_df_column2(df, column_name, weak_coefficient=1.5, strong_
     print(f'MAD Superior: {num_high_mad_outliers} instancias tienen un valor para {column_name} superior a {mad_upper_limit} para {column_name}. Representando un {num_high_mad_outliers_pct:.4}% del total de instancias.')
 """
 
-def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_coefficient=3.0):
 
+def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_coefficient=3.0):
     column_dataframe = df[column_name].describe()
     column_np_array = np.array(column_dataframe)
     q1 = column_dataframe['25%']
@@ -174,14 +178,14 @@ def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_c
     low_weak_iqr_lmt = q1 - weak_coefficient * iqr
     high_weak_iqr_lmt = q3 + weak_coefficient * iqr
     print(f"Rango valores atípicos leves (Tukey): [{low_weak_iqr_lmt},{high_weak_iqr_lmt}]")
-    
+
     k = 3
     median = np.median(column_np_array)
     mad = np.median(np.abs(column_np_array - median))
     mad_lower_limit = median - (k * mad)
     mad_upper_limit = median + (k * mad)
     print(f"Rango valores atípicos MAD (Median Absolute Deviation): [{mad_lower_limit},{mad_upper_limit}]")
-    
+
     num_low_weak_outliers = len(df[df[column_name] < low_weak_iqr_lmt].index)
     num_high_weak_outliers = len(df[df[column_name] > high_weak_iqr_lmt].index)
     num_low_weak_outliers_pct = num_low_weak_outliers / len(df[column_name]) * 100
@@ -192,11 +196,15 @@ def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_c
     num_low_mad_outliers_pct = num_low_mad_outliers / len(df[column_name]) * 100
     num_high_mad_outliers_pct = num_high_mad_outliers / len(df[column_name]) * 100
 
-    print(f'-1.5IQR: {num_low_weak_outliers} instancias tienen un valor para {column_name} inferior a {low_weak_iqr_lmt} (Q1-1.5*IQR) para {column_name}. Representando un {num_low_weak_outliers_pct:.4}% del total de instancias.')
-    print(f'+1.5IQR: {num_high_weak_outliers} instancias tienen un valor para {column_name} superior a {high_weak_iqr_lmt} (Q3+1.5*IQR) para {column_name}. Representando un {num_high_weak_outliers_pct:.4}% del total de instancias.')
+    print(
+        f'-1.5IQR: {num_low_weak_outliers} instancias tienen un valor para {column_name} inferior a {low_weak_iqr_lmt} (Q1-1.5*IQR) para {column_name}. Representando un {num_low_weak_outliers_pct:.4}% del total de instancias.')
+    print(
+        f'+1.5IQR: {num_high_weak_outliers} instancias tienen un valor para {column_name} superior a {high_weak_iqr_lmt} (Q3+1.5*IQR) para {column_name}. Representando un {num_high_weak_outliers_pct:.4}% del total de instancias.')
 
-    print(f'MAD Inferior: {num_low_mad_outliers} instancias tienen un valor para {column_name} inferior a {mad_lower_limit} para {column_name}. Representando un {num_low_mad_outliers_pct:.4}% del total de instancias.')
-    print(f'MAD Superior: {num_high_mad_outliers} instancias tienen un valor para {column_name} superior a {mad_upper_limit} para {column_name}. Representando un {num_high_mad_outliers_pct:.4}% del total de instancias.')
+    print(
+        f'MAD Inferior: {num_low_mad_outliers} instancias tienen un valor para {column_name} inferior a {mad_lower_limit} para {column_name}. Representando un {num_low_mad_outliers_pct:.4}% del total de instancias.')
+    print(
+        f'MAD Superior: {num_high_mad_outliers} instancias tienen un valor para {column_name} superior a {mad_upper_limit} para {column_name}. Representando un {num_high_mad_outliers_pct:.4}% del total de instancias.')
 
     if np.abs(mc) > 0.3:
         print("")
@@ -227,6 +235,7 @@ def get_statistics(df, columns, size):
     result['percentage'] = (result['count'] * 100) / total
     return result.to_string(index=False) + '\n'
 
+
 def get_bin(bins, value):
     for x, y in bins:
         if value >= x:
@@ -236,12 +245,15 @@ def get_bin(bins, value):
                 return "[" + str(x) + "_" + str(y) + ("]" if y == inf else ")")
     return "unknown"
 
+
 def create_bins(df, column, bins):
     return df[column].apply(lambda value: get_bin(bins, value))
+
 
 def discretize_columns(df, columns):
     for k in columns:
         df[k] = create_bins(df, k, columns[k])
+
 
 def get_data(table: str, use_cache=True) -> pd.DataFrame:
     table_file = f'.{os.sep}cache{os.sep}{table}.pk'
@@ -259,6 +271,7 @@ def get_data(table: str, use_cache=True) -> pd.DataFrame:
         print(datetime.now(), 'Data cache files successfully created!!')
         return full_table
 
+
 def load_data(table: str) -> pd.DataFrame:
     print(datetime.now(), 'Loading data ...')
     db_connection = sqlalchemy.create_engine(DB_CONNECTION_STR)
@@ -267,7 +280,10 @@ def load_data(table: str) -> pd.DataFrame:
     print(datetime.now(), 'Data successfully load!!')
     return full_table
 
-def print_histogram(data: pd.DataFrame, column: str, expertise_column: str, bins: int = 30, include_all: bool = True, include_beginners: bool = True, include_experts: bool = True, min_value: float = None, max_value: float = None):
+
+def print_histogram(data: pd.DataFrame, column: str, expertise_column: str, bins: int = 30, include_all: bool = True,
+                    include_beginners: bool = True, include_experts: bool = True, min_value: float = None,
+                    max_value: float = None):
     plt.figure(figsize=(12, 6))
 
     # Filtrar según valores mínimos y máximos
@@ -312,16 +328,17 @@ def print_histogram(data: pd.DataFrame, column: str, expertise_column: str, bins
     plt.legend()
     plt.show()
 
+
 def print_categorical_histogram(
-    data: pd.DataFrame,
-    column: str,
-    expertise_column: str,
-    vertical: bool = False,
-    fillna: bool = False,
-    include_all: bool = True,
-    include_beginners: bool = True,
-    include_experts: bool = True,
-    height: int = 6,
+        data: pd.DataFrame,
+        column: str,
+        expertise_column: str,
+        vertical: bool = False,
+        fillna: bool = False,
+        include_all: bool = True,
+        include_beginners: bool = True,
+        include_experts: bool = True,
+        height: int = 6,
 ):
     if fillna:
         data[column] = data[column].fillna('None')
@@ -368,7 +385,8 @@ def print_categorical_histogram(
             if vertical:
                 plt.bar(percentages.index, percentages, color=colors['Professionals'], alpha=0.5, label='Professionals')
             else:
-                plt.barh(percentages.index, percentages, color=colors['Professionals'], alpha=0.5, label='Professionals')
+                plt.barh(percentages.index, percentages, color=colors['Professionals'], alpha=0.5,
+                         label='Professionals')
 
     # Ajustar orientación
     if vertical:
@@ -412,6 +430,7 @@ def detect_outliers_kde(dataframe: pd.DataFrame, column, percentile: float):
 
     return pd.Series(outliers_mask, index=series.index)
 
+
 def plot_clusters(X: np.array, clusters: np.array, title1: str) -> None:
     """
     Plot the clusters (left) and the original dataset (right) in the same figure.
@@ -435,7 +454,9 @@ def plot_clusters(X: np.array, clusters: np.array, title1: str) -> None:
     plt.ylabel('TSNE 2')
     plt.show()
 
-def show_cluster_distribution(X: pd.DataFrame, clusters: np.array, n_clusters: int, feature_name: str, bins: int) -> None:
+
+def show_cluster_distribution_numerical(X: pd.DataFrame, clusters: np.array, n_clusters: int, feature_name: str,
+                                        bins: int) -> None:
     """
     Show the distribution of a feature for each cluster
     :param X: the dataset to visualize
@@ -451,6 +472,81 @@ def show_cluster_distribution(X: pd.DataFrame, clusters: np.array, n_clusters: i
     plt.xlabel(feature_name)
     plt.ylabel('Density')
     plt.legend()
+    plt.show()
+
+
+def show_cluster_distribution_boolean(X: pd.DataFrame, clusters: np.array, n_clusters: int, feature_name: str) -> None:
+    """
+    Muestra la distribución de una variable booleana para cada cluster, expresada en porcentaje
+    respecto al total de registros de cada cluster.
+
+    :param X: el conjunto de datos a visualizar
+    :param clusters: los clusters del conjunto de datos (etiquetas)
+    :param n_clusters: el número de clusters
+    :param feature_name: el nombre de la variable booleana en X
+    """
+    # Crear una copia del dataframe y agregar la columna de clusters
+    X_plot = X.copy()
+    X_plot['Cluster'] = "Cluster " + pd.Series(clusters).astype(str)
+
+    # Calcular el conteo de cada valor (True/False) por cluster
+    df_counts = X_plot.groupby(['Cluster', feature_name]).size().reset_index(name='count')
+    # Calcular el porcentaje respecto al total de cada cluster
+    df_counts['percent'] = df_counts.groupby('Cluster')['count'].transform(lambda x: 100 * x / x.sum())
+
+    plt.figure(figsize=(10, 6))
+    # Graficar usando barplot con la columna de porcentaje
+    sns.barplot(data=df_counts, x=feature_name, y='percent', hue='Cluster')
+    plt.title(f'Distribución de {feature_name} (booleano) para cada Cluster (porcentaje)')
+    plt.xlabel(feature_name)
+    plt.ylabel('Porcentaje (%)')
+    plt.legend(title='Cluster')
+    plt.ylim(0, 100)
+    plt.show()
+
+
+def show_cluster_distribution_categorical(X: pd.DataFrame, clusters: np.array, n_clusters: int,
+                                          feature_name: str) -> None:
+    """
+    Muestra la distribución de una variable categórica para cada cluster.
+    Si la variable fue one-hot encoded (por ejemplo, columnas con nombres como
+    'name_convention_SnakeCase', 'name_convention_UpperCase'), las combina en una sola columna.
+    Los valores se muestran como porcentaje del total de cada cluster.
+
+    :param X: el conjunto de datos a visualizar
+    :param clusters: los clusters del conjunto de datos (etiquetas)
+    :param n_clusters: el número de clusters
+    :param feature_name: el prefijo de la variable categórica en X (e.g., 'name_convention')
+    """
+    X_plot = X.copy()
+
+    # Buscar columnas que tengan el prefijo 'feature_name_' (one-hot encoded)
+    onehot_cols = [col for col in X_plot.columns if col.startswith(feature_name + '_')]
+
+    if onehot_cols:
+        # Se asume que cada fila tiene un único 1 entre las columnas one-hot.
+        # Se extrae el nombre de la categoría eliminando el prefijo.
+        X_plot[feature_name] = X_plot[onehot_cols].idxmax(axis=1).str.replace(feature_name + '_', '')
+        cat_column = feature_name
+    else:
+        cat_column = feature_name
+
+    # Agregar la columna de clusters
+    X_plot['Cluster'] = "Cluster " + pd.Series(clusters).astype(str)
+
+    # Calcular la cantidad de ocurrencias por cluster y categoría
+    df_counts = X_plot.groupby(['Cluster', cat_column]).size().reset_index(name='count')
+    # Calcular el porcentaje respecto al total de cada cluster
+    df_counts['percent'] = df_counts.groupby('Cluster')['count'].transform(lambda x: 100 * x / x.sum())
+
+    plt.figure(figsize=(10, 6))
+    # Graficar usando sns.barplot con la columna de porcentaje
+    sns.barplot(data=df_counts, x=cat_column, y='percent', hue='Cluster')
+    plt.title(f'Distribución de {feature_name} para cada Cluster (porcentaje)')
+    plt.xlabel(feature_name)
+    plt.ylabel('Porcentaje (%)')
+    plt.legend(title='Cluster')
+    plt.ylim(0, 100)
     plt.show()
 
 def plot_dimension_reduction(X: pd.DataFrame, dimensions: int):
@@ -477,7 +573,8 @@ def plot_dimension_reduction(X: pd.DataFrame, dimensions: int):
     plt.legend(title="Expertise Level")
     plt.show()
 
-def train_val_split(X:pd.DataFrame, y:pd.Series, val_size:float) :
+
+def train_val_split(X: pd.DataFrame, y: pd.Series, val_size: float):
     y = y.apply(lambda t: 1 if t else 0)
     X_y = X.copy()
     X_y['module__expertise_level'] = y
@@ -500,13 +597,25 @@ def train_val_split(X:pd.DataFrame, y:pd.Series, val_size:float) :
 
     return X_train, y_train, X_val, y_val
 
-
-
-
-
-
-
-
-
-
-
+def compute_silhouette_scores(X: np.array, from_k: int, to_k: int) -> np.array:
+    """
+    Compute the silhouette scores for k=from_k to k=to_k
+    :param X: the dataset
+    :param from_k: the minimum number of clusters
+    :param to_k: the maximum number of clusters
+    :return: a list with the silhouette scores for each k
+    """
+    scores = []
+    for k in range(from_k, to_k + 1):
+        kmeans = KMeans(n_clusters=k, random_state=0)
+        clusters = kmeans.fit_predict(X)
+        score = silhouette_score(X, clusters)
+        scores.append(score)
+    # Plot the silhouette scores
+    plt.figure(figsize=(8, 4))
+    plt.plot(range(from_k, to_k + 1), scores, marker='o')
+    plt.xlabel('Number of clusters (k)')
+    plt.ylabel('Silhouette Score')
+    plt.title('Silhouette Score for Optimal k')
+    plt.show()
+    return scores
