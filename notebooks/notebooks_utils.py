@@ -1,12 +1,9 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from matplotlib import pyplot
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from statsmodels.stats.stattools import medcouple
-import math
-import numpy as np
 import sys
 import os
 import dataset.db.db_utils as db_utils
@@ -15,12 +12,12 @@ import pickle
 from datetime import datetime
 import sqlalchemy
 import numpy as np
-import pandas as pd
 from scipy.stats import gaussian_kde
 from IPython.display import display
 from sklearn.manifold import TSNE
-from sklearn.preprocessing import RobustScaler
 from sklearn.model_selection import train_test_split
+from scipy.stats import kruskal
+from scikit_posthocs import posthoc_dunn
 
 # Database connection properties
 DB_CONNECTION_STR = f"postgresql://{db_utils.connection_string['user']}:{db_utils.connection_string['password']}@{db_utils.connection_string['host']}:{db_utils.connection_string['port']}/{db_utils.connection_string['dbname']}"
@@ -433,25 +430,32 @@ def detect_outliers_kde(dataframe: pd.DataFrame, column, percentile: float):
 
 def plot_clusters(X: np.array, clusters: np.array, title1: str) -> None:
     """
-    Plot the clusters (left) and the original dataset (right) in the same figure.
-    The colors of the points represent the cluster labels (left) and the original labels (right).
+    Plot the clusters (left) in a 2D space using t-SNE.
+    The colors of the points represent the cluster labels.
     :param X: the dataset
     :param clusters: the cluster labels
-    :param y: the original labels (setosa, virginica, versicolor)
     :param title1: title for the clusters plot
-    :param title2: title for the original dataset plot
     """
-    # reduce the features to 2D using PCA
-    tsne = TSNE(n_components=2)
+    # Reduce the features to 2D using t-SNE
+    tsne = TSNE(n_components=2, random_state=42)
     X_tsne = tsne.fit_transform(X)
 
-    plt.figure(figsize=(12, 6))
-    # first plot
-    plt.subplot(1, 2, 1)
-    plt.scatter(X_tsne[:, 0], X_tsne[:, 1], c=clusters, cmap='viridis', s=50)  # s=50 is the size of the points
+    # Define colors for each cluster
+    colors = {0: 'blue', 1: 'orange', 2: 'green'}
+    labels = {0: 'Cluster 0', 1: 'Cluster 1', 2: 'Cluster 2'}
+
+    plt.figure(figsize=(8, 6))
+
+    # Scatter plot with assigned colors
+    for cluster in np.unique(clusters):
+        mask = clusters == cluster
+        plt.scatter(X_tsne[mask, 0], X_tsne[mask, 1],
+                    c=colors[cluster], label=labels[cluster], s=50)
+
     plt.title(title1)
     plt.xlabel('TSNE 1')
     plt.ylabel('TSNE 2')
+    plt.legend()
     plt.show()
 
 
@@ -619,3 +623,44 @@ def compute_silhouette_scores(X: np.array, from_k: int, to_k: int) -> np.array:
     plt.title('Silhouette Score for Optimal k')
     plt.show()
     return scores
+
+def apply_kruskal_dunn(df, variable, cluster_labels):
+    """
+    Aplica Kruskal-Wallis y Dunn's post-hoc a una variable continua en función de clusters.
+
+    :param df: DataFrame de pandas con los datos.
+    :param variable: Nombre de la columna con la variable continua (string).
+    :param cluster_labels: Array de NumPy o lista con las etiquetas de cluster.
+    :return: (Kruskal-Wallis statistic, p-value, Dunn's post-hoc DataFrame).
+    """
+    # Paso 1: Asegurar que cluster_labels sea una columna en df
+    df = df.copy()  # Evitar modificar el DataFrame original
+    df['_cluster_temp'] = cluster_labels  # Columna temporal
+
+    # Paso 2: Filtrar NaN y obtener grupos
+    cluster_groups = [group[variable].dropna() for _, group in df.groupby('_cluster_temp')]
+
+    # Paso 3: Kruskal-Wallis
+    kw_statistic, p_value = kruskal(*cluster_groups)
+
+    print(f"Kruskal-Wallis - H-statistic: {kw_statistic:.4f}, p-value: {p_value:.4f}")
+
+    # Paso 4: Dunn's post-hoc si hay diferencias significativas
+    if p_value < 0.05:
+        print("Hay diferencias significativas entre al menos un par de clusters.")
+        dunn_results = posthoc_dunn(
+            df,
+            val_col=variable,
+            group_col='_cluster_temp',
+            p_adjust='bonferroni'
+        )
+        print("\nDunn's post-hoc test (p-values ajustados):")
+        print(dunn_results)
+    else:
+        print("No hay diferencias significativas entre los clusters.")
+        dunn_results = None
+
+    # Eliminar columna temporal (opcional)
+    df.drop('_cluster_temp', axis=1, inplace=True)
+
+    return kw_statistic, p_value, dunn_results
