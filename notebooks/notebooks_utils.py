@@ -6,6 +6,7 @@ from sklearn.metrics import silhouette_score
 from statsmodels.stats.stattools import medcouple
 import sys
 import os
+from sklearn.preprocessing import RobustScaler
 import dataset.db.db_utils as db_utils
 from numpy import inf
 import pickle
@@ -460,7 +461,7 @@ def plot_clusters(X: np.array, clusters: np.array, title1: str) -> None:
 
 
 def show_cluster_distribution_numerical(X: pd.DataFrame, clusters: np.array, n_clusters: int, feature_name: str,
-                                        bins: int) -> None:
+                                        bins: int, min: float = None, max: float = None) -> None:
     """
     Show the distribution of a feature for each cluster
     :param X: the dataset to visualize
@@ -468,15 +469,24 @@ def show_cluster_distribution_numerical(X: pd.DataFrame, clusters: np.array, n_c
     :param n_clusters: the number of clusters
     :param feature_name: the name of the feature in X
     :param bins: the number of bins to categorize the data
+    :param min: (optional) lower bound for the x-axis, defaults to the minimum value of the feature
+    :param max: (optional) upper bound for the x-axis, defaults to the maximum value of the feature
     """
+    if min is None:
+        min = X[feature_name].min() - (X[feature_name].max()/10)
+    if max is None:
+        max = X[feature_name].max() + (X[feature_name].max()/10)
+
     plt.figure(figsize=(10, 6))
     for cluster in range(n_clusters):
         sns.kdeplot(X[clusters == cluster][feature_name], label=f'Cluster {cluster}')
     plt.title(f'Distribution of {feature_name} for each Cluster')
     plt.xlabel(feature_name)
     plt.ylabel('Density')
+    plt.xlim(min, max)
     plt.legend()
     plt.show()
+
 
 
 def show_cluster_distribution_boolean(X: pd.DataFrame, clusters: np.array, n_clusters: int, feature_name: str) -> None:
