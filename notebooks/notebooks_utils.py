@@ -674,3 +674,17 @@ def apply_kruskal_dunn(df, variable, cluster_labels):
     df.drop('_cluster_temp', axis=1, inplace=True)
 
     return kw_statistic, p_value, dunn_results
+
+def plot_pairplot(df, columns):
+    """
+    Genera un pairplot con las variables numéricas especificadas de un DataFrame.
+
+    :param df: DataFrame de pandas con los datos.
+    :param columns: Lista de nombres de columnas a incluir en el pairplot.
+    """
+    numeric_df = df[columns].select_dtypes(include=['number'])  # Seleccionar solo columnas numéricas especificadas
+    if numeric_df.shape[1] > 1:
+        sns.pairplot(numeric_df)
+        plt.show()
+    else:
+        print("No hay suficientes variables numéricas para generar un pairplot.")
