@@ -688,3 +688,26 @@ def plot_pairplot(df, columns):
         plt.show()
     else:
         print("No hay suficientes variables numéricas para generar un pairplot.")
+
+def analizar_bins(df, feature):
+    print(f"\n--- Análisis de la feature: '{feature}' ---")
+
+    # Discretización por igual anchura
+    bins_anchura = pd.cut(df[feature], bins=3)
+    freq_anchura = bins_anchura.value_counts().sort_index()
+    total = len(df)
+    print("\nDiscretización en 3 bins de **igual anchura**:")
+    for bin_label, count in freq_anchura.items():
+        porcentaje = (count / total) * 100
+        print(f"  {bin_label}: {count} ({porcentaje:.1f}%)")
+
+    # Discretización por igual frecuencia
+    try:
+        bins_frecuencia = pd.qcut(df[feature], q=3, duplicates='drop')
+        freq_frecuencia = bins_frecuencia.value_counts().sort_index()
+        print("\nDiscretización en 3 bins de **igual frecuencia**:")
+        for bin_label, count in freq_frecuencia.items():
+            porcentaje = (count / total) * 100
+            print(f"  {bin_label}: {count} ({porcentaje:.1f}%)")
+    except ValueError as e:
+        print("\nDiscretización en igual frecuencia no posible:", e)
