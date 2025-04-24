@@ -451,8 +451,8 @@ def plot_clusters(X: np.array, clusters: np.array, title1: str) -> None:
     X_tsne = tsne.fit_transform(X)
 
     # Define colors for each cluster
-    colors = {0: 'blue', 1: 'orange', 2: 'green'}
-    labels = {0: 'Cluster 0', 1: 'Cluster 1', 2: 'Cluster 2'}
+    colors = {0: 'blue', 1: 'orange', 2: 'green', 3: 'purple', 4: 'yellow'}
+    labels = {0: 'Cluster 0', 1: 'Cluster 1', 2: 'Cluster 2', 3: 'Cluster 3', 4: 'Cluster 4'}
 
     plt.figure(figsize=(8, 6))
 
