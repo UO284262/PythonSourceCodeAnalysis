@@ -2,11 +2,10 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import silhouette_score, classification_report
 from statsmodels.stats.stattools import medcouple
 import sys
 import os
-from sklearn.preprocessing import RobustScaler
 import dataset.db.db_utils as db_utils
 from numpy import inf
 import pickle
@@ -19,6 +18,16 @@ from sklearn.manifold import TSNE
 from sklearn.model_selection import train_test_split
 from scipy.stats import kruskal
 from scikit_posthocs import posthoc_dunn
+import wittgenstein as lw
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.preprocessing import RobustScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, f1_score
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LogisticRegression
+from itertools import product
+from scikit_posthocs import posthoc_dunn
+from scipy.stats import kruskal
 
 # Database connection properties
 DB_CONNECTION_STR = f"postgresql://{db_utils.connection_string['user']}:{db_utils.connection_string['password']}@{db_utils.connection_string['host']}:{db_utils.connection_string['port']}/{db_utils.connection_string['dbname']}"
@@ -563,11 +572,11 @@ def show_cluster_distribution_categorical(X: pd.DataFrame, clusters: np.array, n
     plt.ylim(0, 100)
     plt.show()
 
-def plot_dimension_reduction(X: pd.DataFrame, dimensions: int):
+def plot_dimension_reduction(X: pd.DataFrame, dimensions: int, table: str):
     tsne = TSNE(n_components=dimensions)
     df_tsne = tsne.fit_transform(X)
 
-    categories = ['BEGINNER' if x == 1 else 'PROFESSIONAL' for x in X['module__expertise_level_BEGINNER']]
+    categories = ['BEGINNER' if x == 1 else 'PROFESSIONAL' for x in X[table + '__expertise_level_BEGINNER']]
 
     plt.figure(figsize=(10, 8))
     palette = {'BEGINNER': 'blue', 'PROFESSIONAL': 'red'}
@@ -588,26 +597,29 @@ def plot_dimension_reduction(X: pd.DataFrame, dimensions: int):
     plt.show()
 
 
-def train_val_split(X: pd.DataFrame, y: pd.Series, val_size: float):
+def train_val_split(X: pd.DataFrame, y: pd.Series, val_size: float, table: str):
+    expert_column = table + '__expertise_level_PROFESSIONAL'
+    beg_column = table + '__expertise_level_BEGINNER'
+    target_column = table + '__expertise_level'
     y = y.apply(lambda t: 1 if t else 0)
     X_y = X.copy()
-    X_y['module__expertise_level'] = y
-    X_y.drop(['module__expertise_level_BEGINNER', 'module__expertise_level_PROFESSIONAL'], axis=1, inplace=True)
+    X_y[target_column] = y
+    X_y.drop([beg_column, expert_column], axis=1, inplace=True)
 
     df_train, df_val = train_test_split(
         X_y,
         test_size=val_size,
-        stratify=X_y['module__expertise_level'],  # Asegura el equilibrio de clases
+        stratify=X_y[target_column],  # Asegura el equilibrio de clases
         shuffle=True  # Barajar antes de dividir
     )
 
     X_train = df_train.copy()
-    X_train = X_train.drop(['module__expertise_level'], axis=1)
-    y_train = df_train['module__expertise_level'].copy()
+    X_train = X_train.drop([target_column], axis=1)
+    y_train = df_train[target_column].copy()
 
     X_val = df_val.copy()
-    X_val = X_val.drop(['module__expertise_level'], axis=1)
-    y_val = df_val['module__expertise_level'].copy()
+    X_val = X_val.drop([target_column], axis=1)
+    y_val = df_val[target_column].copy()
 
     return X_train, y_train, X_val, y_val
 
@@ -711,3 +723,371 @@ def analizar_bins(df, feature):
             print(f"  {bin_label}: {count} ({porcentaje:.1f}%)")
     except ValueError as e:
         print("\nDiscretización en igual frecuencia no posible:", e)
+
+
+def extract_and_filter_tree_rules(df, table, min_conf=0.9, min_support=0.05, max_conditions=3):
+    """
+    Extrae las reglas de un árbol de decisión y las filtra según:
+    - min_conf: confianza mínima
+    - min_support: soporte mínimo (en proporción)
+    - max_conditions: número máximo de condiciones en el antecedente
+    """
+    expert_column = table + '__expertise_level_PROFESSIONAL'
+    beg_column = table + '__expertise_level_BEGINNER'
+    target_column = table + '__expertise_level'
+    X = df.copy()
+
+    target_columns = [beg_column, expert_column]
+
+    X["expertise_level"] = X[target_columns].idxmax(axis=1)
+    X["expertise_level"] = X["expertise_level"].str.replace(table + "__", "")
+
+    y = X["expertise_level"]
+    X = X.drop(target_columns + ["expertise_level"], axis=1)
+
+    # Entrenar el árbol de decisión con profundidad máxima de 3:
+    tree = DecisionTreeClassifier(max_depth=3)
+    tree.fit(X, y)
+
+    class_names = tree.classes_
+    feature_names = list(df.columns)
+
+    tree_ = tree.tree_
+    total_samples = tree_.n_node_samples[0]
+
+    def recurse(node, rule_conditions):
+        if tree_.children_left[node] == -1 and tree_.children_right[node] == -1:
+            node_samples = tree_.n_node_samples[node]
+            support = node_samples / total_samples
+
+            counts = tree_.value[node][0]
+            predicted_class_index = np.argmax(counts)
+            predicted_class = class_names[predicted_class_index]
+            confidence = counts[predicted_class_index]
+
+            if len(rule_conditions) <= max_conditions and support >= min_support and confidence >= min_conf:
+                rule_str = " AND ".join(rule_conditions) if rule_conditions else "TRUE"
+                print(f"Rule: IF {rule_str} THEN class = {predicted_class}")
+                print(f"       Support: {support:.2%}, Confidence: {confidence:.2%}\n")
+        else:
+
+            feature_index = tree_.feature[node]
+            threshold = tree_.threshold[node]
+            condition_left = f"{feature_names[feature_index]} <= {threshold:.2f}"
+            recurse(tree_.children_left[node], rule_conditions + [condition_left])
+
+            condition_right = f"{feature_names[feature_index]} > {threshold:.2f}"
+            recurse(tree_.children_right[node], rule_conditions + [condition_right])
+
+    recurse(0, [])
+
+
+def extract_and_filter_irep_rules(df, table, min_conf=0.9, min_support=0.05, max_conditions=3):
+    expert_column = table + '__expertise_level_PROFESSIONAL'
+    beg_column = table + '__expertise_level_BEGINNER'
+    X = df.copy()
+    target_columns = [beg_column, expert_column]
+    X["expertise_level"] = X[target_columns].idxmax(axis=1)
+    X = X.drop(target_columns, axis=1)
+    X["expertise_level"] = X["expertise_level"].apply(
+        lambda value: 0 if value == beg_column else 1)
+
+    irep = lw.IREP()
+
+    stdout_original = sys.stdout
+    sys.stdout = open(os.devnull, 'w')
+    irep.fit(X, class_feat="expertise_level")
+    sys.stdout = stdout_original
+
+    print("Filtered IREP rules:")
+    filter_rules(irep.ruleset_, target_columns, len(X), min_conf, min_support, max_conditions)
+
+
+def extract_and_filter_ripper_rules(df, table, min_conf=0.9, min_support=0.05, max_conditions=3):
+    expert_column = table + '__expertise_level_PROFESSIONAL'
+    beg_column = table + '__expertise_level_BEGINNER'
+    target_column = table + '__expertise_level'
+    X = df.copy()
+    target_columns = [beg_column, expert_column]
+    X["expertise_level"] = X[target_columns].idxmax(axis=1)
+    X = X.drop(target_columns, axis=1)
+    X["expertise_level"] = X["expertise_level"].apply(
+        lambda value: 0 if value == beg_column else 1)
+
+    ripper = lw.RIPPER()
+    ripper.fit(X, class_feat="expertise_level")
+
+    print("Filtered RIPPER rules:")
+    filter_rules(ripper.ruleset_, target_columns, len(X), min_conf, min_support, max_conditions)
+
+
+def filter_rules(ruleset, target_columns, total_samples, min_conf=0.9, min_support=0.05, max_conditions=3):
+    for rule in ruleset.rules:
+        rule_count = sum(rule.class_ns_)
+        if rule_count == 0:
+            continue
+
+        confidence = max(rule.class_freqs_)
+        support = rule_count / total_samples
+
+        if confidence >= min_conf and support >= min_support and len(rule.conds) <= max_conditions:
+            predicted_class_index = rule.class_freqs_.index(max(rule.class_freqs_))
+            rule_str = " AND ".join(str(cond) for cond in rule.conds) if rule.conds else "TRUE"
+            print("Rule: IF " + rule_str + f" THEN class = {target_columns[predicted_class_index]}")
+            print(f"Support: {support:.2%}, Confidence: {confidence:.2%}")
+            print("-----")
+
+def decision_tree_weights(dt, table):
+    expert_column = table + '__expertise_level_PROFESSIONAL'
+    beg_column = table + '__expertise_level_BEGINNER'
+    target_column = table + '__expertise_level'
+    X_dt = dt.copy()
+
+    target_columns = [beg_column, expert_column]
+    X_dt["expertise_level"] = X_dt[target_columns].idxmax(axis=1)
+    X_dt["expertise_level"] = X_dt["expertise_level"].str.replace(table + "__", "")
+    y = X_dt["expertise_level"]
+    X_dt = X_dt.drop(target_columns + ["expertise_level"], axis=1)
+    # Entrenar el árbol de decisión con profundidad máxima de 3:
+    tree = DecisionTreeClassifier(max_depth=20)
+    tree.fit(X_dt, y)
+
+    feature_names = X_dt.columns
+    feature_importances_RF = tree.feature_importances_
+
+    importances_df = pd.DataFrame({
+        "Feature": feature_names,
+        "Importance": feature_importances_RF
+    }).sort_values(by="Importance", ascending=False)
+
+    plt.figure(figsize=(10, 6))
+    plt.barh(importances_df["Feature"], importances_df["Importance"], color='skyblue')
+    plt.xlabel("Importancia")
+    plt.ylabel("Características")
+    plt.title("Importancia de las características en Random Forest")
+    plt.gca().invert_yaxis()
+    plt.tight_layout()
+    plt.show()
+
+def random_forest_weights(X_train, y_train, X_val, y_val):
+    n_estimators_range = range(50, 201, 25)  # Número de estimadores: 50 a 200 en pasos de 25
+    max_depth_range = [None, 10, 20, 30]  # Profundidad máxima del árbol
+    min_samples_split_range = [2, 5, 10]  # Muestras mínimas para dividir un nodo
+
+    best_accuracy = 0
+    best_f1_score = 0
+    best_params = {}
+
+    # Iterar sobre todas las combinaciones de parámetros
+    for n_estimators in n_estimators_range:
+        for max_depth in max_depth_range:
+            for min_samples_split in min_samples_split_range:
+                # Crear y entrenar el modelo con la combinación actual de hiperparámetros
+                rf_model = RandomForestClassifier(
+                    n_estimators=n_estimators,
+                    max_depth=max_depth,
+                    min_samples_split=min_samples_split
+                )
+                rf_model.fit(X_train, y_train)
+
+                # Predicción y métricas
+                y_pred = rf_model.predict(X_val)
+                accuracy_value = accuracy_score(y_val, y_pred)
+                f1_score_value = f1_score(y_val, y_pred)
+
+                # Mostrar resultados para la combinación actual
+                #print(f"Estimators: {n_estimators}, Max Depth: {max_depth}, Min Samples Split: {min_samples_split}.\n\t"
+                #      f"Accuracy: {accuracy_value:.4f}.\n\tF1 Score: {f1_score_value:.4f}.")
+
+                # Actualizar la mejor combinación si es necesario
+                if accuracy_value > best_accuracy or (
+                        accuracy_value == best_accuracy and f1_score_value > best_f1_score):
+                    best_accuracy = accuracy_value
+                    best_f1_score = f1_score_value
+                    best_params = {
+                        'n_estimators': n_estimators,
+                        'max_depth': max_depth,
+                        'min_samples_split': min_samples_split
+                    }
+
+    rf_model = RandomForestClassifier(n_estimators=best_params['n_estimators'], min_samples_split=best_params['min_samples_split'], max_depth=best_params['max_depth'], )
+    rf_model.fit(X_train, y_train)
+
+    feature_names = X_train.columns
+    feature_importances_RF = rf_model.feature_importances_
+
+    importances_df = pd.DataFrame({
+        "Feature": feature_names,
+        "Importance": feature_importances_RF
+    }).sort_values(by="Importance", ascending=False)
+
+    plt.figure(figsize=(10, 6))
+    plt.barh(importances_df["Feature"], importances_df["Importance"], color='skyblue')
+    plt.xlabel("Importancia")
+    plt.ylabel("Características")
+    plt.title("Importancia de las características en Random Forest")
+    plt.gca().invert_yaxis()
+    plt.tight_layout()
+    plt.show()
+
+def logistic_regression(X_train, y_train, X_val, y_val):
+    best_accuracy = 0
+    best_degree = 0
+    best_model = None
+    best_poly_features = None
+    best_params = None
+
+    # Rango de hiperparámetros a explorar
+    param_grid = {
+        'penalty': ['elasticnet'],
+        'C': [0.001, 0.01, 0.1],
+        'solver': ['saga'],
+        'l1_ratio': [0.33, 0.5, 0.66]
+    }
+
+    # Crear todas las combinaciones posibles de hiperparámetros
+    param_combinations = list(product(*param_grid.values()))
+    total_combinations = len(param_combinations)
+
+    print(f"Número total de combinaciones de hiperparámetros: {total_combinations}\n")
+
+    # Iterar sobre los grados polinómicos
+    for degree in range(1, 3):
+        print(f"Probando grado polinómico: {degree}")
+        poly_features = PolynomialFeatures(degree=degree)
+        X_train_poly = poly_features.fit_transform(X_train)
+        X_val_poly = poly_features.transform(X_val)
+
+        # Variables para almacenar los mejores resultados para este grado
+        best_accuracy_degree = 0
+        best_params_degree = None
+        best_model_degree = None
+
+        # Probar cada combinación de hiperparámetros
+        for idx, (penalty, C, solver, l1_ratio) in enumerate(param_combinations, start=1):
+            print(f"  - Combinación {idx}/{total_combinations} para grado {degree}: "
+                  f"penalty={penalty}, C={C}, solver={solver}, l1_ratio={l1_ratio}")
+
+            # Configurar el modelo base de regresión logística
+            logistic = LogisticRegression(
+                penalty=penalty,
+                C=C,
+                solver=solver,
+                l1_ratio=l1_ratio,
+                max_iter=5000
+            )
+
+            # Entrenar el modelo
+            logistic.fit(X_train_poly, y_train)
+
+            # Evaluar en el conjunto de validación
+            accuracy = logistic.score(X_val_poly, y_val)
+
+            # Actualizar los mejores valores para este grado
+            if accuracy > best_accuracy_degree:
+                best_accuracy_degree = accuracy
+                best_params_degree = {
+                    'penalty': penalty,
+                    'C': C,
+                    'solver': solver,
+                    'l1_ratio': l1_ratio
+                }
+                best_model_degree = logistic
+
+            # Guardar el mejor modelo global
+            if accuracy > best_accuracy:
+                best_accuracy = accuracy
+                best_degree = degree
+                best_model = logistic
+                best_poly_features = poly_features
+                best_params = {
+                    'penalty': penalty,
+                    'C': C,
+                    'solver': solver,
+                    'l1_ratio': l1_ratio
+                }
+
+        # Imprimir los mejores resultados para este grado
+        print("\nMejores resultados para grado {}:".format(degree))
+        print("  Accuracy: {:.2f}%".format(best_accuracy_degree * 100))
+        print("  Parámetros:", best_params_degree)
+        print()
+
+    # Resultados finales
+    print(f"Mejor grado polinómico: {best_degree}")
+    print(f"Mejores parámetros globales: {best_params}")
+    print(f"Mejor accuracy global en validación: {best_accuracy * 100:.2f}%")
+
+    # Evaluación final en el conjunto de validación
+    X_val_best_poly = best_poly_features.transform(X_val)
+    y_pred = best_model.predict(X_val_best_poly)
+    print("\nReporte de clasificación en el conjunto de validación:")
+    print(classification_report(y_val, y_pred))
+    print("Accuracy en el conjunto de validación:", accuracy_score(y_val, y_pred))
+
+
+def apply_kruskal_dunn_all(df: pd.DataFrame, variables: list, cluster_labels, alpha: float = 0.05, visualize: bool = True) -> pd.DataFrame:
+    """
+    Realiza Kruskal-Wallis y Dunn post-hoc para múltiples variables,
+    devuelve un único DataFrame con todos los resultados y opcionalmente lo muestra.
+
+    :param df: DataFrame de pandas con los datos.
+    :param variables: Lista de nombres de columnas continuas a analizar.
+    :param cluster_labels: Array o lista con etiquetas de cluster.
+    :param alpha: Nivel de significación para pruebas (por defecto 0.05).
+    :param visualize: Si True, muestra el DataFrame con display_dataframe_to_user.
+    :return: DataFrame con columnas:
+             ['variable','H_stat','p_value','cluster_i','cluster_j','dunn_pvalue','significant']
+    """
+    df = df.copy()
+    df['_cluster_temp'] = cluster_labels
+
+    records = []
+
+    for var in variables:
+        # Agrupar datos por cluster y eliminar NaNs
+        groups = [grp[var].dropna() for _, grp in df.groupby('_cluster_temp')]
+        if len([g for g in groups if len(g) > 0]) < 2:
+            continue
+
+        # Kruskal-Wallis
+        H, p_kw = kruskal(*groups)
+
+        # Prepara estructura de Dunn: incluso si no es significativo, incluimos NaN
+        dunn_matrix = None
+        if p_kw < alpha:
+            dunn_matrix = posthoc_dunn(df, val_col=var, group_col='_cluster_temp', p_adjust='bonferroni')
+        else:
+            # Matriz vacía con índices de clusters
+            idx = sorted(df['_cluster_temp'].unique())
+            dunn_matrix = pd.DataFrame(float('nan'), index=idx, columns=idx)
+
+        # Recorre triángulo superior de la matriz Dunn
+        clusters = dunn_matrix.index.tolist()
+        for i, ci in enumerate(clusters):
+            for cj in clusters[i+1:]:
+                p_dunn = dunn_matrix.loc[ci, cj]
+                records.append({
+                    'variable': var,
+                    'H_stat': H,
+                    'p_value': p_kw,
+                    'cluster_i': ci,
+                    'cluster_j': cj,
+                    'dunn_pvalue': p_dunn,
+                    'significant': (p_dunn < alpha) if pd.notna(p_dunn) else False
+                })
+
+    # Construir DataFrame final
+    result_df = pd.DataFrame.from_records(records)
+    # Ordenar: primero por variable, luego por significant, luego por p_value asc
+    result_df = result_df.sort_values(['variable','significant','dunn_pvalue'], ascending=[True, False, True])
+
+    # Visualizar si se desea
+    if visualize:
+        print("Resultados Kruskal-Dunn")
+        result_df.describe()
+
+    # Limpiar
+    df.drop('_cluster_temp', axis=1, inplace=True)
+
+    return result_df

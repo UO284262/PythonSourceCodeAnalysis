@@ -17,6 +17,7 @@ from dataset.visitors.nodevisitor import NodeVisitor
 
 class VisitorInfo(NodeVisitor):
     def __init__(self, id_manager: IDManager, visitor_db: NodeVisitor):
+        super().__init__()
         self.id_manager = id_manager
         self.visitor_db = visitor_db
 

@@ -92,9 +92,9 @@ if __name__ == '__main__':
     #init_db()
     id_manager = IDManager()
     warnings.filterwarnings("error")
-    source_folder = './dataset/test/test_file'
+    source_folder = './test/test_file'
     expertice_level = 'BEGINNER'
-    project_folder = None
+    project_folder = './test/test_file'
     if len(sys.argv) == 2:
         source_folder = sys.argv[1]
     elif len(sys.argv) == 3:
