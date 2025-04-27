@@ -101,19 +101,15 @@ def print_values_usage_for_cat_var(df, column_name, possible_values=[]):
             print(f'\t\tLa variable {column_name} toma valor el desconocido {value}.')
 
 
-"""
-def print_outliers_for_df_column2(df, column_name, weak_coefficient=1.5, strong_coefficient=3.0):
 
+def print_outliers_tukey(df, column_name, weak_coefficient=1.5, strong_coefficient=3.0):
     column_dataframe = df[column_name].describe()
-    column_np_array = np.array(column_dataframe)
+    data = np.array(df[column_name])
     q1 = column_dataframe['25%']
     q3 = column_dataframe['75%']
     iqr = q3 - q1
-    mc = medcouple(column_np_array)
+    mc = medcouple(data)
     print(f'El coeficiente MC (Medcouple Coefficient) de balanceo es: {mc}')
-    print('Dependiendo del coeficiente de MC se deben tomar unos límites u otros:')
-    print('     |MC| < 0.3    ->  Tukey')
-    print('     |MC| >=  0.3  ->  MAD')
     low_strong_iqr_lmt = q1 - strong_coefficient * iqr
     high_strong_iqr_lmt = q3 + strong_coefficient * iqr
     low_weak_iqr_lmt = q1 - weak_coefficient * iqr
@@ -121,23 +117,6 @@ def print_outliers_for_df_column2(df, column_name, weak_coefficient=1.5, strong_
     print(f"Rango valores atípicos extremos (Tukey): [{low_strong_iqr_lmt},{high_strong_iqr_lmt}]")
     print(f"Rango valores atípicos leves (Tukey): [{low_weak_iqr_lmt},{high_weak_iqr_lmt}]")
 
-
-    if mc < 0.0:
-        low = (q1-1.5 * math.exp(-4*mc) * iqr)
-        high = (q3+1.5 * math.exp(3.5*mc) * iqr)
-    else:
-        low = (q1-1.5 * math.exp(-3.5*mc) * iqr)
-        high = (q3+1.5 * math.exp(4*mc) * iqr)
-
-    print(f"Rango valores atípicos extremos (Fixed BoxPlot): [{low},{high}]")
-    
-    k = 3
-    median = np.median(column_np_array)
-    mad = np.median(np.abs(column_np_array - median))
-    mad_lower_limit = median - (k * mad)
-    mad_upper_limit = median + (k * mad)
-    print(f"Rango valores atípicos MAD (Median Absolute Deviation): [{mad_lower_limit},{mad_upper_limit}]")
-    
     num_low_strong_outliers = len(df[df[column_name] < low_strong_iqr_lmt].index)
     num_low_weak_outliers = len(df[df[column_name] < low_weak_iqr_lmt].index)
     num_high_weak_outliers = len(df[df[column_name] > high_weak_iqr_lmt].index)
@@ -148,88 +127,48 @@ def print_outliers_for_df_column2(df, column_name, weak_coefficient=1.5, strong_
     num_high_weak_outliers_pct = num_high_weak_outliers / len(df[column_name]) * 100
     num_high_strong_outliers_pct = num_high_strong_outliers / len(df[column_name]) * 100
 
-    num_low_out_ad_boxplot = len(df[df[column_name] < low].index)
-    num_high_out_ad_boxplot = len(df[df[column_name] > high].index)
-    num_low_out_ad_boxplot_pct = num_low_out_ad_boxplot / len(df[column_name]) * 100
-    num_high_out_ad_boxplot_pct = num_high_out_ad_boxplot / len(df[column_name]) * 100
-
-    num_low_mad_outliers = len(df[df[column_name] < mad_lower_limit].index)
-    num_high_mad_outliers = len(df[df[column_name] > mad_upper_limit].index)
-    num_low_mad_outliers_pct = num_low_mad_outliers / len(df[column_name]) * 100
-    num_high_mad_outliers_pct = num_high_mad_outliers / len(df[column_name]) * 100
-
     print(f'-3.0IQR: {num_low_strong_outliers} instancias tienen un valor para {column_name} inferior a {low_strong_iqr_lmt} (Q1-3*IQR) para {column_name}. Representando un {num_low_strong_outliers_pct:.4}% del total de instancias.')
     print(f'-1.5IQR: {num_low_weak_outliers} instancias tienen un valor para {column_name} inferior a {low_weak_iqr_lmt} (Q1-1.5*IQR) para {column_name}. Representando un {num_low_weak_outliers_pct:.4}% del total de instancias.')
     print(f'+1.5IQR: {num_high_weak_outliers} instancias tienen un valor para {column_name} superior a {high_weak_iqr_lmt} (Q3+1.5*IQR) para {column_name}. Representando un {num_high_weak_outliers_pct:.4}% del total de instancias.')
     print(f'+3.0IQR: {num_high_strong_outliers} instancias tienen un valor para {column_name} superior a {high_strong_iqr_lmt} (Q3-3*IQR) para {column_name}. Representando un {num_high_strong_outliers_pct:.4}% del total de instancias.')
 
-    print(f'L: {num_low_out_ad_boxplot} instancias tienen un valor para {column_name} inferior a {low} para {column_name}. Representando un {num_low_out_ad_boxplot_pct:.4}% del total de instancias.')
-    print(f'U: {num_high_out_ad_boxplot} instancias tienen un valor para {column_name} superior a {high} para {column_name}. Representando un {num_high_out_ad_boxplot_pct:.4}% del total de instancias.')
 
-    print(f'MAD Inferior: {num_low_mad_outliers} instancias tienen un valor para {column_name} inferior a {mad_lower_limit} para {column_name}. Representando un {num_low_mad_outliers_pct:.4}% del total de instancias.')
-    print(f'MAD Superior: {num_high_mad_outliers} instancias tienen un valor para {column_name} superior a {mad_upper_limit} para {column_name}. Representando un {num_high_mad_outliers_pct:.4}% del total de instancias.')
-"""
-
-
-def print_outliers_for_df_column(df, column_name, weak_coefficient=1.5, strong_coefficient=3.0):
-    column_dataframe = df[column_name].describe()
-    column_np_array = np.array(column_dataframe)
-    q1 = column_dataframe['25%']
-    q3 = column_dataframe['75%']
-    iqr = q3 - q1
-    mc = medcouple(column_np_array)
-    print(f'El coeficiente MC (Medcouple Coefficient) de balanceo es: {mc}')
-    print('Dependiendo del coeficiente de MC se deben tomar unos límites u otros:')
-    print('     |MC| < 0.3    ->  Tukey')
-    print('     |MC| >=  0.3  ->  MAD')
-    low_weak_iqr_lmt = q1 - weak_coefficient * iqr
-    high_weak_iqr_lmt = q3 + weak_coefficient * iqr
-    print(f"Rango valores atípicos leves (Tukey): [{low_weak_iqr_lmt},{high_weak_iqr_lmt}]")
-
-    k = 3
-    median = np.median(column_np_array)
-    mad = np.median(np.abs(column_np_array - median))
+def print_outliers_mad(df, column_name, k=3):
+    data = np.array(df[column_name])
+    median = np.median(data)
+    mad = 1.4826 * np.median(np.abs(data - median))
     mad_lower_limit = median - (k * mad)
     mad_upper_limit = median + (k * mad)
     print(f"Rango valores atípicos MAD (Median Absolute Deviation): [{mad_lower_limit},{mad_upper_limit}]")
-
-    num_low_weak_outliers = len(df[df[column_name] < low_weak_iqr_lmt].index)
-    num_high_weak_outliers = len(df[df[column_name] > high_weak_iqr_lmt].index)
-    num_low_weak_outliers_pct = num_low_weak_outliers / len(df[column_name]) * 100
-    num_high_weak_outliers_pct = num_high_weak_outliers / len(df[column_name]) * 100
 
     num_low_mad_outliers = len(df[df[column_name] < mad_lower_limit].index)
     num_high_mad_outliers = len(df[df[column_name] > mad_upper_limit].index)
     num_low_mad_outliers_pct = num_low_mad_outliers / len(df[column_name]) * 100
     num_high_mad_outliers_pct = num_high_mad_outliers / len(df[column_name]) * 100
-
-    print(
-        f'-1.5IQR: {num_low_weak_outliers} instancias tienen un valor para {column_name} inferior a {low_weak_iqr_lmt} (Q1-1.5*IQR) para {column_name}. Representando un {num_low_weak_outliers_pct:.4}% del total de instancias.')
-    print(
-        f'+1.5IQR: {num_high_weak_outliers} instancias tienen un valor para {column_name} superior a {high_weak_iqr_lmt} (Q3+1.5*IQR) para {column_name}. Representando un {num_high_weak_outliers_pct:.4}% del total de instancias.')
-
     print(
         f'MAD Inferior: {num_low_mad_outliers} instancias tienen un valor para {column_name} inferior a {mad_lower_limit} para {column_name}. Representando un {num_low_mad_outliers_pct:.4}% del total de instancias.')
     print(
         f'MAD Superior: {num_high_mad_outliers} instancias tienen un valor para {column_name} superior a {mad_upper_limit} para {column_name}. Representando un {num_high_mad_outliers_pct:.4}% del total de instancias.')
 
-    if np.abs(mc) > 0.3:
-        print("")
-        print(f"Con un MC de {mc} utilizamos MAD.")
-        print(f"Se consideran anómalos los valores superiores a {mad_upper_limit} o inferiores a {mad_lower_limit}")
-        print("Describimos los valores de las variables de la tabla, cuando el valor de la variable es anómalo")
-        outlier_df = df[(df[column_name] > mad_upper_limit) | (df[column_name] < mad_lower_limit)]
-    else:
-        print("")
-        print(f"Con un MC de {mc} utilizamos Tukey.")
-        print(f"Se consideran anómalos los valores superiores a {high_weak_iqr_lmt} o inferiores a {low_weak_iqr_lmt}")
-        print("Describimos los valores de las variables de la tabla, cuando el valor de la variable es anómalo")
-        outlier_df = df[(df[column_name] > high_weak_iqr_lmt) | (df[column_name] < low_weak_iqr_lmt)]
 
-    if 'ipykernel' in sys.modules:  # Verificar si se ejecuta en Jupyter Notebook
-        display(outlier_df.describe(percentiles=[.25, .50, .75], include=['object', 'float', 'bool', 'int']))
-    else:
-        print(outlier_df.describe(percentiles=[.25, .50, .75], include=['object', 'float', 'bool', 'int']))
+def print_outliers_mad_zero_inflated(df, column_name, k=3, th=0):
+    total_samples = len(df[column_name])
+    no_zero_data = np.array(df[df[column_name] > th][column_name])
+    median = np.median(no_zero_data)
+    mad = 1.4826 * np.median(np.abs(no_zero_data - median))
+    mad_lower_limit = median - (k * mad)
+    mad_upper_limit = median + (k * mad)
+
+    print(f"Rango valores atípicos MAD excluyendo las instancias con valor 0 (Median Absolute Deviation): [{mad_lower_limit},{mad_upper_limit}]")
+
+    num_low_mad_outliers = len(no_zero_data[no_zero_data < mad_lower_limit])
+    num_high_mad_outliers = len(no_zero_data[no_zero_data > mad_upper_limit])
+    num_low_mad_outliers_pct = num_low_mad_outliers / total_samples * 100
+    num_high_mad_outliers_pct = num_high_mad_outliers / total_samples * 100
+    print(
+        f'MAD Inferior: {num_low_mad_outliers} instancias tienen un valor para {column_name} inferior a {mad_lower_limit} y diferente de 0 para {column_name}. Representando un {num_low_mad_outliers_pct:.4}% del total de instancias.')
+    print(
+        f'MAD Superior: {num_high_mad_outliers} instancias tienen un valor para {column_name} superior a {mad_upper_limit} para {column_name}. Representando un {num_high_mad_outliers_pct:.4}% del total de instancias.')
 
 
 def get_statistics(df, columns, size):
@@ -411,21 +350,27 @@ def print_categorical_histogram(
 
 
 def detect_outliers_kde(dataframe: pd.DataFrame, column, percentile: float):
-    # Ajustar la KDE
+    """
+    Detecta outliers con KDE calculando el umbral de densidad directamente sobre los datos,
+    lo cual es mejor para distribuciones con picos o huecos.
+    Args:
+        dataframe: DataFrame con los datos.
+        column: Columna sobre la que aplicar la detección.
+        percentile: Percentil (ej. 0.05 para el 5%) como umbral de outliers.
+    Returns:
+        Serie booleana indicando qué instancias son outliers.
+    """
     series = dataframe[column]
-
-    # Ajustar la KDE
+    # Ajustar KDE a la serie
     kde = gaussian_kde(series)
-    x_grid = np.linspace(series.min(), series.max(), 1000)
-    density = kde(x_grid)
-
-    # Calcular umbral inferior basado en percentil
-    lower_threshold = np.percentile(density, percentile * 100)
-
-    # Detectar outliers solo en regiones de baja densidad
+    # Calcular densidad en los valores reales de la serie
     density_values = kde(series)
+    # Umbral de outliers: densidades por debajo del percentil dado
+    lower_threshold = np.percentile(density_values, percentile * 100)
+    print(f"Umbral de densidad (calculado sobre los datos reales): {lower_threshold:.6f}")
+    # Máscara de outliers: densidades por debajo del umbral
     outliers_mask = density_values < lower_threshold
-
+    # Verificar si se han detectado outliers
     # Verificar si se han detectado outliers
     print(f"Umbral de outliers: valores con densidad menor que {lower_threshold:.6f}")
     if any(outliers_mask):
@@ -434,7 +379,6 @@ def detect_outliers_kde(dataframe: pd.DataFrame, column, percentile: float):
         print(f"Porcentaje de valores detectados como outliers: {outlier_percentage:.2f}%")
     else:
         print("No se detectaron outliers con el umbral dado.")
-
     return pd.Series(outliers_mask, index=series.index)
 
 
