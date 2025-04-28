@@ -171,6 +171,39 @@ def print_outliers_mad_zero_inflated(df, column_name, k=3, th=0):
         f'MAD Superior: {num_high_mad_outliers} instancias tienen un valor para {column_name} superior a {mad_upper_limit} para {column_name}. Representando un {num_high_mad_outliers_pct:.4}% del total de instancias.')
 
 
+def print_outliers_tukey_zero_inflated(df, column_name, weak_coefficient=1.5, strong_coefficient=3.0, th=0):
+    total_samples = len(df[column_name])
+    no_zero_data = np.array(df[df[column_name] > th][column_name])
+    column_dataframe = df[df[column_name] > th][column_name].describe()
+    q1 = column_dataframe['25%']
+    q3 = column_dataframe['75%']
+    iqr = q3 - q1
+    mc = medcouple(no_zero_data)
+    print(f'El coeficiente MC (Medcouple Coefficient) de balanceo es: {mc}')
+    low_strong_iqr_lmt = q1 - strong_coefficient * iqr
+    high_strong_iqr_lmt = q3 + strong_coefficient * iqr
+    low_weak_iqr_lmt = q1 - weak_coefficient * iqr
+    high_weak_iqr_lmt = q3 + weak_coefficient * iqr
+    print(f"Rango valores atípicos extremos (Tukey): [{low_strong_iqr_lmt},{high_strong_iqr_lmt}]")
+    print(f"Rango valores atípicos leves (Tukey): [{low_weak_iqr_lmt},{high_weak_iqr_lmt}]")
+
+    num_low_strong_outliers = len(no_zero_data[no_zero_data < low_strong_iqr_lmt])
+    num_low_weak_outliers = len(no_zero_data[no_zero_data < low_weak_iqr_lmt])
+    num_high_weak_outliers = len(no_zero_data[no_zero_data > high_weak_iqr_lmt])
+    num_high_strong_outliers = len(no_zero_data[no_zero_data > high_strong_iqr_lmt])
+
+    num_low_strong_outliers_pct = num_low_strong_outliers / total_samples * 100
+    num_low_weak_outliers_pct = num_low_weak_outliers / total_samples * 100
+    num_high_weak_outliers_pct = num_high_weak_outliers / total_samples * 100
+    num_high_strong_outliers_pct = num_high_strong_outliers / total_samples * 100
+
+    print(f'-3.0IQR: {num_low_strong_outliers} instancias tienen un valor para {column_name} inferior a {low_strong_iqr_lmt} (Q1-3*IQR) para {column_name}. Representando un {num_low_strong_outliers_pct:.4}% del total de instancias.')
+    print(f'-1.5IQR: {num_low_weak_outliers} instancias tienen un valor para {column_name} inferior a {low_weak_iqr_lmt} (Q1-1.5*IQR) para {column_name}. Representando un {num_low_weak_outliers_pct:.4}% del total de instancias.')
+    print(f'+1.5IQR: {num_high_weak_outliers} instancias tienen un valor para {column_name} superior a {high_weak_iqr_lmt} (Q3+1.5*IQR) para {column_name}. Representando un {num_high_weak_outliers_pct:.4}% del total de instancias.')
+    print(f'+3.0IQR: {num_high_strong_outliers} instancias tienen un valor para {column_name} superior a {high_strong_iqr_lmt} (Q3-3*IQR) para {column_name}. Representando un {num_high_strong_outliers_pct:.4}% del total de instancias.')
+
+
+
 def get_statistics(df, columns, size):
     total = len(df.index)
     result = df.groupby(columns) \
