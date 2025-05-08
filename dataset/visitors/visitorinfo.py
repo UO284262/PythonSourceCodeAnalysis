@@ -25,6 +25,7 @@ class VisitorInfo(NodeVisitor):
         db_program = db_entities.DBProgram()
         ################## IDs ###################
         node_id = self.id_manager.get_id()
+        node_id = self.id_manager.get_id()
         ########## ENTITY PROPERTIES ############
         num_of_dirs = 0
         num_of_packages = 0
