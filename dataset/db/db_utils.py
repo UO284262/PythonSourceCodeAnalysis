@@ -82,7 +82,6 @@ def init_db():
         cursor.close()
         connection.close()
 
-
 def get_db_current_id() -> int:
     connection = psycopg2.connect(**connection_string)
     cursor = connection.cursor()

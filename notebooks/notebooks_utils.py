@@ -55,7 +55,7 @@ def get_percentage(e):
 
 
 # Frequency analysis of the values of a categorical variable
-def print_frequency_anal_for_cat_var(df, column_name, possible_values=[], outlier_threshold=0.2):
+def print_frequency_anal_for_cat_var(df, column_name, possible_values=[], outlier_threshold=1):
     unique_values = df[column_name].unique().tolist()
     unique_values = list(set(unique_values) | set(possible_values))
     #unique_values = unique_values.union(possible_values)
@@ -108,8 +108,8 @@ def print_outliers_tukey(df, column_name, weak_coefficient=1.5, strong_coefficie
     q1 = column_dataframe['25%']
     q3 = column_dataframe['75%']
     iqr = q3 - q1
-    mc = medcouple(data)
-    print(f'El coeficiente MC (Medcouple Coefficient) de balanceo es: {mc}')
+    #mc = medcouple(data)
+    #print(f'El coeficiente MC (Medcouple Coefficient) de balanceo es: {mc}')
     low_strong_iqr_lmt = q1 - strong_coefficient * iqr
     high_strong_iqr_lmt = q3 + strong_coefficient * iqr
     low_weak_iqr_lmt = q1 - weak_coefficient * iqr
@@ -178,8 +178,8 @@ def print_outliers_tukey_zero_inflated(df, column_name, weak_coefficient=1.5, st
     q1 = column_dataframe['25%']
     q3 = column_dataframe['75%']
     iqr = q3 - q1
-    mc = medcouple(no_zero_data)
-    print(f'El coeficiente MC (Medcouple Coefficient) de balanceo es: {mc}')
+    #mc = medcouple(no_zero_data)
+    #print(f'El coeficiente MC (Medcouple Coefficient) de balanceo es: {mc}')
     low_strong_iqr_lmt = q1 - strong_coefficient * iqr
     high_strong_iqr_lmt = q3 + strong_coefficient * iqr
     low_weak_iqr_lmt = q1 - weak_coefficient * iqr
