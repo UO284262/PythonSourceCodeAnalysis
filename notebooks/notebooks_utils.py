@@ -16,8 +16,6 @@ from scipy.stats import gaussian_kde
 from IPython.display import display
 from sklearn.manifold import TSNE
 from sklearn.model_selection import train_test_split
-from scipy.stats import kruskal
-from scikit_posthocs import posthoc_dunn
 import wittgenstein as lw
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.preprocessing import RobustScaler
